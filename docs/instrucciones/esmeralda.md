@@ -59,3 +59,24 @@ verifico, con mi criterio de biotecnología:
 - ¿La `mu_max` (tasa de reproducción) tiene sentido **relativo** entre especies?
 - ¿Se respeta que **no hay latencia**? Ninguna célula debería "revivir".
 - ¿La asignación especie↔entorno es defendible (*D. radiodurans* para Marte, etc.)?
+
+## Mapa: tarea → historia de usuario (Trello)
+Tablero: https://trello.com/b/cK8VP1aj — etiqueta 🟢 **Esmeralda**. Los criterios de
+aceptación de cada historia están en el checklist de su tarjeta.
+
+| Tarea de este archivo | Historia de usuario | Hito |
+|---|---|---|
+| Tareas 1-3 (`Microorganismo` + 3 especies + tests) | **Motor biológico: especies y habitabilidad** | Hito 1 |
+| (nueva) `modes/sandbox.py` | **Modo Sandbox** (detalle en el tablero) | Hito 2 |
+| "Tarea de Hito 3 — Notebook de análisis" | **Notebook de análisis** | Hito 3 |
+| Bloque ADR-0010 + supervisión de umbrales | **Calibración de umbrales con literatura** | Hito 4 |
+
+## Preguntas para configurar tu agente de IA
+Respondé esto antes de que tu Claude implemente; si no, asumirá defaults que quizá no querés:
+1. **Encelado:** ¿qué especie final? Recomendación de la nota: *M. burtonii* psicrófila, o mantener la termófila solo en los picos calientes — ver `docs/notas/encelado-especie-psicrofila.md`.
+2. **Umbrales:** ¿fijás vos los valores calibrados (`t_min`/`t_max`/`r_letal` en W/m²/`a_w_min`) o el agente propone y vos ajustás con literatura?
+3. **mu_max relativo:** ¿qué especie se reproduce más rápido? ¿Qué orden relativo entre las tres?
+4. **Estado inicial de la grilla:** ¿% de celdas vivas al arranque y cómo se distribuyen (aleatorio uniforme, cluster central)?
+5. **Notebook:** ¿nº de repeticiones Montecarlo y semilla(s) por defecto?
+6. **Curvas:** ¿qué métrica graficás (población absoluta viva, fracción viva, media ± σ)?
+7. **Sandbox:** ¿qué rangos mín/máx para los sliders de T, R y A_w?

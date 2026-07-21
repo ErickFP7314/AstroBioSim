@@ -46,3 +46,26 @@ Con mi criterio de matemática verifico:
 - ¿La **API** mantiene la frontera limpia (el frontend no reimplementa el modelo)?
 - **Nota:** el notebook de análisis lo construye Esmeralda; yo valido que su
   **estadística Montecarlo** sea correcta (nº de repeticiones, media ± desviación).
+
+## Mapa: tarea → historia de usuario (Trello)
+Tablero: https://trello.com/b/cK8VP1aj — etiqueta 🟣 **Erick**. Los criterios de
+aceptación de cada historia están en el checklist de su tarjeta.
+
+| Tarea de este archivo | Historia de usuario | Hito |
+|---|---|---|
+| Tareas 1-2 (`transition_rules.py` + `paso()`) | **Autómata Celular: reglas de transición + paso()** | Hito 1 |
+| Tarea 3 (`simulation.py`, acople de motores) | **Orquestador: simulation.py** | Hito 2 |
+| Tarea 3 (Montecarlo dentro del bucle) | **Integración Montecarlo en el bucle** | Hito 3 |
+| Tareas 4-5 (`ui/api.py` FastAPI + `frontend/` React) | **UI: backend FastAPI + dashboard React** | Hito 3 |
+| Sección "Qué reviso yo" (estadística Montecarlo) | **Validación estadística de Montecarlo** | Hito 4 |
+
+## Preguntas para configurar tu agente de IA
+Respondé esto antes de que tu Claude implemente; si no, asumirá defaults que quizá no querés:
+1. **Grilla:** dimensiones M×N por defecto (coordinar con Jose — es el mismo tamaño de campo).
+2. **Condición de borde:** ¿frontera muerta (default) o toroidal? Justificá la elección.
+3. **Reglas de transición:** ¿se mantienen los umbrales tipo Conway (vive con 2-3 vecinos, nace con 3) o se ajustan?
+4. **Estado inicial:** ¿lo define Esmeralda y el orquestador lo recibe como parámetro, o lo genera el CA?
+5. **Montecarlo:** ¿nº de repeticiones por defecto y cómo se derivan las semillas (una base + offsets deterministas)?
+6. **UI ↔ motor:** ¿WebSocket (stream por tick) o polling REST? ¿Qué velocidad/FPS de animación?
+7. **Interactividad:** ¿el dashboard cambia parámetros en vivo (Sandbox) o solo lanza/consulta corridas?
+8. **Persistencia:** ¿se guarda el historial completo de grillas por tick o solo las curvas poblacionales?

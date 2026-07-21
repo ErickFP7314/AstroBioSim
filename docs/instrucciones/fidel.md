@@ -44,3 +44,22 @@ Con mi criterio de biotecnología verifico:
   que documentarlo como "solo para pruebas"?
 - **Validación de salida:** ¿las poblaciones colapsan/crecen de forma
   biológicamente plausible, o hay artefactos (extinción instantánea, saturación irreal)?
+
+## Mapa: tarea → historia de usuario (Trello)
+Tablero: https://trello.com/b/cK8VP1aj — etiqueta 🟡 **Fidel**. Los criterios de
+aceptación de cada historia están en el checklist de su tarjeta.
+
+| Tarea de este archivo | Historia de usuario | Hito |
+|---|---|---|
+| Tarea 1 (`loaders.py` + fallback sintético) | **Capa de datos: loaders + DataFrame canónico** | Hito 1 |
+| Tareas 2-3 (`resampling.py` + `modes/analog.py`) | **Remuestreo + Modo Analógico** | Hito 2 |
+| Sección "Qué reviso yo" (validez de datos y salidas) | **Validación biológica de las salidas** | Hito 4 |
+
+## Preguntas para configurar tu agente de IA
+Respondé esto antes de que tu Claude implemente; si no, asumirá defaults que quizá no querés:
+1. **Paso temporal:** los datasets son diarios (365 filas 2025). ¿Se remuestrea a diario o a otra resolución?
+2. **Hueco de ventilas (8 días NaN):** ¿excluir esas iteraciones o interpolar linealmente de forma acotada?
+3. **Mapeo escalar→grilla:** una fila temporal es un escalar por variable. ¿Campo uniforme por tick, o se le aplica el gradiente espacial de Jose?
+4. **Atacama (`temperature_min/max`):** ¿se genera un ciclo diurno sintético entre min y max, o se usa solo la media?
+5. **Fallback sintético:** ¿con qué distribución/rangos genera cada variable cuando no hay dataset?
+6. **Duración de corrida analógica:** ¿365 iteraciones? Si la simulación es más larga, ¿se recicla la serie o se detiene?
