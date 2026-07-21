@@ -19,11 +19,15 @@ env/
 .coverage
 htmlcov/
 
-# Datos crudos pesados (mantener .gitkeep)
+# Datos crudos pesados (mantener .gitkeep, NO versionar descargas ni exoplanetas)
 data/raw/*
 !data/raw/.gitkeep
+# Procesados: se versionan SOLO los 3 CSV canónicos en uso (ver data/README.md)
 data/processed/*
 !data/processed/.gitkeep
+!data/processed/datos_tierra_control_2025.csv
+!data/processed/datos_atacama_2025_EXTREMOS_REALES.csv
+!data/processed/datos_ventilas_2025_procesados.csv
 
 # IDE / SO
 .vscode/

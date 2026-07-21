@@ -17,6 +17,7 @@ Estados posibles: `Propuesto` · `Aceptado` · `Rechazado` · `Sustituido por AD
 | [0007](0007-estructura-paquetes-repositorio.md) | Estructura de paquetes y layout del repositorio | Aceptado |
 | [0008](0008-reduccion-a-tres-variables-ambientales.md) | Reducción del modelo a tres variables ambientales (T, R, A_w) | Aceptado |
 | [0009](0009-frontend-react-backend-fastapi.md) | Frontend React + backend FastAPI (reemplaza a ADR-0004) | Aceptado |
+| [0010](0010-ingesta-datasets-reales-2025.md) | Ingesta de datasets reales 2025 (esquema canónico, A_w directa, R como flujo) | Aceptado |
 
 > **Nota:** ADR-0008 modifica a ADR-0002, ADR-0003, ADR-0005 y ADR-0006 — la
 > variable **presión (P)** fue eliminada del modelo. Los ADRs afectados llevan la

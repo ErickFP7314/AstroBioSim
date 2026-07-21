@@ -21,6 +21,15 @@
 3. Escribí tests: cada especie devuelve la máscara correcta cuando **una sola**
    variable está fuera de umbral (una prueba por variable y por especie).
 
+> **Cambios por los datos reales 2025 (ADR-0010) — a resolver con Jose/Fidel:**
+> - **`r_letal` ahora en W/m²**, no en Gy (los datos dan flujo radiativo, no dosis).
+>   Los valores 50/5000 "Gy" quedan obsoletos como magnitud: **re-derivá los umbrales
+>   de radiación en W/m²** con literatura.
+> - **Encelado vs. termófila:** los datos de ventila dan **T≈2.4 °C** (océano de fondo),
+>   incompatible con *M. okinawensis* (50–80 °C). Decidí: (a) cambiar la especie de
+>   Encelado por una **psicrófila**, o (b) que la termófila solo viva en los **picos
+>   calientes** del evento hidrotermal (§3.4). Es una decisión biológica tuya + Jose.
+
 ## Criterios de aceptación
 - Las tres especies instancian y heredan de `Microorganismo`.
 - `condiciones_habitables` es **vectorizada** (sin bucles) y devuelve `bool (M,N)`.

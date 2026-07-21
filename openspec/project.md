@@ -41,12 +41,15 @@ visualizado mediante una **interfaz web** y analizado en **Jupyter Notebook**.
 - **Aleatoriedad:** numpy.random con semilla fija para reproducibilidad.
 - **Tests:** pytest.
 
-## Datasets análogos
-- **Marte (Regolito):** dataset **CRC1211DB** del Desierto de Atacama
-  (`soil temperature` → `T`, `relative humidity` → `A_w`). Única fuente del Modo
-  Analógico tras ADR-0008.
-- **Encelado:** parámetros sintéticos de océano subglacial (A_w ≈ 1, gradiente
-  hidrotermal, R ≈ 0).
+## Datasets análogos (datos reales 2025 — ver ADR-0010 y `data/README.md`)
+Una fuente por entorno; esquema canónico `t, temperature, a_w, radiation`:
+- **Tierra (control):** Valles de Fresno, California (`datos_tierra_control_2025.csv`).
+- **Marte (Regolito):** Desierto de Atacama / **CRC1211DB**
+  (`datos_atacama_2025_EXTREMOS_REALES.csv`, con amplitud térmica diurna max/min).
+- **Encelado:** ventilas hidrotermales, A_w derivada de salinidad
+  (`datos_ventilas_2025_procesados.csv`); R≈0 subglacial (el IR es calor, no dosis).
+- **Fuera de alcance:** exoplanetas (NASA Exoplanet Archive, PHL HWC) y el IMAU
+  Antarctic (descartado en ADR-0008).
 
 ## Convenciones de código
 - Paquete: `src/astrobiosim/` con layout `src/`.

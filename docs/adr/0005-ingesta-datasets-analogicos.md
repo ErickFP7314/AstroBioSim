@@ -2,7 +2,8 @@
 
 - **Estado:** Aceptado
 - **Fecha:** 2026-07-15
-- **Modificado por:** [ADR-0008](0008-reduccion-a-tres-variables-ambientales.md) — se elimina la variable `P` y con ella el dataset IMAU Antarctic; el Modo Analógico depende ahora de una sola fuente (Atacama).
+- **Modificado por:** [ADR-0008](0008-reduccion-a-tres-variables-ambientales.md) — se elimina la variable `P` y con ella el dataset IMAU Antarctic.
+- **Modificado por:** [ADR-0010](0010-ingesta-datasets-reales-2025.md) — datos reales 2025 para los **tres** entornos; nuevo esquema canónico (`t, temperature, a_w, radiation`), `A_w` provista directamente (sin `humidity/100`) y `R` como flujo (W/m²). Deja obsoleto lo de "única fuente Atacama" y el mapeo desde humedad relativa de abajo.
 
 ## Contexto
 El Modo Analógico inyecta parámetros ambientales iteración por iteración desde

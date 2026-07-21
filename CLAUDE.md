@@ -56,7 +56,7 @@ import numpy as np
 class CampoAmbiental:
     """Tres capas escalares alineadas a la grilla M×N. Todas la misma forma."""
     T: np.ndarray     # temperatura (°C),           shape (M, N)
-    R: np.ndarray     # radiación acumulada (Gy),   shape (M, N)
+    R: np.ndarray     # radiación: flujo (W/m²), proxy operativo — ver ADR-0010; shape (M, N)
     A_w: np.ndarray   # actividad de agua (0..1),   shape (M, N)
 
     def __post_init__(self) -> None: ...          # valida formas idénticas
@@ -72,7 +72,7 @@ from astrobiosim.core.environment import CampoAmbiental
 
 class Microorganismo(ABC):
     t_min: float; t_max: float      # °C
-    r_letal: float                  # Gy (umbral letal de radiación acumulada)
+    r_letal: float                  # umbral letal de radiación (W/m², ver ADR-0010; re-derivar)
     a_w_min: float                  # actividad de agua mínima (0..1)
     mu_max: float                   # tasa de reproducción óptima
 
@@ -111,14 +111,24 @@ class EventoEstocastico(ABC):
         ...
 ```
 
-### 3.5 Datos análogos — dueño: Fidel (`data/`)
+### 3.5 Datos análogos — dueño: Fidel (`data/`) · actualizado por ADR-0010
 ```python
 import pandas as pd
-# loaders.py -> DataFrame canónico con columnas EXACTAS:
-#   "t" (índice temporal), "temperature" (°C), "humidity" (0..100 %)
-# resampling.py -> secuencia de CampoAmbiental (uno por iteración),
-#   aplicando A_w = humidity / 100 y el gradiente térmico.
+# Datos reales 2025: una fuente por entorno, esquemas crudos distintos.
+# Cada fuente tiene su ADAPTADOR que devuelve el DataFrame CANÓNICO con
+# columnas EXACTAS:
+#   "t"           (índice temporal)
+#   "temperature" (°C)
+#   "a_w"         (0..1, PROVISTA directamente — ya no se calcula humidity/100)
+#   "radiation"   (W/m², flujo radiativo; proxy operativo de R, NO dosis en Gy)
+# (Atacama expone además "temperature_min"/"temperature_max": amplitud diurna.)
+def cargar_control_tierra(ruta: str) -> pd.DataFrame: ...
 def cargar_atacama(ruta: str) -> pd.DataFrame: ...
+def cargar_ventilas(ruta: str) -> pd.DataFrame: ...
+# resampling.py -> secuencia de CampoAmbiental (uno por iteración):
+#   A_w se usa tal cual (0..1); R se alimenta de "radiation" (W/m²).
+#   Mapeo por entorno: superficies usan radiación solar como R;
+#   Encelado subglacial mapea R≈0 (su IR es calor, no dosis). Ver ADR-0010.
 ```
 
 ## 4. Instrucciones por integrante (archivos separados)
