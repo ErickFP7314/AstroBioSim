@@ -19,7 +19,7 @@ class CampoAmbiental:
     T : np.ndarray
         Temperatura (°C), shape (M, N).
     R : np.ndarray
-        Radiación acumulada (Gy), shape (M, N).
+        Radiación: flujo (W/m²), proxy operativo — ver ADR-0010; shape (M, N).
     A_w : np.ndarray
         Actividad de agua (0..1), shape (M, N).
     """

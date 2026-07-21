@@ -29,6 +29,8 @@
 >   incompatible con *M. okinawensis* (50–80 °C). Decidí: (a) cambiar la especie de
 >   Encelado por una **psicrófila**, o (b) que la termófila solo viva en los **picos
 >   calientes** del evento hidrotermal (§3.4). Es una decisión biológica tuya + Jose.
+>   👉 Te dejé candidatas concretas (con umbrales de partida y recomendación:
+>   *Methanococcoides burtonii*) en **`docs/notas/encelado-especie-psicrofila.md`**.
 
 ## Criterios de aceptación
 - Las tres especies instancian y heredan de `Microorganismo`.
