@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "astrobiosim"
+version = "0.1.0"
+description = "Simulador de supervivencia de microorganismos en subsuelos planetarios mediante Autómatas Celulares"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+dependencies = [
+    "numpy>=1.26",
+    "pandas>=2.1",
+    "matplotlib>=3.8",
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.29",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=4.1",
+    "jupyter>=1.0",
+    "ruff>=0.3",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+# Nota: el frontend React (Vite + TypeScript) vive en `frontend/` con su propio
+# `package.json` y toolchain de Node — no forma parte de este paquete Python.
+# El backend se sirve con: uvicorn astrobiosim.ui.api:app --reload  (ADR-0009)
