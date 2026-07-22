@@ -16,8 +16,9 @@
    - `EColi` (control terrestre): `t_min=15, t_max=45, r_letal=50, a_w_min=0.95`.
    - `DRadiodurans` (análogo Marte): radiorresistente `r_letal=5000`, resistente a
      desecación `a_w_min≈0.5`, tolera frío `t_min≈-20, t_max≈45`.
-   - `MOkinawensis` (análogo Encelado): termófila `t_min≈50, t_max≈80`, medio
-     acuoso `a_w_min≈0.9`, radiación no crítica `r_letal` alto.
+   - `MBurtonii` (análogo Encelado, ADR-0011): metanógena **psicrotolerante**
+     `t_min≈-2, t_max≈29`, medio acuoso `a_w_min≈0.94`, radiación no crítica
+     `r_letal` alto (R≈0 subglacial). Reemplaza a la termófila *M. okinawensis*.
 3. Escribí tests: cada especie devuelve la máscara correcta cuando **una sola**
    variable está fuera de umbral (una prueba por variable y por especie).
 
@@ -25,12 +26,11 @@
 > - **`r_letal` ahora en W/m²**, no en Gy (los datos dan flujo radiativo, no dosis).
 >   Los valores 50/5000 "Gy" quedan obsoletos como magnitud: **re-derivá los umbrales
 >   de radiación en W/m²** con literatura.
-> - **Encelado vs. termófila:** los datos de ventila dan **T≈2.4 °C** (océano de fondo),
->   incompatible con *M. okinawensis* (50–80 °C). Decidí: (a) cambiar la especie de
->   Encelado por una **psicrófila**, o (b) que la termófila solo viva en los **picos
->   calientes** del evento hidrotermal (§3.4). Es una decisión biológica tuya + Jose.
->   👉 Te dejé candidatas concretas (con umbrales de partida y recomendación:
->   *Methanococcoides burtonii*) en **`docs/notas/encelado-especie-psicrofila.md`**.
+> - **Encelado — especie decidida (ADR-0011):** la termófila *M. okinawensis* se
+>   reemplaza por **`MBurtonii`** (metanógena psicrotolerante, T≈-2…29 °C), porque
+>   los datos de ventila dan **T≈2.4 °C**. Umbrales de partida y justificación en
+>   **`docs/notas/encelado-especie-psicrofila.md`**. Solo falta que re-calibres los
+>   valores finales con literatura.
 
 ## Criterios de aceptación
 - Las tres especies instancian y heredan de `Microorganismo`.
@@ -54,8 +54,8 @@ retrospectivo (esta tarea era de Erick; la asumís vos):
 Tu Claude puede escribir el código correcto pero con **parámetros irreales**. Yo
 verifico, con mi criterio de biotecnología:
 - ¿Los **umbrales** de cada especie son coherentes con la literatura? (E. coli
-  mesófila; *D. radiodurans* radiorresistente y anhidrobiótica; *M. okinawensis*
-  metanógena termófila que necesita agua). Ajusto los valores de partida.
+  mesófila; *D. radiodurans* radiorresistente y anhidrobiótica; *M. burtonii*
+  metanógena psicrotolerante que necesita agua líquida — ADR-0011). Ajusto los valores de partida.
 - ¿La `mu_max` (tasa de reproducción) tiene sentido **relativo** entre especies?
 - ¿Se respeta que **no hay latencia**? Ninguna célula debería "revivir".
 - ¿La asignación especie↔entorno es defendible (*D. radiodurans* para Marte, etc.)?
@@ -73,7 +73,7 @@ aceptación de cada historia están en el checklist de su tarjeta.
 
 ## Preguntas para configurar tu agente de IA
 Respondé esto antes de que tu Claude implemente; si no, asumirá defaults que quizá no querés:
-1. **Encelado:** ¿qué especie final? Recomendación de la nota: *M. burtonii* psicrófila, o mantener la termófila solo en los picos calientes — ver `docs/notas/encelado-especie-psicrofila.md`.
+1. **Encelado (especie ya decidida — `MBurtonii`, ADR-0011):** ¿confirmás los umbrales de partida (`t_min≈-2`, `t_max≈29`, `a_w_min≈0.94`, `r_letal` alto) o los ajustás con literatura antes de implementar?
 2. **Umbrales:** ¿fijás vos los valores calibrados (`t_min`/`t_max`/`r_letal` en W/m²/`a_w_min`) o el agente propone y vos ajustás con literatura?
 3. **mu_max relativo:** ¿qué especie se reproduce más rápido? ¿Qué orden relativo entre las tres?
 4. **Estado inicial de la grilla:** ¿% de celdas vivas al arranque y cómo se distribuyen (aleatorio uniforme, cluster central)?

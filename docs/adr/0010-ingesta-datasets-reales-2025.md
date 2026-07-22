@@ -65,11 +65,10 @@ Para el MVP, la capa `R` del `CampoAmbiental` se alimenta de la columna `radiati
   ventilas sin inventar valores (Fidel).
 
 ## Riesgos / cuestiones abiertas (a resolver por sus dueños, no aquí)
-1. **Encelado vs. termófila.** Los datos de ventila dan T≈2.4 °C (océano de fondo),
-   incompatible con *M. okinawensis* (50–80 °C). Decisión de Esmeralda + Jose: (a)
-   cambiar la especie de Encelado por una **psicrófila**, o (b) tratar los **picos
-   calientes** cerca de fumarolas (evento `EmisionHidrotermalEncelado`, §3.4) como el
-   único nicho habitable de la termófila. Sin resolver.
+1. **Encelado vs. termófila.** ✅ **RESUELTO por ADR-0011:** los datos de ventila dan
+   T≈2.4 °C (océano de fondo), incompatible con *M. okinawensis* (50–80 °C). Se
+   reemplaza la especie de Encelado por **Methanococcoides burtonii** (metanógena
+   psicrotolerante, T≈-2…29 °C), compatible con la T del análogo.
 2. **Defensa del proxy de R.** Documentar en el informe que W/m² ≠ dosis ionizante;
    es una aproximación de estrés radiativo para análogos terrestres (Fidel valida).
 

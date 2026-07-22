@@ -62,7 +62,8 @@ Consecuencias directas sobre el modelo:
    (ADR-0003) y el bucle único de simulación. Reconsiderable si la
    diferenciación de Encelado resulta insuficiente.
 3. **Reducir a `A_w` únicamente.** Rechazado: `T` y `R` son precisamente los ejes
-   que definen a `M_Okinawensis` (termófila) y `D_Radiodurans` (radiorresistente);
+   que definen a `M_Burtonii` (psicrotolerante, definida por su rango de T — ADR-0011)
+   y `D_Radiodurans` (radiorresistente);
    sin ellos las tres especies serían indistinguibles y el estudio comparativo
    perdería su objeto.
 

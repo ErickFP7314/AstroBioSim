@@ -16,7 +16,7 @@ Adoptar layout `src/` con paquete `astrobiosim` organizado por responsabilidad:
 AstroBioSim/
 ├── src/astrobiosim/
 │   ├── core/            # Motores de dominio (POO)
-│   │   ├── microorganism.py   # Microorganismo (base) + EColi, DRadiodurans, MOkinawensis
+│   │   ├── microorganism.py   # Microorganismo (base) + EColi, DRadiodurans, MBurtonii
 │   │   └── environment.py     # PlanetaSubsuelo (base) + Tierra/Marte/Encelado, CampoAmbiental
 │   ├── engine/          # Autómata Celular + estocasticidad
 │   │   ├── cellular_automaton.py  # grilla, vecindad de Moore, bucle síncrono

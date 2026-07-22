@@ -7,7 +7,7 @@ en paralelo sin pisarse.
 
 | Integrante | Disciplina | Carpeta / módulo dueño | Responsabilidad |
 |-----------|-----------|------------------------|-----------------|
-| **Esmeralda** | Biotecnología | `src/astrobiosim/core/microorganism.py` + `notebooks/` | Motor biológico: jerarquía de especies (`EColi`, `DRadiodurans`, `MOkinawensis`) y **calibración de los umbrales** T, R, A_w a partir de literatura; además el **notebook de análisis** retrospectivo de las corridas. |
+| **Esmeralda** | Biotecnología | `src/astrobiosim/core/microorganism.py` + `notebooks/` | Motor biológico: jerarquía de especies (`EColi`, `DRadiodurans`, `MBurtonii`) y **calibración de los umbrales** T, R, A_w a partir de literatura; además el **notebook de análisis** retrospectivo de las corridas. |
 | **Fidel** | Biotecnología | `src/astrobiosim/data/` + `src/astrobiosim/modes/analog.py` | Capa de datos análogos: loaders del dataset de Atacama, mapeo `HR → A_w` y gradiente de humedad, remuestreo temporal, y **validación biológica** de las corridas. |
 | **Jose** | Física | `src/astrobiosim/core/environment.py` + `src/astrobiosim/engine/stochastic.py` | Motor ambiental/físico: entornos planetarios, **gradiente térmico** del regolito, campo de radiación, y física de los **eventos Montecarlo** (desecación marciana, emisiones hidrotermales con disipación). |
 | **Erick** | Matemática | `src/astrobiosim/engine/cellular_automaton.py` + `transition_rules.py` + `ui/` + `frontend/` | Motor de Autómata Celular: formalización de la **función de transición**, vecindad de Moore, **vectorización NumPy**, estabilidad numérica y reproducibilidad; además el **dashboard React + API FastAPI** (ADR-0009) y la **validación estadística** de las corridas. |

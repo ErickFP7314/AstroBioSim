@@ -20,9 +20,9 @@ arquitectura de software implementable, dividida en incrementos verificables.
 ### Incluye
 1. **Motor biológico** — jerarquía POO:
    - `Microorganismo` (clase base abstracta) con atributos:
-     `t_min`, `t_max` (°C), `r_letal` (Gy), `a_w_min`, `mu_max`.
+     `t_min`, `t_max` (°C), `r_letal` (W/m², ADR-0010), `a_w_min`, `mu_max`.
    - Especies derivadas: `EColi` (control terrestre), `DRadiodurans` (Marte),
-     `MOkinawensis` (Encelado).
+     `MBurtonii` (Encelado, ADR-0011).
 2. **Motor ambiental** — jerarquía POO:
    - `PlanetaSubsuelo` (base) → `TierraSubsuelo`, `MarteSubsuelo`, `EnceladoSubglacial`.
    - Vector ambiental por celda `E_{x,y} = {T, R, A_w}`.

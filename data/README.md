@@ -27,7 +27,8 @@ Todos: series diarias de 2025 (365 filas). Ver **ADR-0010** para el esquema can�
 ## Avisos de calidad (verificado 2026-07-21)
 - `ventilas`: **hueco de 8 días** (17–24 ago 2025) con NaN → `resampling.py` debe
   imputar/enmascarar sin inventar valores. `A_w≈0.9817` (constante, coherente con agua
-  de mar a 34.5 psu). **T≈2.4 °C**: es agua de fondo, NO la termófila — ver riesgo #1 de ADR-0010.
+  de mar a 34.5 psu). **T≈2.4 °C**: agua de fondo, coherente con la especie
+  psicrotolerante `MBurtonii` (ADR-0011), no con la termófila previa.
 - `tierra`, `atacama`: sin NaN. Rangos físicos correctos.
 - **Radiación en W/m²** (flujo), no dosis en Gy: se usa como proxy operativo de `R`
   (ADR-0010). Encelado mapea `R≈0` (su IR es calor, no dosis ionizante).
