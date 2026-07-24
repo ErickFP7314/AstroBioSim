@@ -85,8 +85,43 @@ class PlanetaSubsuelo(ABC):
         return np.arange(m, dtype=float).reshape(m, 1)
 
     @abstractmethod
+    def campo_modulado(
+        self,
+        *,
+        temperature: float,
+        a_w: float,
+        radiation_global: float = 0.0,
+        rng: np.random.Generator | None = None,
+    ) -> CampoAmbiental:
+        """Construye el campo M×N reusando la **estructura espacial** del entorno
+        pero con los valores de superficie/base tomados de un dato temporal.
+
+        Es el punto de reúso para el Modo Analógico (ADR-0017): cada tick de la
+        serie real inyecta su `temperature`, `a_w` y `radiation_global` (W/m²,
+        irradiancia solar global) y el entorno los propaga con su propia física
+        —decaimiento con la profundidad en Marte, fumarolas en Encelado— en vez
+        de aplanar el campo. `campo_inicial` es el caso particular con los valores
+        medios por defecto.
+
+        Parameters
+        ----------
+        temperature : float
+            Temperatura de superficie/base (°C) del tick.
+        a_w : float
+            Actividad de agua (0..1) del tick.
+        radiation_global : float
+            Irradiancia solar **global** (W/m²) del tick; el entorno decide cómo
+            la usa (Marte: UV con la profundidad; Tierra/Encelado: la ignoran, R=0).
+        rng : np.random.Generator, optional
+            Generador inyectado; los entornos con dispersión la muestrean con él.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
     def campo_inicial(self, rng: np.random.Generator | None = None) -> CampoAmbiental:
-        """Construye el `CampoAmbiental` en t=0 de este entorno.
+        """Construye el `CampoAmbiental` en t=0 (valores medios) de este entorno.
+
+        Es `campo_modulado` con los valores medios por defecto del entorno.
 
         Parameters
         ----------
@@ -118,12 +153,26 @@ class TierraSubsuelo(PlanetaSubsuelo):
     A_W_SUBSUELO: float = 0.99  # suelo a capacidad de campo (coincide con el dataset corregido)
     UV_SUBSUELO: float = 0.0  # el suelo bloquea el UV por completo
 
-    def campo_inicial(self, rng: np.random.Generator | None = None) -> CampoAmbiental:
+    def campo_modulado(
+        self,
+        *,
+        temperature: float,
+        a_w: float,
+        radiation_global: float = 0.0,
+        rng: np.random.Generator | None = None,
+    ) -> CampoAmbiental:
+        # Control uniforme: el subsuelo no tiene estructura espacial. `R = 0`
+        # (el suelo bloquea el UV), así que `radiation_global` se ignora.
         m, n = self.shape
-        T = np.full((m, n), self.T_SUBSUELO_C)
+        T = np.full((m, n), float(temperature))
         R = np.full((m, n), self.UV_SUBSUELO)
-        A_w = np.full((m, n), self.A_W_SUBSUELO)
+        A_w = np.full((m, n), float(a_w))
         return CampoAmbiental(T=T, R=R, A_w=A_w)
+
+    def campo_inicial(self, rng: np.random.Generator | None = None) -> CampoAmbiental:
+        return self.campo_modulado(
+            temperature=self.T_SUBSUELO_C, a_w=self.A_W_SUBSUELO, rng=rng
+        )
 
 
 class MarteSubsuelo(PlanetaSubsuelo):
@@ -171,21 +220,41 @@ class MarteSubsuelo(PlanetaSubsuelo):
             else self.escala_termica / self.RAZON_ATENUACION_UV
         )
 
-    def campo_inicial(self, rng: np.random.Generator | None = None) -> CampoAmbiental:
+    def campo_modulado(
+        self,
+        *,
+        temperature: float,
+        a_w: float,
+        radiation_global: float,
+        rng: np.random.Generator | None = None,
+    ) -> CampoAmbiental:
+        # `temperature` es la superficie del día; se amortigua con la profundidad
+        # hacia la asíntota fría. `radiation_global` → UV de superficie, que se
+        # atenúa mucho más rápido (skin depth radiativo). Así el campo diario
+        # conserva la banda de profundidad (ADR-0014/0017).
         m, n = self.shape
         z = self._profundidad  # (M, 1), broadcast a (M, N)
-        T = self.T_PROFUNDO_C + (self.T_SUPERFICIE_C - self.T_PROFUNDO_C) * np.exp(
+        T = self.T_PROFUNDO_C + (float(temperature) - self.T_PROFUNDO_C) * np.exp(
             -z / self.escala_termica
         )
-        R = self.UV_SUPERFICIE * np.exp(-z / self.escala_radiativa)
+        uv_superficie = float(radiation_global) * FRACCION_UV
+        R = uv_superficie * np.exp(-z / self.escala_radiativa)
         T = np.broadcast_to(T, (m, n)).copy()
         R = np.broadcast_to(R, (m, n)).copy()
 
-        A_w = np.full((m, n), self.A_W_MEDIA)
+        A_w = np.full((m, n), float(a_w))
         if rng is not None:
             A_w = A_w + rng.normal(0.0, self.A_W_SIGMA, size=(m, n))
         A_w = np.clip(A_w, 0.0, 1.0)
         return CampoAmbiental(T=T, R=R, A_w=A_w)
+
+    def campo_inicial(self, rng: np.random.Generator | None = None) -> CampoAmbiental:
+        return self.campo_modulado(
+            temperature=self.T_SUPERFICIE_C,
+            a_w=self.A_W_MEDIA,
+            radiation_global=self.RADIACION_GLOBAL_W_M2,
+            rng=rng,
+        )
 
 
 class EnceladoSubglacial(PlanetaSubsuelo):
@@ -232,16 +301,31 @@ class EnceladoSubglacial(PlanetaSubsuelo):
         m, n = self.shape
         return self.SIGMA_FRACCION * min(m, n)
 
-    def campo_inicial(self, rng: np.random.Generator | None = None) -> CampoAmbiental:
+    def campo_modulado(
+        self,
+        *,
+        temperature: float,
+        a_w: float,
+        radiation_global: float = 0.0,
+        rng: np.random.Generator | None = None,
+    ) -> CampoAmbiental:
+        # `temperature` es el fondo oceánico del día; las fumarolas se suman
+        # encima con su kernel gaussiano fijo. `R = 0` (el hielo blinda todo), así
+        # que `radiation_global` se ignora.
         m, n = self.shape
         filas, cols = np.indices((m, n), dtype=float)
         sigma = self.sigma_espacial
-        T = np.full((m, n), self.T_OCEANO_C)
+        T = np.full((m, n), float(temperature))
         for frac_fila, frac_col in self.FUMAROLAS_FRACCION:
             f0 = frac_fila * (m - 1)
             c0 = frac_col * (n - 1)
             d2 = (filas - f0) ** 2 + (cols - c0) ** 2
             T = T + self.DELTA_T_FUMAROLA * np.exp(-d2 / (2 * sigma**2))
         R = np.full((m, n), self.UV_ENCELADO)
-        A_w = np.full((m, n), self.A_W_OCEANO)
+        A_w = np.full((m, n), float(a_w))
         return CampoAmbiental(T=T, R=R, A_w=A_w)
+
+    def campo_inicial(self, rng: np.random.Generator | None = None) -> CampoAmbiental:
+        return self.campo_modulado(
+            temperature=self.T_OCEANO_C, a_w=self.A_W_OCEANO, rng=rng
+        )

@@ -85,6 +85,16 @@ Respondé esto antes de que tu Claude implemente; si no, asumirá defaults que q
 | `campo_inicial()` | `campo_inicial(rng=None)` | permite muestrear la dispersión de forma reproducible |
 | `SIGMA_ESPACIAL = 4.0` celdas | `SIGMA_FRACCION = 0.08` | **bug encontrado:** en grillas chicas las 3 fumarolas se solapaban y el pico llegaba a 43 °C. La física no puede depender de la resolución. A 50×50 da los mismos 4.0 de antes. |
 
+## ⚠️ Aviso: tu `environment.py` ganó `campo_modulado` (ADR-0017, 2026-07-24)
+
+Para el Modo Analógico de Fidel, tus clases `PlanetaSubsuelo` ahora tienen
+`campo_modulado(*, temperature, a_w, radiation_global, rng)`: construye el campo
+`M×N` con **tu misma estructura espacial** (decaimiento de profundidad en Marte,
+fumarolas en Encelado) pero con el valor de superficie tomado del dato del día.
+`campo_inicial` pasó a ser el caso particular con los valores medios —tu física no
+cambió y tus tests siguen verdes. **Revisá `campo_modulado` al mergear**
+`feat/data-resampling`: es una extensión de tu contrato §3.1.
+
 ## Tus tareas nuevas
 
 1. **[Hito 2 — prioritaria] `SalmueraDelicuescente`** en `stochastic.py`. Es la

@@ -105,9 +105,14 @@ Respondé esto antes de que tu Claude implemente; si no, asumirá defaults que q
    suelo, el dataset `datos_tierra_control_2025.csv` se corrigió a **`a_w = 0.99`
    constante** (suelo a capacidad de campo, asunción física documentada en
    `data/README.md`). Coincide con `TierraSubsuelo.A_W_SUBSUELO`.
-4. **[Hito 2] `resampling.py`:** el mapeo por entorno ahora es UV. Superficies:
-   `radiation × fracción UV`. **Encelado sigue en `R = 0`** — y ahora hay un motivo
-   más fuerte: sus 320 W/m² de `Radiacion_Infrarroja_W_m2` son **calor**, no UV.
+4. ~~**[Hito 2] `resampling.py`**~~ ✅ **IMPLEMENTADO (2026-07-24)** en la rama
+   `feat/data-resampling`: `limpiar_ventilas` (interpolación lineal acotada del
+   hueco de 8 días), `secuencia_campos` (un `CampoAmbiental` por día) y
+   `modes/analog.py` (`ModoAnalogico`, cumple la interfaz `ModoSimulacion` de
+   `modes/base.py`). **Decisión clave (ADR-0017):** el escalar diario se propaga
+   con el modelo espacial de Jose (`campo_modulado`), no aplanando el campo —así
+   Marte conserva su banda de profundidad. Falta tu revisión de la banda UV
+   (tarea 1) y la `a_w` media de Atacama (deuda #1).
 
 ## Preguntas nuevas para tu agente
 
