@@ -17,33 +17,20 @@
 - Este documento dice **qué** falta; `docs/instrucciones/<nombre>.md` dice **cómo**
   hacerlo, y `docs/adr/` dice **por qué** se decidió así.
 
-**Progreso global:** 27/98 criterios (28%)
+**Progreso global:** 32/103 criterios (31%)
 
 | Integrante | Área | Criterios cumplidos |
 |---|---|---|
 | 🟢 **Esmeralda** | Motor biológico + notebook | 10/26 (38%) |
 | 🟡 **Fidel** | Datos análogos + validación | 4/15 (27%) |
 | 🔵 **Jose** | Motor ambiental + eventos | 13/24 (54%) |
-| 🟣 **Erick** | Autómata Celular + UI | 0/33 (0%) |
+| 🟣 **Erick** | Autómata Celular + UI | 5/38 (13%) |
 
 ---
 
-## Hito 1 — Fundaciones — 0/5 criterios
+## Hito 1 — Fundaciones
 
-### ⬜ 🟣 Automata Celular: reglas de transicion + paso()
-
-**Dueño:** Erick · **Criterios:** 0/5
-
-> *Como motor de AC, quiero calcular S^{t+1} desde S^t de forma sincrona para simular la evolucion poblacional.*
->
-> Implementar `transition_rules` + `paso(estado, campo, especie)` con vecindad de Moore, contra stubs de campo/especie (contrato §3.3).
-> Rama: `feat/engine-transicion`.
-
-- [ ] `paso()` devuelve nuevo estado `(M,N) int8` SIN modificar el estado de entrada (doble buffer)
-- [ ] Conteo de vecinos de Moore correcto en casos de prueba (esquinas y bordes)
-- [ ] Estado int8 {MUERTA=0, LATENTE=1, ACTIVA=2}: fuera de crecimiento -> LATENTE; fuera de supervivencia -> MUERTA, absorbente (ADR-0012)
-- [ ] Vectorizado (sin bucles Python); `pytest tests/unit/test_cellular_automaton.py` verde
-- [ ] `paso()` recibe el `rng` inyectado; el conteo de vecinos de Moore cuenta SOLO celdas ACTIVA
+_(vacío)_
 
 ---
 
@@ -144,7 +131,7 @@
 
 ---
 
-## Hito 3 — Superficies — 0/16 criterios
+## Hito 3 — Superficies — 0/21 criterios
 
 ### ⬜ 🟣 Integracion Montecarlo en el bucle
 
@@ -198,6 +185,18 @@
 - [ ] La variable de respuesta es la persistencia (fraccion activa/latente/muerta al final de la corrida)
 - [ ] El resultado identifica un UMBRAL CRITICO: debajo la poblacion se extingue, encima persiste
 - [ ] El mapa de persistencia se regenera de forma reproducible desde el notebook
+
+### ⬜ 🟣 Editor de reglas por bloques + panel de notacion
+
+**Dueño:** Erick · **Criterios:** 0/5
+
+> ADR-0016. La UI ofrece un menu con las reglas de fabrica (logistica/conway/hibrida) y una opcion 'personalizar' que arma reglas con bloques tipo Scratch (condicionales y procesos estandarizados). El motor ya esta preparado: cada regla es una ReglaTransicion y el editor es una fabrica de reglas, no toca engine/.
+
+- [ ] Menu desplegable con las 3 reglas de fabrica (REGLAS_DISPONIBLES) intercambiables en vivo
+- [ ] Opcion 'personalizar': bloques de condiciones/procesos que producen una ReglaTransicion valida
+- [ ] El editor NO toca engine/: solo construye reglas contra la interfaz ReglaTransicion
+- [ ] Panel que renderiza notacion() de la regla activa (LaTeX) en notacion formal de AC
+- [ ] Una regla personalizada respeta los invariantes: sincrona, MUERTA absorbente, sin RNG global
 
 ---
 
@@ -269,25 +268,26 @@
 
 ---
 
-## En revisión — 4/4 criterios
+## En revisión — 5/5 criterios
 
-### ✅ 🟡 Capa de datos: loaders + DataFrame canonico
+### ✅ 🟣 Automata Celular: reglas de transicion + paso()
 
-**Dueño:** Fidel · **Criterios:** 4/4
+**Dueño:** Erick · **Criterios:** 5/5
 
-> *Como capa de datos, quiero cargar los datasets reales 2025 en un esquema unico para alimentar el Modo Analogico.*
+> *Como motor de AC, quiero calcular S^{t+1} desde S^t de forma sincrona para simular la evolucion poblacional.*
 >
-> Implementar `cargar_control_tierra` / `cargar_atacama` / `cargar_ventilas` + fallback sintetico (contrato §3.5, ADR-0010).
-> Rama: `feat/data-loaders`.
+> Implementar `transition_rules` + `paso(estado, campo, especie)` con vecindad de Moore, contra stubs de campo/especie (contrato §3.3).
+> Rama: `feat/engine-transicion`.
 
-- [x] Cada loader devuelve DataFrame con columnas EXACTAS `t, temperature, a_w, radiation` (Atacama ademas `temperature_min/max`)
-- [x] `a_w` siempre en `[0,1]` y se usa directa (ya no `humidity/100`)
-- [x] El fallback sintetico respeta la misma interfaz canonica
-- [x] `pytest tests/unit/test_data.py` pasa en verde
+- [x] `paso()` devuelve nuevo estado `(M,N) int8` SIN modificar el estado de entrada (doble buffer)
+- [x] Conteo de vecinos de Moore correcto en casos de prueba (esquinas y bordes)
+- [x] Estado int8 {MUERTA=0, LATENTE=1, ACTIVA=2}: fuera de crecimiento -> LATENTE; fuera de supervivencia -> MUERTA, absorbente (ADR-0012)
+- [x] Vectorizado (sin bucles Python); pytest tests/unit/test_transition.py en verde (19 tests)
+- [x] `paso()` recibe el `rng` inyectado; el conteo de vecinos de Moore cuenta SOLO celdas ACTIVA
 
 ---
 
-## ✅ Hecho — 21/21 criterios
+## ✅ Hecho — 25/25 criterios
 
 ### ✅ 🔵 Motor ambiental: CampoAmbiental + 3 entornos
 
@@ -341,6 +341,20 @@
 - [x] `condiciones_habitables()` sigue existiendo como alias: no rompe codigo previo
 - [x] Ningun `a_w_min` de crecimiento baja de 0.605, verificado por test
 - [x] `tests/integration/test_especie_en_su_entorno.py` en verde
+
+### ✅ 🟡 Capa de datos: loaders + DataFrame canonico
+
+**Dueño:** Fidel · **Criterios:** 4/4
+
+> *Como capa de datos, quiero cargar los datasets reales 2025 en un esquema unico para alimentar el Modo Analogico.*
+>
+> Implementar `cargar_control_tierra` / `cargar_atacama` / `cargar_ventilas` + fallback sintetico (contrato §3.5, ADR-0010).
+> Rama: `feat/data-loaders`.
+
+- [x] Cada loader devuelve DataFrame con columnas EXACTAS `t, temperature, a_w, radiation` (Atacama ademas `temperature_min/max`)
+- [x] `a_w` siempre en `[0,1]` y se usa directa (ya no `humidity/100`)
+- [x] El fallback sintetico respeta la misma interfaz canonica
+- [x] `pytest tests/unit/test_data.py` pasa en verde
 
 ---
 
