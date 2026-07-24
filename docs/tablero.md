@@ -6,7 +6,7 @@
 > ver qué está hecho, qué falta y con qué criterios de aceptación se da por
 > terminada cada tarea.
 >
-> **Última sincronización:** 2026-07-23 · regenerar con `python scripts/sync_tablero.py`
+> **Última sincronización:** 2026-07-24 · regenerar con `python scripts/sync_tablero.py`
 
 ## Cómo leerlo
 
@@ -17,32 +17,18 @@
 - Este documento dice **qué** falta; `docs/instrucciones/<nombre>.md` dice **cómo**
   hacerlo, y `docs/adr/` dice **por qué** se decidió así.
 
-**Progreso global:** 23/98 criterios (23%)
+**Progreso global:** 27/98 criterios (28%)
 
 | Integrante | Área | Criterios cumplidos |
 |---|---|---|
 | 🟢 **Esmeralda** | Motor biológico + notebook | 10/26 (38%) |
-| 🟡 **Fidel** | Datos análogos + validación | 0/15 (0%) |
+| 🟡 **Fidel** | Datos análogos + validación | 4/15 (27%) |
 | 🔵 **Jose** | Motor ambiental + eventos | 13/24 (54%) |
 | 🟣 **Erick** | Autómata Celular + UI | 0/33 (0%) |
 
 ---
 
-## Hito 1 — Fundaciones — 0/9 criterios
-
-### ⬜ 🟡 Capa de datos: loaders + DataFrame canonico
-
-**Dueño:** Fidel · **Criterios:** 0/4
-
-> *Como capa de datos, quiero cargar los datasets reales 2025 en un esquema unico para alimentar el Modo Analogico.*
->
-> Implementar `cargar_control_tierra` / `cargar_atacama` / `cargar_ventilas` + fallback sintetico (contrato §3.5, ADR-0010).
-> Rama: `feat/data-loaders`.
-
-- [ ] Cada loader devuelve DataFrame con columnas EXACTAS `t, temperature, a_w, radiation` (Atacama ademas `temperature_min/max`)
-- [ ] `a_w` siempre en `[0,1]` y se usa directa (ya no `humidity/100`)
-- [ ] El fallback sintetico respeta la misma interfaz canonica
-- [ ] `pytest tests/unit/test_data.py` pasa en verde
+## Hito 1 — Fundaciones — 0/5 criterios
 
 ### ⬜ 🟣 Automata Celular: reglas de transicion + paso()
 
@@ -283,9 +269,21 @@
 
 ---
 
-## En revisión
+## En revisión — 4/4 criterios
 
-_(vacío)_
+### ✅ 🟡 Capa de datos: loaders + DataFrame canonico
+
+**Dueño:** Fidel · **Criterios:** 4/4
+
+> *Como capa de datos, quiero cargar los datasets reales 2025 en un esquema unico para alimentar el Modo Analogico.*
+>
+> Implementar `cargar_control_tierra` / `cargar_atacama` / `cargar_ventilas` + fallback sintetico (contrato §3.5, ADR-0010).
+> Rama: `feat/data-loaders`.
+
+- [x] Cada loader devuelve DataFrame con columnas EXACTAS `t, temperature, a_w, radiation` (Atacama ademas `temperature_min/max`)
+- [x] `a_w` siempre en `[0,1]` y se usa directa (ya no `humidity/100`)
+- [x] El fallback sintetico respeta la misma interfaz canonica
+- [x] `pytest tests/unit/test_data.py` pasa en verde
 
 ---
 
