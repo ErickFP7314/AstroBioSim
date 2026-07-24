@@ -19,6 +19,10 @@ Estados posibles: `Propuesto` · `Aceptado` · `Rechazado` · `Sustituido por AD
 | [0009](0009-frontend-react-backend-fastapi.md) | Frontend React + backend FastAPI (reemplaza a ADR-0004) | Aceptado |
 | [0010](0010-ingesta-datasets-reales-2025.md) | Ingesta de datasets reales 2025 (esquema canónico, A_w directa, R como flujo) | Aceptado |
 | [0011](0011-especie-encelado-methanococcoides-burtonii.md) | Especie análoga de Encelado: Methanococcoides burtonii (reemplaza a M. okinawensis) | Aceptado |
+| [0012](0012-tres-estados-celulares-y-separacion-de-umbrales.md) | Tres estados celulares (activa/latente/muerta) y separación de umbrales | Aceptado |
+| [0013](0013-cinetica-crecimiento-valores-cardinales.md) | Cinética de crecimiento continua por valores cardinales (CTMI + gamma concept) | Aceptado |
+| [0014](0014-radiacion-como-irradiancia-uv.md) | `R` reencuadrada como irradiancia UV (W/m²) con atenuación en el subsuelo | Aceptado |
+| [0015](0015-microrefugios-salmueras-y-pregunta-de-investigacion.md) | Microrefugios por salmueras delicuescentes y pregunta de investigación | Aceptado |
 
 > **Nota:** ADR-0008 modifica a ADR-0002, ADR-0003, ADR-0005 y ADR-0006 — la
 > variable **presión (P)** fue eliminada del modelo. Los ADRs afectados llevan la
@@ -26,3 +30,10 @@ Estados posibles: `Propuesto` · `Aceptado` · `Rechazado` · `Sustituido por AD
 >
 > **Nota:** ADR-0011 resuelve la cuestión abierta #1 de ADR-0010 — la especie de
 > Encelado pasa de *M. okinawensis* (termófila) a **M. burtonii** (psicrotolerante).
+>
+> **Nota:** ADR-0012 a ADR-0015 son un **bloque aceptado en conjunto** (2026-07-23).
+> Surgen de la primera integración real entre el motor biológico y los entornos, que
+> reveló que el modelo de **un solo umbral** (habitable / no habitable) no puede
+> representar la biología de los extremófilos elegidos. ADR-0013, ADR-0014 y ADR-0015
+> dependen de ADR-0012. Modifican la **regla de oro nº3** y los contratos de frontera
+> **§3.2, §3.3, §3.4 y §3.5** de `CLAUDE.md`.

@@ -21,6 +21,16 @@ Documentación: contexto completo en `openspec/project.md`; decisiones en
 > terrestres donde la presión es casi constante y no discrimina. Si ves `P`,
 > `p_min`, `p_max`, `presión` o el dataset IMAU Antarctic, es obsoleto: **no lo
 > implementes**. Solo T, R, A_w.
+>
+> **`R` es irradiancia UV en W/m²** (ADR-0014), no flujo solar total ni dosis en
+> Gy. La dosis ionizante no discrimina en la escala de la simulación (0.077 Gy/año
+> en Marte frente a los ~5000 Gy que tolera *D. radiodurans*); el UV sí esteriliza.
+> Si ves `r_letal`, es obsoleto: ahora son `uv_max` y `uv_letal`.
+>
+> **Pregunta de investigación** (ADR-0015): *¿con qué frecuencia y magnitud mínimas
+> deben aparecer microrefugios húmedos transitorios para que una población persista
+> en un subsuelo planetario, en vez de extinguirse?* Que Marte dé extinción en bulk
+> es el resultado **correcto**, no un bug.
 
 ## 2. Reglas de oro (invariantes para TODOS los asistentes)
 
@@ -28,8 +38,14 @@ Documentación: contexto completo en `openspec/project.md`; decisiones en
    *entornos*, NO las celdas (las celdas son arrays NumPy). No dupliques la lógica
    de umbrales ni la de transición.
 2. **Solo tres variables ambientales: `T`, `R`, `A_w`.** Nada de presión.
-3. **Sin latencia ni esporulación.** Si una célula sale de sus umbrales, muere de
-   forma **irreversible**. No hay "dormancia".
+3. **Tres estados; la muerte es irreversible** (ADR-0012). Una célula está
+   `ACTIVA` (crece), `LATENTE` (viva, no se reproduce) o `MUERTA` (terminal).
+   `LATENTE → ACTIVA` sí es reversible; `MUERTA` es absorbente y **nadie
+   resucita**. Sigue sin haber **esporulación**: la latencia es anhidrobiosis /
+   quiescencia, no una espora con umbrales distintos.
+   → Por eso cada especie declara **dos** juegos de umbrales: los de
+   **crecimiento** y los de **supervivencia**. Nunca uses uno solo para las dos
+   cosas.
 4. **Autómata Celular síncrono.** `S^{t+1}` se calcula íntegro a partir de `S^t`
    (doble buffer). Nunca actualices la grilla in situ.
 5. **Vectorizá con NumPy.** Prohibido recorrer la grilla celda por celda con
@@ -55,13 +71,18 @@ import numpy as np
 @dataclass
 class CampoAmbiental:
     """Tres capas escalares alineadas a la grilla M×N. Todas la misma forma."""
-    T: np.ndarray     # temperatura (°C),           shape (M, N)
-    R: np.ndarray     # radiación: flujo (W/m²), proxy operativo — ver ADR-0010; shape (M, N)
-    A_w: np.ndarray   # actividad de agua (0..1),   shape (M, N)
+    T: np.ndarray     # temperatura (°C),            shape (M, N)
+    R: np.ndarray     # irradiancia UV (W/m²) — ADR-0014; shape (M, N)
+    A_w: np.ndarray   # actividad de agua (0..1),    shape (M, N)
 
     def __post_init__(self) -> None: ...          # valida formas idénticas
     @property
     def shape(self) -> tuple[int, int]: ...
+
+class PlanetaSubsuelo(ABC):
+    def campo_inicial(self, rng: np.random.Generator | None = None) -> CampoAmbiental:
+        """Campo en t=0. Con `rng`, los entornos que declaran dispersión la
+        muestrean (ADR-0015); sin él, el campo es determinista."""
 ```
 
 ### 3.2 Especie — dueño: Esmeralda (`core/microorganism.py`)
@@ -70,20 +91,32 @@ from abc import ABC
 import numpy as np
 from astrobiosim.core.environment import CampoAmbiental
 
-class Microorganismo(ABC):
-    t_min: float; t_max: float      # °C
-    r_letal: float                  # umbral letal de radiación (W/m², ver ADR-0010; re-derivar)
-    a_w_min: float                  # actividad de agua mínima (0..1)
-    mu_max: float                   # tasa de reproducción óptima
+MUERTA, LATENTE, ACTIVA = 0, 1, 2      # estados celulares (ADR-0012)
 
-    def condiciones_habitables(self, campo: CampoAmbiental) -> np.ndarray:
-        """Máscara bool (M,N): True donde TODAS las variables están en umbral.
-        Vectorizado:
+class Microorganismo(ABC):
+    # --- umbrales de CRECIMIENTO (μ > 0) ---
+    t_min: float; t_opt: float; t_max: float   # puntos cardinales (°C), para ADR-0013
+    a_w_min: float                  # a_w mínima para crecer (0..1)
+    uv_max: float                   # UV máxima bajo la cual crece (W/m²)
+    # --- umbrales de SUPERVIVENCIA (viva, μ = 0) ---
+    t_sup_min: float; t_sup_max: float
+    a_w_sup_min: float              # ~0 en especies anhidrobióticas
+    uv_letal: float                 # por encima: muerte irreversible
+    # --- cinética ---
+    mu_opt: float                   # tasa en el óptimo (h⁻¹)
+
+    def condiciones_crecimiento(self, campo: CampoAmbiental) -> np.ndarray:
+        """Máscara bool (M,N): True donde la especie SE REPRODUCE. Vectorizado:
             (campo.T >= t_min) & (campo.T <= t_max)
-            & (campo.R <= r_letal) & (campo.A_w >= a_w_min)
-        """
-        ...
+            & (campo.A_w >= a_w_min) & (campo.R <= uv_max)"""
+    def condiciones_supervivencia(self, campo: CampoAmbiental) -> np.ndarray:
+        """Máscara bool (M,N): True donde SIGUE VIVA. Superconjunto de la anterior."""
+    def condiciones_habitables(self, campo: CampoAmbiental) -> np.ndarray:
+        """Alias retrocompatible de condiciones_crecimiento()."""
 ```
+> `a_w_min` **nunca** puede bajar de ~0.605: es el límite de división celular
+> conocido para cualquier organismo terrestre. Si una especie no crece, la
+> respuesta es que quede `LATENTE`, no bajarle el umbral.
 
 ### 3.3 Paso del autómata — dueño: Erick (`engine/cellular_automaton.py`)
 ```python
@@ -91,10 +124,16 @@ import numpy as np
 from astrobiosim.core.environment import CampoAmbiental
 from astrobiosim.core.microorganism import Microorganismo
 
-def paso(estado: np.ndarray, campo: CampoAmbiental,
-         especie: Microorganismo) -> np.ndarray:
-    """Un tick del AC (actualización síncrona). Devuelve el nuevo estado (M,N) int8.
-    Usa especie.condiciones_habitables(campo) y el conteo de vecinos de Moore."""
+def paso(estado: np.ndarray, campo: CampoAmbiental, especie: Microorganismo,
+         rng: np.random.Generator) -> np.ndarray:
+    """Un tick del AC (actualización síncrona). Devuelve el nuevo estado (M,N) int8
+    con valores en {MUERTA, LATENTE, ACTIVA} (ADR-0012).
+
+    - dentro de condiciones_crecimiento           -> ACTIVA
+    - fuera de crecimiento, dentro de superviv.   -> LATENTE
+    - fuera de condiciones_supervivencia          -> MUERTA (absorbente)
+    El conteo de vecinos de Moore para reproducir cuenta SOLO celdas ACTIVA, y la
+    probabilidad de reproducción sale de la cinética de ADR-0013 (transition_rules)."""
     ...
 ```
 
@@ -110,6 +149,10 @@ class EventoEstocastico(ABC):
         """Perturba y devuelve el campo (NO toca el estado biológico)."""
         ...
 ```
+> **Los eventos no pueden ser todos degradantes** (ADR-0015). Hasta ahora todos
+> empeoraban el ambiente (`MicroFisuraMarte` baja `A_w`), lo que sesgaba toda
+> corrida hacia la extinción por construcción. Debe existir su contraparte que lo
+> **mejore**: `SalmueraDelicuescente` sube `A_w` transitoriamente.
 
 ### 3.5 Datos análogos — dueño: Fidel (`data/`) · actualizado por ADR-0010
 ```python
@@ -120,7 +163,9 @@ import pandas as pd
 #   "t"           (índice temporal)
 #   "temperature" (°C)
 #   "a_w"         (0..1, PROVISTA directamente — ya no se calcula humidity/100)
-#   "radiation"   (W/m², flujo radiativo; proxy operativo de R, NO dosis en Gy)
+#   "radiation"   (W/m², irradiancia UV — ADR-0014. Si la fuente solo da
+#                  irradiancia global, se multiplica por FRACCION_UV y el
+#                  factor queda DOCUMENTADO en el adaptador, no escondido)
 # (Atacama expone además "temperature_min"/"temperature_max": amplitud diurna.)
 def cargar_control_tierra(ruta: str) -> pd.DataFrame: ...
 def cargar_atacama(ruta: str) -> pd.DataFrame: ...
