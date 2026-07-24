@@ -289,6 +289,20 @@ _(vacío)_
 
 ## ✅ Hecho — 25/25 criterios
 
+### ✅ 🟡 Capa de datos: loaders + DataFrame canonico
+
+**Dueño:** Fidel · **Criterios:** 4/4
+
+> *Como capa de datos, quiero cargar los datasets reales 2025 en un esquema unico para alimentar el Modo Analogico.*
+>
+> Implementar `cargar_control_tierra` / `cargar_atacama` / `cargar_ventilas` + fallback sintetico (contrato §3.5, ADR-0010).
+> Rama: `feat/data-loaders`.
+
+- [x] Cada loader devuelve DataFrame con columnas EXACTAS `t, temperature, a_w, radiation` (Atacama ademas `temperature_min/max`)
+- [x] `a_w` siempre en `[0,1]` y se usa directa (ya no `humidity/100`)
+- [x] El fallback sintetico respeta la misma interfaz canonica
+- [x] `pytest tests/unit/test_data.py` pasa en verde
+
 ### ✅ 🔵 Motor ambiental: CampoAmbiental + 3 entornos
 
 **Dueño:** Jose · **Criterios:** 8/8
@@ -341,20 +355,6 @@ _(vacío)_
 - [x] `condiciones_habitables()` sigue existiendo como alias: no rompe codigo previo
 - [x] Ningun `a_w_min` de crecimiento baja de 0.605, verificado por test
 - [x] `tests/integration/test_especie_en_su_entorno.py` en verde
-
-### ✅ 🟡 Capa de datos: loaders + DataFrame canonico
-
-**Dueño:** Fidel · **Criterios:** 4/4
-
-> *Como capa de datos, quiero cargar los datasets reales 2025 en un esquema unico para alimentar el Modo Analogico.*
->
-> Implementar `cargar_control_tierra` / `cargar_atacama` / `cargar_ventilas` + fallback sintetico (contrato §3.5, ADR-0010).
-> Rama: `feat/data-loaders`.
-
-- [x] Cada loader devuelve DataFrame con columnas EXACTAS `t, temperature, a_w, radiation` (Atacama ademas `temperature_min/max`)
-- [x] `a_w` siempre en `[0,1]` y se usa directa (ya no `humidity/100`)
-- [x] El fallback sintetico respeta la misma interfaz canonica
-- [x] `pytest tests/unit/test_data.py` pasa en verde
 
 ---
 

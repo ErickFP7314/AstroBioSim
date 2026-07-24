@@ -1,0 +1,159 @@
+\documentclass[11pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish,es-noshorthands]{babel}
+\usepackage{lmodern}
+\usepackage[margin=2.4cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{parskip}
+\usepackage[colorlinks=true,linkcolor=black,urlcolor=blue]{hyperref}
+
+\definecolor{acmuerta}{HTML}{9AA0A6}
+\definecolor{aclatente}{HTML}{C9A227}
+\definecolor{acactiva}{HTML}{2E7D32}
+\newcommand{\MUERTA}{\textcolor{acmuerta}{\textsf{MUERTA}}}
+\newcommand{\LATENTE}{\textcolor{aclatente}{\textsf{LATENTE}}}
+\newcommand{\ACTIVA}{\textcolor{acactiva}{\textsf{ACTIVA}}}
+
+\title{\textbf{AstroBioSim — Modelo biológico de las especies}\\[2pt]
+\large Decisiones de diseño para la exposición y defensa final}
+\author{Área de Biotecnología}
+\date{Julio 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent El motor biológico define \emph{quién} vive y \emph{dónde}: tres
+microorganismos análogos, cada uno con umbrales de tolerancia calibrados con
+literatura. Este documento justifica la elección de especies, la separación entre
+\emph{crecimiento} y \emph{supervivencia} (que da lugar a la latencia), la
+asignación especie–entorno y la trazabilidad de cada parámetro. La regla de oro:
+un parámetro sin procedencia no entra al modelo.
+\end{abstract}
+
+\section{Las tres especies análogas}
+
+\begin{center}\small
+\begin{tabular}{@{}llll@{}}
+\toprule
+Entorno & Especie & Rasgo clave & Metabolismo \\
+\midrule
+Tierra (control) & \emph{Escherichia coli} & mesófila estándar & heterótrofo \\
+Marte & \emph{Deinococcus radiodurans} & radiorresistente, anhidrobiótica & heterótrofo \\
+Encelado & \emph{Methanococcoides burtonii} & psicrotolerante & metanógena \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\emph{E.\ coli} es el control: no un extremófilo, sino la referencia con
+parámetros de laboratorio bien establecidos. \emph{D.\ radiodurans} es el candidato
+marciano por su resistencia a radiación y desecación. \emph{M.\ burtonii}
+reemplazó a una termófila original (ADR-0011) porque los datos de ventila dan
+$T\approx 2{,}4\,^\circ$C: una termófila moriría trivialmente. \emph{M.\ burtonii}
+es psicrotolerante (lago Ace, Antártida) y \textbf{metanógena}, lo que conserva la
+relevancia astrobiológica directa —el penacho de Encelado contiene CH$_4$ y H$_2$.
+
+\section{Crecimiento vs.\ supervivencia: el origen de la latencia (ADR-0012)}
+
+La decisión biológica de fondo. Cada especie declara \emph{dos} juegos de umbrales,
+no uno:
+\begin{itemize}[nosep]
+  \item \textbf{Crecimiento} ($\mu>0$): $t_{\min},t_{\mathrm{opt}},t_{\max}$,
+  $a_{w,\min}$, $\mathrm{UV}_{\max}$.
+  \item \textbf{Supervivencia} (sigue viva, $\mu=0$): $t_{\text{sup,min}},
+  t_{\text{sup,max}}$, $a_{w,\text{sup}}$, $\mathrm{UV}_{\text{letal}}$.
+\end{itemize}
+El motivo es la \emph{anhidrobiosis}: \emph{D.\ radiodurans}, al quedarse sin agua,
+no muere sino que se \emph{apaga} y revive con el agua. Su límite de metabolismo
+\emph{activo} es $a_w\approx 0{,}90$, pero sobrevive seca hasta $a_w\approx 0$. Un
+modelo de un solo umbral obligaría a elegir entre matarla (falso) o declarar
+crecimiento por debajo del límite de la vida (indefendible). Con dos umbrales, en
+Atacama queda \LATENTE: viva, sin crecer —que es la verdad.
+
+\paragraph{Cota dura.} Ningún $a_{w,\min}$ de crecimiento puede bajar de
+$\mathbf{0{,}605}$, el límite inferior de división celular conocido para cualquier
+organismo terrestre (Stevenson \emph{et al.}, 2015). Un test lo verifica y falla si
+alguien lo cruza. Los tres estados \MUERTA/\LATENTE/\ACTIVA{} del autómata son la
+traducción directa de esta biología.
+
+\section{Parámetros calibrados y su procedencia}
+
+Toda cifra lleva etiqueta de procedencia: \textbf{[LIT]} publicado, \textbf{[DER]}
+derivado por fórmula, \textbf{[ANA]} inferido por analogía con un organismo medido,
+\textbf{[CONV]} convención, \textbf{[EST]} estimación pendiente.
+
+\begin{center}\small
+\begin{tabular}{@{}lcccl@{}}
+\toprule
+Especie & $t_{\min}/t_{\mathrm{opt}}/t_{\max}$ (\textdegree C) & $a_{w,\min}$ & $a_{w,\text{sup}}$ & Proc.\ (agua) \\
+\midrule
+\emph{E.\ coli} & $7{,}5\,/\,37\,/\,47$ & $0{,}95$ & $0{,}50$ & [LIT] / [EST] \\
+\emph{D.\ radiodurans} & $4\,/\,30\,/\,39$ & $0{,}90$ & $0{,}0$ & [LIT] / [LIT] \\
+\emph{M.\ burtonii} & $-2{,}5\,/\,23{,}4\,/\,29{,}5$ & $0{,}95$ & $0{,}80$ & [LIT] / [EST] \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph{Umbrales de UV, derivados de fluencias (ADR-0014).} La letalidad UV es
+una \emph{fluencia} (J/m$^2$) y el campo es una \emph{irradiancia} (W/m$^2$); se
+convierten dividiendo por la exposición por tick:
+\begin{equation}
+\mathrm{UV}_{\text{letal}}=\frac{F_{\text{letal}}}{\tau},\qquad
+\mathrm{UV}_{\max}=\frac{\mathrm{UV}_{\text{letal}}}{10},\qquad \tau\approx 8\ \text{h de sol.}
+\end{equation}
+Con $F_{\text{letal}}=870$~J/m$^2$ para \emph{E.\ coli} y $50\,760$~J/m$^2$ para
+\emph{D.\ radiodurans} [LIT]: un factor $\mathbf{58\times}$ que sale del dato, no de
+una estimación. Para \emph{M.\ burtonii} no hay medición publicada; se infiere
+\textbf{[ANA]}: las metanógenas adaptadas al frío resisten $2{,}5$--$13{,}8\times$
+más UV que la referencia sensible (\emph{M.\ barkeri}, $\approx$\emph{E.\ coli}), y
+se toma el extremo inferior ($2{,}5\times$) por prudencia.
+
+\section{Habitabilidad como intersección booleana}
+
+Para un campo dado, la máscara de crecimiento de cada especie es la intersección
+vectorizada de sus umbrales:
+\[
+\text{crece}=\big(T\ge t_{\min}\big)\wedge\big(T\le t_{\max}\big)
+\wedge\big(a_w\ge a_{w,\min}\big)\wedge\big(\mathrm{UV}\le \mathrm{UV}_{\max}\big),
+\]
+y análogamente la de supervivencia con los umbrales laxos. La de supervivencia es
+siempre un \emph{superconjunto} de la de crecimiento (se testea).
+
+\section{Resultado del modelo y lectura biológica}
+
+Con los parámetros calibrados, cada especie en su entorno da:
+\begin{center}\small
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Especie / entorno & \ACTIVA & \LATENTE & \MUERTA \\
+\midrule
+\emph{E.\ coli} / Tierra & $100\%$ & $0\%$ & $0\%$ \\
+\emph{D.\ radiodurans} / Marte & $0\%$ & $94\%$ & $6\%$ \\
+\emph{M.\ burtonii} / Encelado & $100\%$ & $0\%$ & $0\%$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+La lectura es coherente: el control prospera; \emph{M.\ burtonii} crece incluso en
+los núcleos de fumarola (con $t_{\max}=29{,}5$, la vida se agrupa en las ventilas,
+no las evita); y \emph{D.\ radiodurans} en Marte \emph{sobrevive latente pero no
+crece} —el regolito en bulk es inhabitable, y solo un microrefugio húmedo
+reactiva la división. Que Marte dé extinción del crecimiento activo \textbf{no es
+un error}: es el resultado correcto y el punto de partida de la pregunta de
+investigación.
+
+\section*{Supervisión biológica (criterios de la defensa)}
+\begin{itemize}[nosep]
+  \item Los umbrales citan literatura; el único \textbf{[EST]} que resta es
+  $a_{w,\text{sup}}$ de \emph{E.\ coli} y \emph{M.\ burtonii}.
+  \item Se respeta que \emph{ninguna célula muerta revive}: \MUERTA{} es absorbente;
+  \LATENTE$\to$\ACTIVA{} sí es válido (no es resurrección).
+  \item La asignación especie--entorno es defendible y la $\mu_{\mathrm{opt}}$
+  relativa tiene sentido ($2{,}1 > 0{,}26 > 0{,}069$~h$^{-1}$).
+\end{itemize}
+
+\end{document}

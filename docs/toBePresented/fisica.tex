@@ -1,0 +1,149 @@
+\documentclass[11pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish,es-noshorthands]{babel}
+\usepackage{lmodern}
+\usepackage[margin=2.4cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{parskip}
+\usepackage[colorlinks=true,linkcolor=black,urlcolor=blue]{hyperref}
+
+\newcommand{\campo}{E}
+
+\title{\textbf{AstroBioSim — Modelo físico del entorno}\\[2pt]
+\large Decisiones de diseño para la exposición y defensa final}
+\author{Área de Física}
+\date{Julio 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent El motor ambiental construye el campo físico que gobierna la
+habitabilidad: temperatura $T$, radiación $R$ y actividad de agua $a_w$, alineadas
+a la grilla del autómata. Este documento justifica las tres variables, los modelos
+de campo de cada subsuelo (Tierra, Marte, Encelado), el reencuadre de la radiación
+como UV, y los eventos estocásticos que perturban el ambiente. El criterio rector
+es que \emph{una variable que no discrimina no entra al modelo}.
+\end{abstract}
+
+\section{El vector ambiental: por qué tres variables}
+
+Cada celda lleva un vector $\campo_{i,j}=(T,\ R,\ a_w)$ con las tres capas alineadas
+a la grilla $M\times N$. La especificación original tenía cuatro variables; la
+\textbf{presión fue eliminada} (ADR-0008) porque en los análogos terrestres
+permanece casi constante ($\sim 0{,}5$--$1$~atm), nunca cruza umbrales letales y
+solo agrega una dimensión muerta. El principio se aplica de nuevo con la radiación
+(§3): mantenemos únicamente lo que \emph{separa escenarios}.
+
+\section{Modelos de campo por subsuelo}
+
+Convención de grilla: la fila $0$ es la superficie y el eje de filas representa
+\textbf{profundidad creciente} (salvo Encelado, que es un corte horizontal del
+piso oceánico).
+
+\paragraph{Tierra (control).} Subsuelo somero, térmicamente estable: la onda diurna
+ya está amortiguada, de modo que el campo es uniforme a la media anual
+($T\approx 19{,}8\,^\circ$C), con $R=0$ (el suelo bloquea el UV) y $a_w\approx
+0{,}99$ (suelo a capacidad de campo). Es el escenario benigno de referencia.
+
+\paragraph{Marte (análogo Atacama).} La onda térmica diurna se amortigua
+\emph{exponencialmente} con la profundidad $z$ hacia una asíntota fría (modelo
+estándar de \emph{skin depth} en regolito):
+\begin{equation}
+T(z)=T_{\infty}+(T_{\mathrm{sup}}-T_{\infty})\,e^{-z/\delta_T},\qquad
+\mathrm{UV}(z)=\mathrm{UV}_{\mathrm{sup}}\,e^{-z/\delta_{\mathrm{UV}}},
+\end{equation}
+con $\delta_{\mathrm{UV}}\ll\delta_T$: la luz penetra el regolito muchísimo menos
+que el calor. Esta separación de escalas es física central del proyecto (§4).
+
+\paragraph{Encelado (océano subglacial).} Fondo frío ($T\approx 2{,}4\,^\circ$C)
+con \emph{fumarolas} hidrotermales como fuentes puntuales cuyo pico de temperatura
+decae radialmente con un núcleo gaussiano:
+\begin{equation}
+T(i,j)=T_{\text{océano}}+\sum_{f}\Delta T_f\,
+\exp\!\left(-\frac{(i-i_f)^2+(j-j_f)^2}{2\sigma^2}\right),
+\end{equation}
+con $R=0$ (el hielo blinda por completo la radiación externa) y $a_w\approx 0{,}98$
+(agua de mar). El radio $\sigma$ se fija como \emph{fracción de la grilla}, no en
+celdas fijas: de lo contrario, en grillas pequeñas las fumarolas se solapan y el
+pico depende de la resolución en vez de la física (corrección hallada en la
+integración).
+
+\section{Reencuadre de la radiación: UV, no dosis ionizante (ADR-0014)}
+
+El dato crudo es irradiancia solar \emph{global} en W/m$^2$. Sin embargo, la
+variable físicamente pertinente para la vida no es la insolación total (mayormente
+visible e infrarroja, que no esteriliza) ni la \emph{dosis ionizante acumulada}.
+Los números lo obligan:
+\begin{itemize}[nosep]
+  \item Superficie marciana: $0{,}21$~mGy/día $\approx 0{,}077$~Gy/año (RAD,
+  Curiosity).
+  \item \emph{D.\ radiodurans} tolera $5000$~Gy sin pérdida de viabilidad.
+\end{itemize}
+Acumular la dosis letal tomaría $\sim\!65\,000$~años: en la escala de la
+simulación, la dosis ionizante \textbf{no discrimina} —el mismo defecto que la
+presión. Lo que sí esteriliza de inmediato es el \textbf{UV}, y además se mide en
+W/m$^2$, las mismas unidades. Por eso $R$ pasa a ser \textbf{irradiancia UV},
+obtenida de la global por una fracción documentada,
+$\mathrm{UV}=f_{\mathrm{UV}}\cdot R_{\text{global}}$ con $f_{\mathrm{UV}}=0{,}05$.
+
+\paragraph{Validación independiente.} El modelo da $\mathrm{UV}_{\mathrm{sup}}
+\approx 844\times 0{,}05 = 42{,}2$~W/m$^2$, que cae dentro del rango
+\emph{publicado} de UV marciano (200--400~nm) de $42$--$55$~W/m$^2$. El factor no
+estaba lejos por una vía distinta a la que lo fijó.
+
+\section{La banda de profundidad habitable}
+
+Combinando la atenuación rápida del UV con la lenta del calor, el eje de
+profundidad adquiere significado biológico. Con los umbrales derivados de
+literatura, en Marte emergen \emph{sin ajustar nada}:
+\begin{center}\small
+\begin{tabular}{@{}lll@{}}
+\toprule
+Profundidad & Estado & Causa \\
+\midrule
+Superficie (filas 0--2) & \textsf{MUERTA} & UV por encima de la fluencia letal \\
+Somero (filas 3--4) & \textsf{LATENTE} & el UV ya no mata pero inhibe; falta agua \\
+Profundo (filas 5$+$) & \textsf{LATENTE} & el UV deja de limitar; sigue faltando agua \\
+\bottomrule
+\end{tabular}
+\end{center}
+La ventana habitable marciana queda acotada \emph{arriba} por el UV y \emph{abajo}
+por la disponibilidad de agua: una banda de profundidad, no un plano.
+
+\section{Eventos estocásticos (Montecarlo)}
+
+Perturbaciones aleatorias que actúan \emph{solo} sobre el campo (nunca sobre el
+estado biológico), todas con el generador sembrado inyectado:
+\begin{itemize}[nosep]
+  \item \textbf{Micro-fisura marciana:} caída abrupta de $a_w$ en un radio de
+  celdas (desecación por liberación de vapor).
+  \item \textbf{Emisión hidrotermal (Encelado):} pico $\Delta T\sim\mathcal{N}(\mu,\sigma^2)$
+  que se disipa radialmente con un núcleo gaussiano (difusión de calor).
+  \item \textbf{Salmuera delicuescente (Marte):} contraparte simétrica de la
+  micro-fisura que \emph{eleva} $a_w$ transitoriamente en un radio (ADR-0015).
+\end{itemize}
+
+\paragraph{Simetría necesaria.} Antes, todos los eventos \emph{degradaban} el
+ambiente, sesgando cada corrida hacia la extinción por construcción. El evento de
+salmuera es el que da a Marte algo que estudiar: sin él, la pregunta de
+investigación no tiene mecanismo. Su frecuencia y magnitud son los parámetros del
+barrido central del proyecto.
+
+\section*{Deuda física abierta (honestidad para la defensa)}
+\begin{itemize}[nosep]
+  \item La $a_w$ de Marte usa el \emph{mínimo} diario real ($0{,}187$), una cota
+  pesimista; conviene la media con su dispersión.
+  \item La asíntota térmica $T_{\infty}=7{,}8\,^\circ$C es la media de los mínimos
+  diarios, pero una onda térmica amortigua hacia la \emph{media anual} ($\approx
+  22\,^\circ$C): revisar.
+  \item El pico $\Delta T=25$ de la emisión hidrotermal, apilado sobre una fumarola
+  existente, puede llevar $T$ a $\sim\!59\,^\circ$C. Puede ser correcto (el núcleo
+  de una ventila es letal), pero hay que decidirlo.
+\end{itemize}
+
+\end{document}

@@ -1,0 +1,223 @@
+\documentclass[11pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish,es-noshorthands]{babel}
+\usepackage{lmodern}
+\usepackage[margin=2.4cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{parskip}
+\usepackage[colorlinks=true,linkcolor=black,urlcolor=blue]{hyperref}
+
+\definecolor{acmuerta}{HTML}{9AA0A6}
+\definecolor{aclatente}{HTML}{C9A227}
+\definecolor{acactiva}{HTML}{2E7D32}
+
+\newcommand{\estado}{S}
+\newcommand{\campo}{E}
+\newcommand{\MUERTA}{\textcolor{acmuerta}{\textsf{MUERTA}}}
+\newcommand{\LATENTE}{\textcolor{aclatente}{\textsf{LATENTE}}}
+\newcommand{\ACTIVA}{\textcolor{acactiva}{\textsf{ACTIVA}}}
+
+\title{\textbf{AstroBioSim — Modelo matemático del autómata celular}\\[2pt]
+\large Decisiones de diseño para la exposición y defensa final}
+\author{Área de Matemática}
+\date{Julio 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent AstroBioSim simula la supervivencia poblacional de microorganismos en
+subsuelos de Tierra, Marte y Encelado mediante un \textbf{autómata celular (AC)}
+estocástico y espacialmente explícito sobre una grilla 2D. Este documento define
+formalmente el AC: su espacio de estados de \emph{tres} niveles, la vecindad de
+Moore, la actualización síncrona, la cinética de crecimiento continua y las
+reglas de transición intercambiables. Es la pieza matemática central del proyecto
+y el eje de la pregunta de investigación.
+\end{abstract}
+
+\section{Definición formal del autómata}
+
+Un autómata celular es una tupla $\mathcal{A}=(\mathcal{L},\ \mathcal{Q},\
+\mathcal{N},\ \phi)$ donde $\mathcal{L}$ es el retículo, $\mathcal{Q}$ el conjunto
+de estados, $\mathcal{N}$ la vecindad y $\phi$ la función de transición local.
+
+\paragraph{Retículo.} $\mathcal{L}=\{(i,j): 0\le i<M,\ 0\le j<N\}$, una grilla
+$M\times N$. Cada celda es un \emph{sitio} físico del subsuelo, no un individuo:
+las clases del programa son las \emph{especies} y los \emph{entornos}; las celdas
+son entradas de arreglos \textsf{NumPy}.
+
+\paragraph{Espacio de estados de tres niveles.} A diferencia del Juego de la Vida
+clásico (vivo/muerto), aquí
+\[
+\mathcal{Q}=\{\,\MUERTA=0,\ \ \LATENTE=1,\ \ \ACTIVA=2\,\}.
+\]
+La distinción es la decisión matemática de fondo del proyecto (ADR-0012). Responde
+a un hecho biológico: los extremófilos sobreviven la desecación en un estado
+\emph{latente} (vivos, sin reproducirse) que un modelo binario no puede
+representar. Formalmente:
+\begin{itemize}[nosep]
+  \item \ACTIVA: la célula se reproduce ($\mu>0$).
+  \item \LATENTE: viva pero sin reproducirse ($\mu=0$); \emph{ocupa} el sitio.
+  \item \MUERTA: sitio sin biomasa viable. Es un \textbf{estado absorbente}:
+  la muerte es irreversible. Repoblar un sitio \MUERTA{} es \emph{colonización}
+  por un vecino \ACTIVA, no resurrección de la misma célula.
+\end{itemize}
+
+\paragraph{Vecindad de Moore.} $\mathcal{N}(i,j)$ son los $8$ sitios adyacentes
+(ortogonales y diagonales). Definimos los conteos de vecinos
+\begin{align}
+n_A(i,j) &= \#\{(k,l)\in\mathcal{N}(i,j): \estado_{k,l}=\ACTIVA\},\\
+n_O(i,j) &= \#\{(k,l)\in\mathcal{N}(i,j): \estado_{k,l}\in\{\ACTIVA,\LATENTE\}\}.
+\end{align}
+La \textbf{condición de borde} por defecto es \emph{frontera muerta}: los sitios
+fuera de la grilla cuentan como \MUERTA. Es coherente con que la grilla es una
+\emph{ventana} del subsuelo, no un mundo cerrado. Se ofrece también la variante
+\emph{toroidal} (wrap-around) para estudios sin efecto de borde.
+
+\paragraph{Actualización síncrona (doble buffer).} El estado en $t{+}1$ se calcula
+\emph{íntegro} a partir del estado en $t$:
+\[
+\estado^{\,t+1}_{i,j}=\phi\!\left(\estado^{\,t}_{i,j},\ \{\estado^{\,t}_{k,l}\}_{\mathcal{N}},\ \campo_{i,j}\right).
+\]
+Nunca se actualiza la grilla \emph{in situ}: se lee de $\estado^{\,t}$ y se escribe
+en un buffer nuevo. Esto garantiza que el resultado es independiente del orden de
+barrido, condición necesaria para que la vectorización \textsf{NumPy} sea
+\emph{equivalente} a la definición celda-a-celda. Prohibimos los bucles Python
+sobre celdas: todo se expresa con máscaras booleanas y desplazamientos de arreglos.
+
+\section{Cinética de crecimiento continua (ADR-0013)}
+
+El corazón cuantitativo es reemplazar la máscara binaria ``habitable / no
+habitable'' por una \textbf{tasa de crecimiento} $\mu$ que depende de cuán lejos
+del óptimo está el ambiente. Adoptamos el \emph{gamma concept} de la microbiología
+predictiva: factores multiplicativos independientes, cada uno en $[0,1]$,
+\begin{equation}
+\mu(T,a_w,\mathrm{UV})=\mu_{\mathrm{opt}}\cdot\gamma_T(T)\cdot\gamma_{a_w}(a_w)\cdot\gamma_{\mathrm{UV}}(\mathrm{UV}).
+\end{equation}
+
+\paragraph{Factor térmico (modelo cardinal con inflexión, CTMI).} Con los tres
+puntos cardinales $T_{\min}<T_{\mathrm{opt}}<T_{\max}$ y sin parámetros libres
+(Rosso, Lobry \& Flandrois, 1993):
+\begin{equation}
+\gamma_T(T)=\frac{(T-T_{\max})(T-T_{\min})^2}
+{(T_{\mathrm{opt}}-T_{\min})\big[(T_{\mathrm{opt}}-T_{\min})(T-T_{\mathrm{opt}})-(T_{\mathrm{opt}}-T_{\max})(T_{\mathrm{opt}}+T_{\min}-2T)\big]}
+\end{equation}
+para $T\in(T_{\min},T_{\max})$, y $0$ fuera. Se verifica $\gamma_T(T_{\mathrm{opt}})=1$
+y $\gamma_T(T_{\min})=\gamma_T(T_{\max})=0$.
+
+\paragraph{Factores de agua y de UV.}
+\begin{equation}
+\gamma_{a_w}(a_w)=\left[\frac{a_w-a_{w,\min}}{1-a_{w,\min}}\right]_0^1,\qquad
+\gamma_{\mathrm{UV}}(\mathrm{UV})=\left[1-\frac{\mathrm{UV}}{\mathrm{UV}_{\max}}\right]_0^1,
+\end{equation}
+donde $[\,\cdot\,]_0^1$ denota recorte a $[0,1]$. Ambos se anulan al cruzar el
+umbral de crecimiento respectivo.
+
+\paragraph{Probabilidad de reproducción por tick.} La tasa continua se convierte en
+la probabilidad de que una celda \ACTIVA{} coloque una hija en un sitio vecino
+vacío durante un paso de duración $\Delta t$:
+\begin{equation}
+p_{\mathrm{rep}}=\big[\mu\cdot\Delta t\big]_0^1,\qquad \Delta t = 1\ \text{h}.
+\end{equation}
+Con $\mu_{\mathrm{opt}}$ en $\mathrm{h}^{-1}$, el producto es adimensional. Elegimos
+$\Delta t=1$~h porque produce un gradiente informativo entre especies en el óptimo
+($p_{\mathrm{rep}}\approx 0{,}88$ para \emph{E.\ coli}, $0{,}23$ para
+\emph{D.\ radiodurans}, $0{,}07$ para \emph{M.\ burtonii}), en lugar de saturar a
+$1$ como haría un paso diario.
+
+\section{Reglas de transición intercambiables (ADR-0016)}
+
+La función de transición $\phi$ no está cableada: es una \textbf{estrategia
+intercambiable}. El motor calcula una vez por tick las máscaras ambientales
+$\mathrm{cre}=\gamma\text{-crecimiento}$ y $\mathrm{sup}=$ supervivencia, la
+probabilidad $p_{\mathrm{rep}}$ y los conteos $n_A,n_O$, y se los entrega a la
+regla. Cada regla se autodescribe en notación formal para el panel de la interfaz.
+Sea $U\sim\mathcal{U}(0,1)$ una variable del generador sembrado (reproducibilidad).
+
+\paragraph{Regla logística (proceso de contacto) — por defecto.}
+\begin{equation}
+\estado^{\,t+1}_{i,j}=
+\begin{cases}
+\MUERTA & \neg\,\mathrm{sup}(\campo_{i,j})\\[2pt]
+\ACTIVA & \text{ocupada}\ \wedge\ \mathrm{cre}(\campo_{i,j})\\[2pt]
+\LATENTE & \text{ocupada}\ \wedge\ \mathrm{sup}\ \wedge\ \neg\,\mathrm{cre}\\[2pt]
+\ACTIVA & \text{vacía}\ \wedge\ \mathrm{cre}\ \wedge\ U<p_{\mathrm{rep}}\,\dfrac{n_A}{8}\\[6pt]
+\MUERTA & \text{en otro caso}
+\end{cases}
+\end{equation}
+Sin muerte por soledad; la única muerte es ambiental. Es la más defendible
+biológicamente: un frente de colonización avanza sobre sitios viables a una
+velocidad regida por $\mu$.
+
+\paragraph{Regla de Conway (B3/S23), filtrada por el ambiente.}
+\begin{equation}
+\estado^{\,t+1}_{i,j}=
+\begin{cases}
+\MUERTA & \neg\,\mathrm{sup}\\
+\{\ACTIVA,\LATENTE\} & \text{ocupada}\ \wedge\ n_O\in\{2,3\}\\
+\ACTIVA & \text{vacía}\ \wedge\ \mathrm{cre}\ \wedge\ n_O=3\ \wedge\ U<p_{\mathrm{rep}}\\
+\MUERTA & \text{en otro caso}
+\end{cases}
+\end{equation}
+Se conserva por su valor visual y como validación (bajo ambiente óptimo reproduce
+el Juego de la Vida: un \emph{blinker} oscila con periodo $2$, lo que testeamos).
+Los umbrales $2$–$3/3$ son del autómata, no de la microbiología.
+
+\paragraph{Regla híbrida.} Contacto para nacer más una muerte por sobrepoblación
+($n_O>k$) que evita la saturación total, sin muerte por soledad. El editor de
+reglas por bloques de la interfaz (Hito 3) produce nuevas reglas sobre esta misma
+firma, sin tocar el motor.
+
+\section{Reproducibilidad y ensambles Montecarlo}
+
+Toda la aleatoriedad (reproducción, eventos estocásticos) usa un único
+\textsf{numpy.random.Generator} con semilla explícita, inyectado como parámetro:
+nunca el estado global. En consecuencia, \emph{misma semilla $\Rightarrow$ misma
+corrida}. Como el sistema es estocástico, una sola corrida no es la respuesta: se
+promedian $R$ repeticiones con semillas $s_0,s_0{+}1,\dots$ y se reporta la
+media $\pm$ desviación de las fracciones de sitios \ACTIVA/\LATENTE/\MUERTA a lo
+largo del tiempo. Validamos que $R$ es suficiente cuando la media se estabiliza al
+crecer $R$.
+
+\section{La pregunta de investigación (ADR-0015)}
+
+El aporte del proyecto es cuantitativo. En el regolito marciano en bulk
+($a_w\approx 0{,}19$, muy por debajo del límite de división $\approx 0{,}605$)
+nadie crece: el resultado correcto es la extinción del crecimiento activo. La vida
+persiste solo en \emph{microrefugios} húmedos transitorios (salmueras). Formulamos:
+
+\begin{quote}\itshape
+¿Con qué frecuencia y magnitud mínimas deben aparecer microrefugios húmedos
+transitorios para que una población persista en un subsuelo planetario, en vez de
+extinguirse?
+\end{quote}
+
+Operativamente es un \textbf{barrido de parámetros} $\text{frecuencia}\times
+\text{magnitud}$ del evento de salmuera sobre ensambles Montecarlo, con la
+persistencia (fracción no-\MUERTA{} al final) como variable de respuesta. La salida
+es un \emph{umbral crítico}: por debajo la población se extingue, por encima
+persiste. La combinación espacialidad $+$ estocasticidad $+$ latencia es un nicho
+poco cubierto por la literatura de habitabilidad, que suele ser puntual (0-D).
+
+\section*{Síntesis de decisiones (defensa)}
+\begin{center}
+\small
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Decisión} & \textbf{Justificación} \\
+\midrule
+Tres estados (no binario) & representar la latencia sin violar la muerte irreversible (ADR-0012)\\
+Cinética CTMI continua & $\mu$ deja de ser decorativa; ``crece a tal tasa'' en vez de ``vive/muere'' (ADR-0013)\\
+Reglas intercambiables & menú de reglas + editor por bloques + panel de notación (ADR-0016)\\
+Frontera muerta & la grilla es una ventana del subsuelo, no un toro\\
+$\Delta t = 1$~h & gradiente informativo de $p_{\mathrm{rep}}$ entre especies\\
+Semilla inyectada & reproducibilidad exacta; base de los ensambles Montecarlo\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\end{document}
