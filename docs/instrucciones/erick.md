@@ -69,3 +69,65 @@ Respondé esto antes de que tu Claude implemente; si no, asumirá defaults que q
 6. **UI ↔ motor:** ¿WebSocket (stream por tick) o polling REST? ¿Qué velocidad/FPS de animación?
 7. **Interactividad:** ¿el dashboard cambia parámetros en vivo (Sandbox) o solo lanza/consulta corridas?
 8. **Persistencia:** ¿se guarda el historial completo de grillas por tick o solo las curvas poblacionales?
+
+---
+
+# 🔄 Actualización 2026-07-23 — ADR-0012 a 0015
+
+> Es el bloque que más te toca: **dos de los cuatro ADRs son matemática pura y son
+> tuyos.** Nada de tu código estaba escrito todavía, así que no hay que corregir,
+> solo implementar sobre la base nueva.
+
+## Lo que cambia en tu contrato (§3.3)
+
+- El estado deja de ser binario: `int8` con `{MUERTA=0, LATENTE=1, ACTIVA=2}`.
+- `paso()` ahora recibe **`rng`** (la reproducción pasa a ser estocástica).
+- El conteo de vecinos de Moore para reproducir cuenta **solo celdas `ACTIVA`**.
+- `condiciones_habitables` sigue existiendo como alias, pero usá los métodos nuevos:
+  `condiciones_crecimiento` y `condiciones_supervivencia`.
+
+## Tus tareas nuevas
+
+1. **[Hito 1] `paso()` con tres estados.** La transición, vectorizada y síncrona:
+   ```
+   dentro de crecimiento                     -> ACTIVA
+   fuera de crecimiento, dentro de superviv. -> LATENTE
+   fuera de supervivencia                    -> MUERTA  (absorbente)
+   MUERTA                                    -> MUERTA
+   ```
+   Cuidado con el orden: `MUERTA` es absorbente, así que la máscara de muertas
+   previas se aplica **al final**, pisando cualquier otra transición.
+2. **[Hito 1 — la más interesante] `transition_rules.py` con cinética continua**
+   (ADR-0013). Reemplaza la máscara binaria por
+   `μ = μ_opt · γ_T(T) · γ_aw(a_w) · γ_UV(UV)`, con `γ_T` por CTMI:
+   ```
+                 (T − T_max)(T − T_min)²
+   γ_T(T) = ─────────────────────────────────────────────────────────
+            (T_opt − T_min)·[ (T_opt − T_min)(T − T_opt)
+                              − (T_opt − T_max)(T_opt + T_min − 2T) ]
+   ```
+   y `0` fuera de `(T_min, T_max)`. Después `p_repro = clip(μ·Δt, 0, 1)`, muestreada
+   con el `rng` inyectado. **Testeá los bordes** (`T = T_min`, `T_opt`, `T_max`): el
+   CTMI es numéricamente delicado ahí y el denominador puede anularse.
+3. **[Hito 3] El barrido de parámetros** — el entregable con más peso académico del
+   proyecto (ADR-0015). Barrido `frecuencia × magnitud` del evento
+   `SalmueraDelicuescente` de Jose, sobre ensambles Montecarlo con semillas
+   explícitas, midiendo **persistencia de la población** (fracción activa/latente/
+   muerta) como variable de respuesta. La salida es la respuesta a la pregunta de
+   investigación: ¿dónde está el umbral crítico de agua transitoria?
+4. **[Hito 3] La UI muestra tres estados**, no dos: el `<canvas>` necesita tres
+   colores y las curvas pasan de una a tres series.
+5. **[Hito 4] Análisis de sensibilidad.** Qué parámetro domina el desenlace, variando
+   cada uno sobre su rango de incertidumbre en literatura. Es lo que blinda el
+   resultado frente a que los umbrales de Esmeralda tengan error.
+
+## Preguntas nuevas para tu agente
+
+9. **Δt:** ¿cuánto tiempo físico representa un tick? `μ_opt` está en h⁻¹, así que
+   `p_repro = μ·Δt` necesita que Δt esté definido en horas.
+10. **Reglas de Conway:** con la cinética continua, ¿siguen aplicando los umbrales de
+    2-3 vecinos, o la reproducción pasa a depender solo de `μ` y de haber un vecino
+    vacío?
+11. **Latencia y vecindad:** ¿una celda `LATENTE` ocupa espacio (bloquea que nazca
+    otra ahí)? Yo diría que sí, pero definilo explícitamente.
+12. **Barrido:** ¿cuántos puntos por eje y cuántas repeticiones Montecarlo por punto?

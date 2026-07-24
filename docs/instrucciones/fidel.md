@@ -63,3 +63,50 @@ Respondé esto antes de que tu Claude implemente; si no, asumirá defaults que q
 4. **Atacama (`temperature_min/max`):** ¿se genera un ciclo diurno sintético entre min y max, o se usa solo la media?
 5. **Fallback sintético:** ¿con qué distribución/rangos genera cada variable cuando no hay dataset?
 6. **Duración de corrida analógica:** ¿365 iteraciones? Si la simulación es más larga, ¿se recicla la serie o se detiene?
+
+---
+
+# 🔄 Actualización 2026-07-23 — ADR-0012 a 0015
+
+> Tu capa de datos no cambia de forma, pero **sí cambia el significado de dos
+> columnas**. Esto salió de integrar los motores de Esmeralda y Jose.
+
+## Lo que cambia en el contrato §3.5
+
+| Columna | Antes | Ahora |
+|---|---|---|
+| `radiation` | flujo radiativo total (W/m²) | **irradiancia UV** (W/m²) — ADR-0014 |
+| `a_w` | se usaba tal cual | sigue igual, **pero ojo con el origen** (ver abajo) |
+
+## Tus tareas nuevas
+
+1. **[Hito 1 — prioritaria] Convertir `radiation` a banda UV.** Los datasets dan
+   irradiancia **global**, que es mayormente visible e infrarroja y no esteriliza.
+   Multiplicá por la fracción UV y **dejá el factor documentado en el adaptador**,
+   no escondido en una constante. Hoy hay un `FRACCION_UV = 0.05` en
+   `core/environment.py` como valor de trabajo; si conseguís el dato real de la banda
+   por fuente, mejor. Coordiná la **banda exacta** con Esmeralda: tiene que ser la
+   misma con la que ella derive `uv_max` / `uv_letal`.
+2. **[Hito 1] Re-extraer la `a_w` media de Atacama.** La columna disponible es
+   `Actividad_Agua_Minima_aw`, o sea el **mínimo diario**: una cota inferior
+   pesimista, no el valor típico. Usarla como valor del campo garantizaba la
+   extinción. Necesitamos la media (y ojalá la dispersión) de la serie real.
+3. **[Hito 1] Documentar el problema del control terrestre.** La columna
+   `Actividad_Agua_aw` de Fresno (media 0.55, rango 0.16–0.93) es **humedad relativa
+   del aire**, no actividad de agua del suelo — un suelo no oscila así de un día
+   para otro. Para un modelo de **subsuelo** no sirve directa. Dos salidas: conseguir
+   `a_w` de suelo, o documentar explícitamente que el control usa un valor teórico de
+   capacidad de campo (0.99). Esto es exactamente el tipo de límite que tu sección
+   "Qué reviso yo" existe para cazar.
+4. **[Hito 2] `resampling.py`:** el mapeo por entorno ahora es UV. Superficies:
+   `radiation × fracción UV`. **Encelado sigue en `R = 0`** — y ahora hay un motivo
+   más fuerte: sus 320 W/m² de `Radiacion_Infrarroja_W_m2` son **calor**, no UV.
+
+## Preguntas nuevas para tu agente
+
+7. **Banda UV:** ¿UV-A+UV-B (~5 % del global), solo UV-B, o dosis DNA-ponderada? Debe
+   coincidir con la banda de Esmeralda.
+8. **`a_w` de Atacama:** ¿la fuente original permite extraer media y desviación, o solo
+   tenemos el mínimo diario ya agregado?
+9. **`a_w` de suelo vs. aire:** ¿hay alguna fuente de `a_w` de suelo para Fresno, o
+   documentamos el valor teórico como limitación conocida del modelo?

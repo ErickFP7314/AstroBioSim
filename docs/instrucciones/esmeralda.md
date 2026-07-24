@@ -80,3 +80,50 @@ Respondé esto antes de que tu Claude implemente; si no, asumirá defaults que q
 5. **Notebook:** ¿nº de repeticiones Montecarlo y semilla(s) por defecto?
 6. **Curvas:** ¿qué métrica graficás (población absoluta viva, fracción viva, media ± σ)?
 7. **Sandbox:** ¿qué rangos mín/máx para los sliders de T, R y A_w?
+
+---
+
+# 🔄 Actualización 2026-07-23 — ADR-0012 a 0015
+
+> Tu Hito 1 quedó **aprobado y mergeado**. Lo que sigue son los cambios que trajo el
+> bloque ADR-0012…0015, que nació justamente de integrar tu motor con el de Jose.
+
+## Lo que ya se corrigió en tu archivo (no lo rehagas)
+
+| Antes | Ahora | Por qué |
+|---|---|---|
+| Un umbral por variable | **Dos**: crecimiento y supervivencia | ADR-0012 |
+| `DRadiodurans.a_w_min = 0.75` | `a_w_min = 0.90` + `a_w_sup_min = 0.0` | 0.90 es su límite metabólico real; la anhidrobiosis va al umbral de supervivencia |
+| `MBurtonii.t_max = 20` | `t_min=-2.5, t_opt=23.4, t_max=29.5` | valores publicados; ahora los núcleos de fumarola son habitables |
+| `MBurtonii.a_w_min = 0.98` | `0.95` | 0.98 quedaba exactamente al filo del campo |
+| `r_letal` | `uv_max` / `uv_letal` | ADR-0014: `R` es UV, no radiación total |
+| `mu_max` | `mu_opt` + nuevo `t_opt` | ADR-0013 necesita los tres puntos cardinales |
+
+Tenías razón en todo lo que dijiste: *E. coli* no se tocó (0.95 sigue siendo dato
+duro), y tu intuición de los "pesos que favorecen el crecimiento" se convirtió en el
+ADR-0013 tal cual, solo que con los pesos sacados de literatura.
+
+## Tus tareas nuevas
+
+1. **[Hito 4] Re-derivar los umbrales UV.** `uv_max` y `uv_letal` de las tres
+   especies están marcados `# PROVISIONAL` en el código: los puse por orden de
+   magnitud (*D. radiodurans* ≈ 20× *E. coli*) para desbloquear al resto, pero el
+   valor con literatura lo ponés vos. Es el único parámetro del modelo que hoy no
+   está citado.
+2. **[Hito 4] Validar los umbrales de supervivencia.** `t_sup_min/max` y
+   `a_w_sup_min` son mi mejor estimación, no literatura. El de *D. radiodurans*
+   (`a_w_sup_min = 0.0`, anhidrobiosis) es el más defendible; los otros dos
+   revisalos.
+3. **[Hito 3] El notebook cambia de métrica.** Ya no es una curva de población viva:
+   son **tres** — fracción `ACTIVA`, `LATENTE` y `MUERTA` en el tiempo. La lectura
+   biológica interesante pasa a ser la transición latente↔activa en Marte cuando
+   aparece un microrefugio.
+
+## Preguntas nuevas para tu agente
+
+8. **UV:** ¿en qué banda derivás los umbrales (UV-B, UV-C, dosis DNA-ponderada)? Debe
+   ser la misma banda que use Fidel al convertir la columna `radiation`.
+9. **Supervivencia:** ¿cuánto tiempo puede una célula quedar `LATENTE` antes de morir,
+   o la latencia es indefinida mientras esté dentro del rango de supervivencia?
+10. **Reactivación:** ¿una célula latente vuelve a `ACTIVA` de inmediato al mejorar las
+    condiciones, o hay un retardo (lag de recuperación)?
