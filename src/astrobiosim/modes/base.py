@@ -24,3 +24,20 @@ class ModoSimulacion(Protocol):
     def campos(self) -> Iterator[CampoAmbiental]:
         """Devuelve un iterador de `CampoAmbiental`, uno por tick de la corrida."""
         ...
+
+
+class ModoEstatico:
+    """Modo de **campo fijo**: repite el mismo `CampoAmbiental` en cada tick.
+
+    Es el proveedor más simple que cumple `ModoSimulacion`. Sirve para corridas de
+    ambiente constante (la base sobre la que el Modo Sandbox de Esmeralda pondrá
+    sus sliders) y para testear el orquestador. Es **infinito**: acotá la corrida
+    con `n_iteraciones` en `simular`.
+    """
+
+    def __init__(self, campo: CampoAmbiental) -> None:
+        self._campo = campo
+
+    def campos(self) -> Iterator[CampoAmbiental]:
+        while True:
+            yield self._campo
