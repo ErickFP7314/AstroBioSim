@@ -17,6 +17,11 @@ Documentación: contexto completo en `openspec/project.md`; decisiones en
 `docs/adr/`; reparto en `docs/division-trabajo.md`; plan del MVP en
 `openspec/changes/bootstrap-simulator/proposal.md`.
 
+> **¿Qué hay que hacer y qué falta?** → **`docs/tablero.md`**, espejo en Markdown
+> del tablero de Trello con todas las tareas, su estado y sus criterios de
+> aceptación. Consultalo antes de empezar cualquier tarea: te dice **qué** falta;
+> `docs/instrucciones/<nombre>.md` te dice **cómo**, y `docs/adr/` **por qué**.
+
 > **La presión fue eliminada del modelo** (ADR-0008). Trabajamos con análogos
 > terrestres donde la presión es casi constante y no discrimina. Si ves `P`,
 > `p_min`, `p_max`, `presión` o el dataset IMAU Antarctic, es obsoleto: **no lo
