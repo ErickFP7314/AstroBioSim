@@ -196,12 +196,29 @@ class MBurtonii(Microorganismo):
     `a_w_sup_min` es alto: no es anhidrobiótica.
     """
 
-    #: Fluencia UV₂₅₄ letal (J/m²). **No hay dato publicado para esta especie.**
-    #: Se asume el de *E. coli* como cota conservadora: es una arquea anaerobia
-    #: estricta, sin la maquinaria de reparación de *Deinococcus*, así que no hay
-    #: motivo para suponerla más resistente. En Encelado nunca se activa (UV = 0);
-    #: solo importa en Modo Sandbox. Es el parámetro más débil del modelo.
-    FLUENCIA_LETAL_J_M2: float = 870.0
+    #: Fluencia UV₂₅₄ letal (J/m²), **inferida por analogía** — no hay medición
+    #: publicada para *M. burtonii*. Cadena de inferencia:
+    #:
+    #: 1. Las metanógenas cubren un rango amplio de resistencia al UV. La
+    #:    referencia sensible es *M. barkeri* (suelo no-permafrost), cuya respuesta
+    #:    al UV es "comparable a *E. coli* y otros microorganismos radiosensibles".
+    #:    De ahí sale la línea base de 870 J/m².
+    #: 2. *M. soligelidi*, metanógena **adaptada al frío** (permafrost siberiano),
+    #:    resiste **2.5–13.8× más UV** que *M. barkeri*, con F₁₀(UVC) comparable al
+    #:    de *D. radiodurans*. La adaptación al frío correlaciona con más
+    #:    resistencia al UV en este grupo.
+    #: 3. *M. burtonii* también es una metanógena adaptada al frío (lago Ace,
+    #:    Antártida), así que cae plausiblemente en ese rango enriquecido.
+    #:
+    #: Se toma el **extremo inferior** del rango (2.5×) por prudencia: si nos
+    #: equivocamos, es hacia subestimar su resistencia, no hacia inflarla.
+    #:
+    #: Nota adicional: las metanógenas se inhiben con luz azul/UV cercano
+    #: (370–430 nm), a diferencia de los anaerobios facultativos como *E. coli*.
+    #: O sea que su inhibición del crecimiento podría empezar aún más abajo.
+    #:
+    #: En Encelado nunca se activa (UV = 0); solo importa en Modo Sandbox.
+    FLUENCIA_LETAL_J_M2: float = 870.0 * 2.5
 
     # Crecimiento
     t_min: float = -2.5

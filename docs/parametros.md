@@ -8,8 +8,9 @@ Cada valor lleva una etiqueta de procedencia:
 
 | Etiqueta | Significado |
 |---|---|
-| **[LIT]** | Valor publicado. Lleva referencia. |
+| **[LIT]** | Valor publicado **para esa especie**. Lleva referencia. |
 | **[DER]** | Derivado de un **[LIT]** por una fórmula explícita que está en el código. |
+| **[ANA]** | Inferido **por analogía** con un organismo emparentado que sí fue medido. Lleva la cadena de inferencia escrita y se elige el extremo conservador del rango. |
 | **[CONV]** | Convención del modelo, no dato. Es una decisión nuestra, y se justifica. |
 | **[EST]** | Estimación sin respaldo directo. **Es deuda**: hay que cerrarla o documentarla como limitación. |
 
@@ -61,11 +62,35 @@ uv_max   = uv_letal / RAZON_INHIBICION_UV
 |---|---|---|---|---|
 | *E. coli* | 870 | **[LIT]** | 0.0302 | 0.0030 |
 | *D. radiodurans* | 50 760 | **[LIT]** | 1.7625 | 0.1763 |
-| *M. burtonii* | 870 | **[EST]** | 0.0302 | 0.0030 |
+| *M. burtonii* | 2 175 (= 870 × 2.5) | **[ANA]** | 0.0755 | 0.0076 |
 
 El cociente **58×** entre *D. radiodurans* y *E. coli* sale directo de las
 fluencias publicadas — es de donde viene su fama de radiorresistente, y ya no es
 un factor que hayamos elegido a ojo.
+
+#### Cadena de inferencia de *M. burtonii* **[ANA]**
+
+No existe medición de UV publicada para esta especie. La inferencia:
+
+1. Las metanógenas cubren un **rango amplio** de resistencia al UV. La referencia
+   sensible del grupo es *M. barkeri* (suelo no-permafrost), cuya respuesta al UV
+   es *"comparable a E. coli y otros microorganismos radiosensibles"*. De ahí sale
+   la línea base de **870 J/m²**.
+2. *M. soligelidi*, metanógena **adaptada al frío** (permafrost siberiano),
+   resiste **2.5–13.8× más UV** que *M. barkeri*, con F₁₀(UVC) comparable al de
+   *D. radiodurans*. O sea: dentro de las metanógenas, **la adaptación al frío
+   correlaciona con más resistencia al UV**.
+3. *M. burtonii* es también una metanógena adaptada al frío (lago Ace, Antártida),
+   así que cae plausiblemente en ese rango enriquecido.
+
+Se toma el **extremo inferior** del rango (**2.5×**) por prudencia: si nos
+equivocamos, es hacia **subestimar** su resistencia, no hacia inflarla — que es el
+error que un revisor perdona.
+
+> Nota biológica que conviene tener presente: las metanógenas se inhiben con luz
+> **azul / UV cercano (370–430 nm)**, a diferencia de los anaerobios facultativos
+> como *E. coli*. Su inhibición del crecimiento podría empezar aún más abajo de lo
+> que dice `uv_max`. Como en Encelado `R = 0`, esto **solo afecta al Modo Sandbox**.
 
 > ⚠️ **`SEGUNDOS_UV_POR_TICK` acopla dos módulos.** Si Erick cambia el Δt del
 > autómata, esta constante **tiene que cambiar con él**, o los umbrales dejan de
@@ -144,8 +169,7 @@ Ordenado por impacto sobre la credibilidad del resultado.
 | 1 | **`a_w` media de Atacama.** Hoy usamos el **mínimo diario** (0.187) como valor del campo. Es una cota pesimista, no el valor típico. | Fidel | Sesga toda corrida hacia la extinción. Es el parámetro que más mueve el resultado. |
 | 2 | **`T_PROFUNDO_C` de Marte.** Es la media de los mínimos diarios, pero una onda térmica amortigua hacia la **media anual** (≈ 22.4 °C), no hacia el mínimo. | Jose | Cambia dónde queda la banda habitable. Creemos que está mal. |
 | 3 | **`a_w` del control terrestre.** La columna del dataset es humedad del **aire** (media 0.55, rango 0.16–0.93, sd 0.23); un suelo no oscila así. Usamos 0.99 teórico. | Fidel | O se consigue `a_w` de suelo, o se documenta como limitación conocida. |
-| 4 | **UV de *M. burtonii*.** **[EST]** sin dato publicado. | Esmeralda | Solo afecta al Modo Sandbox (en Encelado `R = 0`), pero es el único parámetro sin ninguna base. |
-| 5 | **`a_w_sup_min` de *E. coli* y *M. burtonii*.** **[EST]**. | Esmeralda | Define cuánto aguantan antes de morir, no cuándo crecen. Impacto medio. |
+| 4 | **`a_w_sup_min` de *E. coli* y *M. burtonii*.** **[EST]**. | Esmeralda | Define cuánto aguantan antes de morir, no cuándo crecen. **Es la única [EST] que queda.** |
 | 6 | **`ΔT = 25` del evento hidrotermal.** Apilado sobre una fumarola existente lleva T a 59 °C y mata a *M. burtonii* en el 29 % de los disparos. Puede ser correcto (el núcleo de una ventila **es** letal), pero hay que decidirlo. | Jose | Afecta la dinámica de Encelado. |
 | 7 | **`SEGUNDOS_UV_POR_TICK` y el Δt del autómata.** Tienen que ser coherentes. | Erick + Esmeralda | Si divergen, los umbrales UV dejan de significar lo que dicen, en silencio. |
 
@@ -163,6 +187,16 @@ Ordenado por impacto sobre la credibilidad del resultado.
 - **Puntos cardinales de *M. burtonii*:** óptimo 23.4 °C, máximo 29.5 °C, mínimo
   teórico −2.5 °C.
 - **Fluencias UV₂₅₄:** *E. coli* 870 J/m²; *D. radiodurans* 50 760 J/m².
+- **Resistencia UV de metanógenas:** Morozova, Moeller, Rettberg & Wagner (2015),
+  *Enhanced Radiation Resistance of Methanosarcina soligelidi SMA-21 … in Direct
+  Comparison to Methanosarcina barkeri*, Astrobiology — *M. soligelidi*
+  (permafrost) resiste 2.5–13.8× más UV que *M. barkeri*, cuya respuesta es
+  comparable a la de *E. coli*.
+- **Fotosensibilidad de metanógenas:** inhibición del crecimiento por luz azul /
+  UV cercano (370–430 nm), a diferencia de anaerobios facultativos como *E. coli*.
+- **UVC en metanógenas hidratadas vs. desecadas:** *M. maripaludis* sobrevivió 24 h
+  hidratada y 16 h desecada; *M. formicicum*, 24 h y 12 h respectivamente
+  (implicaciones para Marte).
 - **UV en superficie marciana:** 42–55 W/m² (200–400 nm) con poco polvo; dosis
   biológicamente efectiva hasta 3 órdenes de magnitud sobre la terrestre.
 - **Radiación ionizante:** *D. radiodurans* tolera 5000 Gy sin pérdida de

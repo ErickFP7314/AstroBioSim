@@ -17,11 +17,11 @@
 - Este documento dice **qué** falta; `docs/instrucciones/<nombre>.md` dice **cómo**
   hacerlo, y `docs/adr/` dice **por qué** se decidió así.
 
-**Progreso global:** 22/98 criterios (22%)
+**Progreso global:** 23/98 criterios (23%)
 
 | Integrante | Área | Criterios cumplidos |
 |---|---|---|
-| 🟢 **Esmeralda** | Motor biológico + notebook | 9/26 (35%) |
+| 🟢 **Esmeralda** | Motor biológico + notebook | 10/26 (38%) |
 | 🟡 **Fidel** | Datos análogos + validación | 0/15 (0%) |
 | 🔵 **Jose** | Motor ambiental + eventos | 13/24 (54%) |
 | 🟣 **Erick** | Autómata Celular + UI | 0/33 (0%) |
@@ -61,7 +61,7 @@
 
 ---
 
-## Hito 2 — Dominio — 1/35 criterios
+## Hito 2 — Dominio — 2/35 criterios
 
 ### ⬜ 🟡 Remuestreo + Modo Analogico
 
@@ -133,7 +133,7 @@
 
 ### 🔸 🟢 Re-derivar umbrales UV y de supervivencia
 
-**Dueño:** Esmeralda · **Criterios:** 1/7
+**Dueño:** Esmeralda · **Criterios:** 2/7
 
 > ADR-0012 y ADR-0014. PARCIALMENTE RESUELTO: los umbrales UV de E. coli y D. radiodurans ya se derivaron de fluencias publicadas (870 y 50.760 J/m2, factor 58x) dividiendo por SEGUNDOS_UV_POR_TICK. Ver docs/parametros.md. Queda el UV de M. burtonii (sin dato publicado) y los umbrales de supervivencia.
 
@@ -142,7 +142,7 @@
 - [ ] Ningun `a_w_min` de crecimiento baja de 0.605 (limite de division celular conocido)
 - [ ] La banda usada (UV254) coincide con la que aplica Fidel en el adaptador
 - [ ] `pytest tests/unit/test_microorganism.py` en verde
-- [ ] Cerrar el UV de M. burtonii: hoy es [EST] (se asume el de E. coli), el unico parametro del modelo sin ninguna base publicada
+- [x] UV de M. burtonii cerrado por analogia [ANA]: metanogenas adaptadas al frio resisten 2.5-13.8x mas que M. barkeri (~E. coli). Se toma 2.5x -> 2175 J/m2. Ver docs/parametros.md §1.3
 - [ ] Confirmar SEGUNDOS_UV_POR_TICK (28.800 s) con el dt que elija Erick: si divergen, los umbrales UV dejan de significar lo que dicen
 
 ### ⬜ 🟡 Radiacion a banda UV + a_w media de Atacama
