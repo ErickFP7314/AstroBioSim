@@ -116,9 +116,17 @@ Respondé esto antes de que tu Claude implemente; si no, asumirá defaults que q
 
 ## Estado (2026-07-24)
 
-- ✅ **Hito 1 IMPLEMENTADO** en la rama `feat/engine-transicion`: `transition_rules.py`
-  (cinética CTMI + tres reglas intercambiables) y `paso()` en `cellular_automaton.py`,
-  con 19 tests (`test_transition.py`). Ver **ADR-0016**.
+- ✅ **Hito 1 IMPLEMENTADO** (mergeado): `transition_rules.py` (cinética CTMI + tres
+  reglas intercambiables) y `paso()` en `cellular_automaton.py`, con 19 tests
+  (`test_transition.py`). Ver **ADR-0016**.
+- ✅ **Hito 2 — `simulation.py` IMPLEMENTADO** en la rama `feat/orquestador-simulation`:
+  `simular(modo, especie, estado_inicial, rng, ...)` corre el bucle (campo del modo →
+  eventos de Jose → `paso` → historial), devuelve `ResultadoSimulacion` (curvas
+  muerta/latente/activa por tick, grillas opcionales), reproducible. Consume la
+  interfaz `ModoSimulacion`, así que Analógico y Sandbox comparten el bucle (DRY).
+  Helper `sembrar_estado` para el estado inicial; `ModoEstatico` para campo fijo.
+  12 tests de integración. **Falta que exista el Modo Sandbox de Esmeralda** para
+  cerrar el modo interactivo; el orquestador ya lo consumiría sin cambios.
 - La regla logística (proceso de contacto) es la de fábrica; hay también `ReglaConway`
   y `ReglaHibrida`, todas en `REGLAS_DISPONIBLES`. Cada una expone `notacion()` (LaTeX)
   para el **panel de notación formal** que pediste.
