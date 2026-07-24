@@ -118,6 +118,41 @@ def test_encelado_los_nucleos_de_fumarola_son_habitables_para_m_burtonii() -> No
     assert campo.T.max() < 29.5
 
 
+def test_campo_inicial_es_campo_modulado_con_los_valores_medios() -> None:
+    """ADR-0017: campo_inicial es el caso particular de campo_modulado por defecto."""
+    e = MarteSubsuelo(shape=(15, 6))
+    inicial = e.campo_inicial()
+    modulado = e.campo_modulado(
+        temperature=e.T_SUPERFICIE_C,
+        a_w=e.A_W_MEDIA,
+        radiation_global=e.RADIACION_GLOBAL_W_M2,
+    )
+    np.testing.assert_allclose(inicial.T, modulado.T)
+    np.testing.assert_allclose(inicial.R, modulado.R)
+    np.testing.assert_allclose(inicial.A_w, modulado.A_w)
+
+
+def test_campo_modulado_marte_propaga_el_dato_del_dia_con_profundidad() -> None:
+    e = MarteSubsuelo(shape=(20, 4))
+    campo = e.campo_modulado(temperature=30.0, a_w=0.25, radiation_global=800.0)
+    # la superficie toma el dato del día; decae hacia la asíntota fría
+    assert campo.T[0, 0] == pytest.approx(
+        e.T_PROFUNDO_C + (30.0 - e.T_PROFUNDO_C), abs=1e-6
+    )
+    assert campo.T[0, 0] > campo.T[-1, 0]
+    # el UV de superficie sale de la irradiancia global del día
+    assert campo.R[0, 0] == pytest.approx(800.0 * FRACCION_UV, rel=1e-6)
+    assert campo.R[0, 0] > campo.R[-1, 0]
+
+
+def test_campo_modulado_tierra_es_uniforme_y_sin_uv() -> None:
+    e = TierraSubsuelo(shape=(8, 8))
+    campo = e.campo_modulado(temperature=12.0, a_w=0.99, radiation_global=900.0)
+    assert np.allclose(campo.T, 12.0)
+    assert np.all(campo.R == 0.0)  # subsuelo: ignora la radiación global
+    assert np.allclose(campo.A_w, 0.99)
+
+
 def test_los_tres_entornos_son_cualitativamente_distintos() -> None:
     shape = (15, 15)
     tierra = TierraSubsuelo(shape=shape).campo_inicial()

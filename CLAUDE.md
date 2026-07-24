@@ -91,9 +91,13 @@ class CampoAmbiental:
     def shape(self) -> tuple[int, int]: ...
 
 class PlanetaSubsuelo(ABC):
+    def campo_modulado(self, *, temperature: float, a_w: float,
+                       radiation_global: float = 0.0, rng=None) -> CampoAmbiental:
+        """Campo M×N con la estructura espacial del entorno pero valores de
+        superficie tomados de un dato temporal (Modo Analógico, ADR-0017)."""
     def campo_inicial(self, rng: np.random.Generator | None = None) -> CampoAmbiental:
-        """Campo en t=0. Con `rng`, los entornos que declaran dispersión la
-        muestrean (ADR-0015); sin él, el campo es determinista."""
+        """Campo en t=0 = campo_modulado con los valores medios. Con `rng`, los
+        entornos con dispersión la muestrean (ADR-0015)."""
 ```
 
 ### 3.2 Especie — dueño: Esmeralda (`core/microorganism.py`)

@@ -1,9 +1,9 @@
 """Limpieza, remuestreo y mapeo ambiental — contrato de frontera §3.5 (dueño: Fidel).
 
-STUB de Hito 0. Toma el DataFrame CANÓNICO que devuelven los adaptadores de
-`loaders.py` (`t, temperature, a_w, radiation`) y produce la **secuencia de
-`CampoAmbiental`** que el orquestador inyecta iteración por iteración en el Modo
-Analógico. Ver ADR-0010. Implementación real en `feat/data-loaders`.
+Toma el DataFrame CANÓNICO que devuelven los adaptadores de `loaders.py`
+(`t, temperature, a_w, radiation`) y produce la **secuencia de `CampoAmbiental`**
+que el orquestador inyecta iteración por iteración en el Modo Analógico. Ver
+ADR-0010 y ADR-0017.
 
 Decisiones ya fijadas (NO reabrir sin ADR):
 
@@ -17,13 +17,14 @@ Decisiones ya fijadas (NO reabrir sin ADR):
        - Encelado subglacial: `R = 0`. Su columna es IR (calor de la ventila),
          NO UV ni dosis ionizante. Mapear a cero es lo defendible.
 3. **Hueco de 8 días en ventilas (2025-08-17 … 2025-08-24):** son NaN reales.
-   `limpiar_ventilas` debe **enmascarar o imputar sin inventar** valores fuera de
-   rango físico (interpolación acotada o exclusión de esas iteraciones). Nunca
-   rellenar con constantes arbitrarias.
+   `limpiar_ventilas` las rellena por **interpolación lineal acotada** (decisión
+   2026-07-24), sin inventar valores fuera de rango.
 
-El gradiente térmico dentro de la grilla (cómo se reparte un escalar temporal en
-las M×N celdas) lo coordina Fidel con Jose; por eso la construcción del
-`CampoAmbiental` queda como stub hasta fijar la forma de la grilla (§3.1).
+4. **El escalar temporal se reparte en la grilla reusando el modelo de Jose**
+   (ADR-0017): `secuencia_campos` no aplana el campo, sino que llama a
+   `PlanetaSubsuelo.campo_modulado`, que propaga el dato del día con la física del
+   entorno (banda de profundidad en Marte, fumarolas en Encelado). Un campo
+   uniforme dejaría el UV de superficie esterilizando toda la grilla.
 """
 from __future__ import annotations
 
@@ -33,7 +34,14 @@ from enum import Enum
 import numpy as np
 import pandas as pd
 
-from astrobiosim.core.environment import FRACCION_UV, CampoAmbiental
+from astrobiosim.core.environment import (
+    FRACCION_UV,
+    CampoAmbiental,
+    EnceladoSubglacial,
+    MarteSubsuelo,
+    PlanetaSubsuelo,
+    TierraSubsuelo,
+)
 
 # Columnas canónicas que consume este módulo (las produce loaders.py).
 COLUMNAS_CANONICAS: tuple[str, ...] = ("t", "temperature", "a_w", "radiation")
@@ -49,6 +57,14 @@ class Entorno(Enum):
 
 #: Entornos cuya radiación NO alimenta a `R` (se mapea a 0). Ver ADR-0010.
 _ENTORNOS_SIN_RADIACION: frozenset[Entorno] = frozenset({Entorno.ENCELADO})
+
+#: Cada entorno análogo ↔ su modelo espacial (dueño Jose). El Modo Analógico reusa
+#: la estructura de estas clases modulándola con la serie temporal (ADR-0017).
+_PLANETA: dict[Entorno, type[PlanetaSubsuelo]] = {
+    Entorno.TIERRA: TierraSubsuelo,
+    Entorno.MARTE: MarteSubsuelo,
+    Entorno.ENCELADO: EnceladoSubglacial,
+}
 
 
 def mapear_radiacion(radiation: np.ndarray, entorno: Entorno) -> np.ndarray:
@@ -81,22 +97,73 @@ def mapear_radiacion(radiation: np.ndarray, entorno: Entorno) -> np.ndarray:
 
 
 def limpiar_ventilas(df: pd.DataFrame) -> pd.DataFrame:
-    """Trata el hueco de 8 días (NaN) de ventilas SIN inventar valores.
+    """Rellena el hueco de 8 días (NaN) por **interpolación lineal acotada**.
 
-    Enmascara o interpola de forma acotada las filas 2025-08-17 … 2025-08-24.
-    Fidel decide la estrategia (exclusión vs. interpolación lineal acotada) y la
-    justifica; nunca rellenar con constantes arbitrarias.
+    Estrategia elegida (2026-07-24): interpolación lineal *interior*
+    (`limit_area="inside"`), que rellena los NaN de agosto entre los bordes reales
+    conocidos. Como el valor queda entre dos datos reales, nunca se sale de rango
+    físico ni se inventan constantes. Solo toca columnas numéricas; `t` queda
+    intacta. Encelado es muy estable (~2.4 °C, `a_w`≈0.982), así que el relleno es
+    casi indistinguible del dato. No modifica el DataFrame de entrada.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        DataFrame canónico (posiblemente con NaN interiores).
+
+    Returns
+    -------
+    pd.DataFrame
+        Copia con los NaN interiores interpolados linealmente.
     """
-    raise NotImplementedError("Fidel: implementar en feat/data-loaders (§3.5, ADR-0010)")
+    salida = df.copy()
+    columnas = salida.select_dtypes(include="number").columns
+    salida[columnas] = salida[columnas].interpolate(
+        method="linear", limit_area="inside"
+    )
+    return salida
 
 
 def secuencia_campos(
-    df: pd.DataFrame, entorno: Entorno, shape: tuple[int, int]
+    df: pd.DataFrame,
+    entorno: Entorno,
+    shape: tuple[int, int],
+    rng: np.random.Generator | None = None,
 ) -> Iterator[CampoAmbiental]:
     """Convierte el DataFrame canónico en una secuencia de `CampoAmbiental`.
 
-    Un `CampoAmbiental` por fila temporal: `A_w` tal cual, `R` vía
-    `mapear_radiacion`, y `temperature` distribuida en la grilla `shape` (M, N)
-    según el gradiente térmico acordado con Jose (§3.1).
+    Un `CampoAmbiental` por fila temporal. Cada fila inyecta sus escalares
+    (`temperature`, `a_w`, `radiation` global) en el modelo espacial del entorno
+    (`PlanetaSubsuelo.campo_modulado`, ADR-0017), que los propaga con su propia
+    física: en Marte, la banda de profundidad de T y UV; en Encelado, las
+    fumarolas; en Tierra, un campo uniforme. Así el análogo **no** aplana el
+    subsuelo (un campo uniforme dejaría el UV de superficie esterilizando toda la
+    grilla).
+
+    Se itera sobre las filas temporales (no sobre celdas): la construcción de cada
+    campo sigue siendo vectorizada.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        DataFrame canónico ya limpio (ver `limpiar_ventilas`).
+    entorno : Entorno
+        Entorno análogo; selecciona el modelo espacial.
+    shape : tuple[int, int]
+        Dimensiones (M, N) de la grilla.
+    rng : np.random.Generator, optional
+        Generador inyectado; los entornos con dispersión lo usan.
+
+    Yields
+    ------
+    CampoAmbiental
+        Un campo por fila del DataFrame.
     """
-    raise NotImplementedError("Fidel: implementar en feat/data-loaders (§3.5, ADR-0010)")
+    planeta = _PLANETA[entorno](shape=shape)
+    for fila in df.itertuples(index=False):
+        yield planeta.campo_modulado(
+            temperature=fila.temperature,
+            a_w=fila.a_w,
+            radiation_global=fila.radiation,
+            rng=rng,
+        )
