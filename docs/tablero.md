@@ -17,14 +17,14 @@
 - Este documento dice **qué** falta; `docs/instrucciones/<nombre>.md` dice **cómo**
   hacerlo, y `docs/adr/` dice **por qué** se decidió así.
 
-**Progreso global:** 36/103 criterios (35%)
+**Progreso global:** 41/103 criterios (40%)
 
 | Integrante | Área | Criterios cumplidos |
 |---|---|---|
 | 🟢 **Esmeralda** | Motor biológico + notebook | 10/26 (38%) |
 | 🟡 **Fidel** | Datos análogos + validación | 8/15 (53%) |
 | 🔵 **Jose** | Motor ambiental + eventos | 13/24 (54%) |
-| 🟣 **Erick** | Autómata Celular + UI | 5/38 (13%) |
+| 🟣 **Erick** | Autómata Celular + UI | 10/38 (26%) |
 
 ---
 
@@ -34,22 +34,7 @@ _(vacío)_
 
 ---
 
-## Hito 2 — Dominio — 2/31 criterios
-
-### ⬜ 🟣 Orquestador: simulation.py
-
-**Dueño:** Erick · **Criterios:** 0/5
-
-> *Como orquestador, quiero acoplar el motor biologico y el ambiental en el bucle del AC para correr una simulacion completa.*
->
-> `simulation.py` une motores. Necesita el Hito 1 mergeado en `main`.
-> Rama: `feat/simulation-orquestador`.
-
-- [ ] `simulation.py` corre N iteraciones acoplando campo + especie + `paso()` sin errores
-- [ ] Misma semilla -> misma corrida (reproducible)
-- [ ] Devuelve la serie de estados/poblaciones esperada para un caso de prueba
-- [ ] `pytest tests/integration/` pasa en verde
-- [ ] El orquestador propaga los tres estados y aplica los eventos (incluida la salmuera) antes de `paso()`
+## Hito 2 — Dominio — 2/26 criterios
 
 ### ⬜ 🟢 Modo Sandbox
 
@@ -254,7 +239,22 @@ _(vacío)_
 
 ---
 
-## En revisión — 9/9 criterios
+## En revisión — 14/14 criterios
+
+### ✅ 🟣 Orquestador: simulation.py
+
+**Dueño:** Erick · **Criterios:** 5/5
+
+> *Como orquestador, quiero acoplar el motor biologico y el ambiental en el bucle del AC para correr una simulacion completa.*
+>
+> `simulation.py` une motores. Necesita el Hito 1 mergeado en `main`.
+> Rama: `feat/simulation-orquestador`.
+
+- [x] `simulation.py` corre N iteraciones acoplando campo + especie + `paso()` sin errores
+- [x] Misma semilla -> misma corrida (reproducible)
+- [x] Devuelve la serie de estados/poblaciones esperada para un caso de prueba
+- [x] `pytest tests/integration/` pasa en verde
+- [x] El orquestador propaga los tres estados y aplica los eventos (incluida la salmuera) antes de `paso()`
 
 ### ✅ 🟡 Remuestreo + Modo Analogico
 
