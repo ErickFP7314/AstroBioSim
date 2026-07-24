@@ -114,6 +114,21 @@ Respondé esto antes de que tu Claude implemente; si no, asumirá defaults que q
 - `condiciones_habitables` sigue existiendo como alias, pero usá los métodos nuevos:
   `condiciones_crecimiento` y `condiciones_supervivencia`.
 
+## Estado (2026-07-24)
+
+- ✅ **Hito 1 IMPLEMENTADO** en la rama `feat/engine-transicion`: `transition_rules.py`
+  (cinética CTMI + tres reglas intercambiables) y `paso()` en `cellular_automaton.py`,
+  con 19 tests (`test_transition.py`). Ver **ADR-0016**.
+- La regla logística (proceso de contacto) es la de fábrica; hay también `ReglaConway`
+  y `ReglaHibrida`, todas en `REGLAS_DISPONIBLES`. Cada una expone `notacion()` (LaTeX)
+  para el **panel de notación formal** que pediste.
+- **Pendiente Hito 3 (UI):** el **editor de reglas por bloques** (tipo Scratch) que
+  produce nuevas `ReglaTransicion`, y el panel que renderiza `notacion()`. El motor ya
+  está preparado: el editor es una *fábrica* de reglas, no toca `engine/`.
+- Decisiones tomadas: frontera muerta, LATENTE ocupa pero no reproduce, Δt = 1 h.
+  ⚠️ Δt = 1 h se acopla con `SEGUNDOS_UV_POR_TICK` (hoy 8 h) — reconciliar con
+  Esmeralda (deuda #7 de `docs/parametros.md`).
+
 ## Tus tareas nuevas
 
 1. **[Hito 1] `paso()` con tres estados.** La transición, vectorizada y síncrona:

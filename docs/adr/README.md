@@ -23,6 +23,7 @@ Estados posibles: `Propuesto` · `Aceptado` · `Rechazado` · `Sustituido por AD
 | [0013](0013-cinetica-crecimiento-valores-cardinales.md) | Cinética de crecimiento continua por valores cardinales (CTMI + gamma concept) | Aceptado |
 | [0014](0014-radiacion-como-irradiancia-uv.md) | `R` reencuadrada como irradiancia UV (W/m²) con atenuación en el subsuelo | Aceptado |
 | [0015](0015-microrefugios-salmueras-y-pregunta-de-investigacion.md) | Microrefugios por salmueras delicuescentes y pregunta de investigación | Aceptado |
+| [0016](0016-reglas-de-transicion-intercambiables.md) | Reglas de transición intercambiables (Strategy) + notación formal | Aceptado |
 
 > **Nota:** ADR-0008 modifica a ADR-0002, ADR-0003, ADR-0005 y ADR-0006 — la
 > variable **presión (P)** fue eliminada del modelo. Los ADRs afectados llevan la
