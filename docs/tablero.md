@@ -17,13 +17,13 @@
 - Este documento dice **qué** falta; `docs/instrucciones/<nombre>.md` dice **cómo**
   hacerlo, y `docs/adr/` dice **por qué** se decidió así.
 
-**Progreso global:** 12/85 criterios (14%)
+**Progreso global:** 21/95 criterios (22%)
 
 | Integrante | Área | Criterios cumplidos |
 |---|---|---|
-| 🟢 **Esmeralda** | Motor biológico + notebook | 4/20 (20%) |
+| 🟢 **Esmeralda** | Motor biológico + notebook | 8/24 (33%) |
 | 🟡 **Fidel** | Datos análogos + validación | 0/15 (0%) |
-| 🔵 **Jose** | Motor ambiental + eventos | 8/17 (47%) |
+| 🔵 **Jose** | Motor ambiental + eventos | 13/23 (57%) |
 | 🟣 **Erick** | Autómata Celular + UI | 0/33 (0%) |
 
 ---
@@ -212,7 +212,7 @@
 
 ---
 
-## Hito 4 — Validacion — 0/16 criterios
+## Hito 4 — Validacion — 0/17 criterios
 
 ### ⬜ 🟢 Calibracion de umbrales con literatura
 
@@ -242,7 +242,7 @@
 
 ### ⬜ 🔵 Sanidad fisica de gradientes y eventos
 
-**Dueño:** Jose · **Criterios:** 0/4
+**Dueño:** Jose · **Criterios:** 0/5
 
 > *Como fisico, quiero verificar que los campos y eventos son fisicamente coherentes.*
 >
@@ -253,6 +253,7 @@
 - [ ] Los eventos estocasticos perturban/disipan sin generar valores no fisicos
 - [ ] Encelado queda diferenciado de los otros entornos en el campo resultante
 - [ ] Revisada la asintota termica de Marte: la onda amortigua hacia la media anual, no hacia el minimo diario
+- [ ] Revisar ΔT=25 del evento hidrotermal: si cae sobre una fumarola existente lleva T a 59 °C y mata a M. burtonii en 29% de los disparos. Puede ser correcto (el nucleo de una ventila es letal), pero hay que decidirlo
 
 ### ⬜ 🟣 Validacion estadistica de Montecarlo
 
@@ -285,11 +286,11 @@ _(vacío)_
 
 ---
 
-## ✅ Hecho — 12/12 criterios
+## ✅ Hecho — 21/21 criterios
 
 ### ✅ 🔵 Motor ambiental: CampoAmbiental + 3 entornos
 
-**Dueño:** Jose · **Criterios:** 4/4
+**Dueño:** Jose · **Criterios:** 8/8
 
 > *Como motor ambiental, quiero exponer T, R y A_w por celda para que todos los modulos consuman el mismo campo.*
 >
@@ -302,10 +303,14 @@ _(vacío)_
 - [x] `.shape` devuelve `(M,N)` correcto
 - [x] Cada entorno (Tierra/Marte/Encelado) genera un CampoAmbiental con las 3 capas pobladas
 - [x] `pytest tests/unit/test_environment.py` pasa en verde
+- [x] `R` es irradiancia UV y el factor de conversion queda documentado (ADR-0014)
+- [x] El campo de Tierra usa a_w de SUELO, no humedad del aire
+- [x] El campo de Marte porta su dispersion con `rng` opcional, no el minimo colapsado (ADR-0015)
+- [x] Fix: el radio de las fumarolas es fraccion de la grilla; la fisica ya no depende de la resolucion
 
 ### ✅ 🔵 Eventos estocasticos: micro-fisura + emision hidrotermal
 
-**Dueño:** Jose · **Criterios:** 4/4
+**Dueño:** Jose · **Criterios:** 5/5
 
 > *Como fisica del entorno, quiero perturbar el campo con eventos aleatorios reproducibles para modelar dinamica Montecarlo.*
 >
@@ -316,10 +321,11 @@ _(vacío)_
 - [x] Usa el `rng` inyectado: misma semilla -> mismo resultado (reproducible)
 - [x] Micro-fisura marciana y emision hidrotermal producen cambios dentro de rango fisico esperado
 - [x] `pytest tests/unit/test_stochastic.py` pasa en verde
+- [x] Los dos eventos siguen pasando sin cambios tras ADR-0012..0015 (`test_stochastic.py` en verde)
 
 ### ✅ 🟢 Motor biologico: especies y habitabilidad
 
-**Dueño:** Esmeralda · **Criterios:** 4/4
+**Dueño:** Esmeralda · **Criterios:** 8/8
 
 > *Como motor biologico, quiero evaluar que celdas son habitables segun T, R y A_w para que el automata sepa donde puede vivir cada especie.*
 >
@@ -329,7 +335,11 @@ _(vacío)_
 - [x] `condiciones_habitables(campo)` devuelve mascara `bool (M,N)` correcta para un campo de prueba
 - [x] Test: cada especie muere si UNA sola variable sale de umbral (una prueba por variable y especie)
 - [x] `pytest tests/unit/test_microorganism.py` pasa en verde
-- [x] La mascara es vectorizada (sin bucles) y no hay logica de presion ni latencia
+- [x] La mascara es vectorizada (sin bucles) y no hay logica de presion. La latencia SI existe ahora, pero como ESTADO (ADR-0012), no como umbral que resucite: MUERTA sigue siendo absorbente
+- [x] Dos juegos de umbrales por especie: crecimiento y supervivencia (ADR-0012)
+- [x] `condiciones_habitables()` sigue existiendo como alias: no rompe codigo previo
+- [x] Ningun `a_w_min` de crecimiento baja de 0.605, verificado por test
+- [x] `tests/integration/test_especie_en_su_entorno.py` en verde
 
 ---
 
