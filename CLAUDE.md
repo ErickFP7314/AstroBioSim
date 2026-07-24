@@ -21,6 +21,12 @@ Documentación: contexto completo en `openspec/project.md`; decisiones en
 > del tablero de Trello con todas las tareas, su estado y sus criterios de
 > aceptación. Consultalo antes de empezar cualquier tarea: te dice **qué** falta;
 > `docs/instrucciones/<nombre>.md` te dice **cómo**, y `docs/adr/` **por qué**.
+>
+> **¿De dónde sale este número?** → **`docs/parametros.md`**, la referencia oficial
+> de todo valor del modelo con su procedencia (**[LIT]** publicado · **[DER]**
+> derivado · **[CONV]** convención nuestra · **[EST]** estimación pendiente) y su
+> cita. **Un parámetro sin procedencia no entra al modelo.** Si vas a cambiar un
+> umbral o una constante, actualizá esa tabla en el mismo commit.
 
 > **La presión fue eliminada del modelo** (ADR-0008). Trabajamos con análogos
 > terrestres donde la presión es casi constante y no discrimina. Si ves `P`,

@@ -71,6 +71,11 @@ Respondé esto antes de que tu Claude implemente; si no, asumirá defaults que q
 
 # 🔄 Actualización 2026-07-23 — ADR-0012 a 0015
 
+> 📐 **Todo valor numérico del modelo vive en `docs/parametros.md`** con su
+> procedencia y su cita. Antes de fijar o cambiar un umbral, mirá ahí — y si lo
+> cambiás, actualizá esa tabla en el mismo commit.
+
+
 > Tu capa de datos no cambia de forma, pero **sí cambia el significado de dos
 > columnas**. Esto salió de integrar los motores de Esmeralda y Jose.
 

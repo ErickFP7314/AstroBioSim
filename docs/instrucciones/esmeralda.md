@@ -92,6 +92,11 @@ Respondé esto antes de que tu Claude implemente; si no, asumirá defaults que q
 
 # 🔄 Actualización 2026-07-23 — ADR-0012 a 0015
 
+> 📐 **Todo valor numérico del modelo vive en `docs/parametros.md`** con su
+> procedencia y su cita. Antes de fijar o cambiar un umbral, mirá ahí — y si lo
+> cambiás, actualizá esa tabla en el mismo commit.
+
+
 > Tu Hito 1 quedó **aprobado y mergeado**. Lo que sigue son los cambios que trajo el
 > bloque ADR-0012…0015, que nació justamente de integrar tu motor con el de Jose.
 

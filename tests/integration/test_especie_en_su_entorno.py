@@ -59,12 +59,31 @@ def test_el_control_terrestre_crece_en_todo_el_subsuelo() -> None:
     assert np.all(EColi().condiciones_crecimiento(campo))
 
 
-def test_marte_en_bulk_es_habitable_pero_no_fertil() -> None:
-    """ADR-0015: el regolito sostiene vida latente, no crecimiento activo."""
+def test_marte_en_bulk_no_es_fertil_en_ninguna_profundidad() -> None:
+    """ADR-0015: sin agua transitoria, el regolito no sostiene crecimiento."""
     especie = DRadiodurans()
     campo = MarteSubsuelo(shape=SHAPE).campo_inicial()
-    assert not np.any(especie.condiciones_crecimiento(campo))  # nadie crece
-    assert np.all(especie.condiciones_supervivencia(campo))  # nadie muere
+    assert not np.any(especie.condiciones_crecimiento(campo))
+
+
+def test_marte_tiene_capa_esteril_de_superficie_y_subsuelo_viable() -> None:
+    """La banda de profundidad de ADR-0014, con umbrales derivados de literatura.
+
+    El UV marciano (~42 W/m², dentro del rango publicado de 42–55) esteriliza las
+    primeras celdas y se extingue en el regolito en pocas más. Eso es justamente
+    el argumento de por qué el nicho candidato está en el subsuelo.
+    """
+    especie = DRadiodurans()
+    entorno = MarteSubsuelo(shape=SHAPE)
+    campo = entorno.campo_inicial()
+    sobrevive = especie.condiciones_supervivencia(campo)
+
+    assert not sobrevive[0].any(), "la superficie debe ser estéril por UV"
+    assert sobrevive[-1].all(), "el fondo debe ser viable: el UV ya no llega"
+    # la frontera es única y monótona: una vez que se sobrevive, no se vuelve a morir
+    profundidad_segura = int(np.argmax(sobrevive.all(axis=1)))
+    assert 0 < profundidad_segura < entorno.shape[0]
+    assert sobrevive[profundidad_segura:].all()
 
 
 def test_marte_se_vuelve_fertil_dentro_de_un_microrefugio_humedo() -> None:

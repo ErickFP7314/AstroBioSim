@@ -36,6 +36,21 @@ MUERTA: int = 0
 LATENTE: int = 1
 ACTIVA: int = 2
 
+#: Exposición UV efectiva por tick, en segundos (~8 h de sol útil en un tick
+#: diario, que es la resolución de los datasets).
+#:
+#: Hace falta porque la letalidad del UV es una **fluencia** (J/m²) mientras que
+#: el campo `R` es una **irradiancia** (W/m²), que es lo que miden los datos. Los
+#: umbrales de abajo se derivan como ``fluencia_publicada / SEGUNDOS_UV_POR_TICK``.
+#: Si Erick cambia el Δt del autómata, **este valor tiene que cambiar con él** o
+#: los umbrales dejan de significar lo que dicen. Ver `docs/parametros.md`.
+SEGUNDOS_UV_POR_TICK: float = 8 * 3600
+
+#: Factor entre la fluencia que **inhibe el crecimiento** y la que **mata**.
+#: Convención del modelo (no dato de literatura): el estrés subletal frena la
+#: división mucho antes de matar. Documentado en `docs/parametros.md`.
+RAZON_INHIBICION_UV: float = 10.0
+
 
 class Microorganismo(ABC):
     """Base abstracta de una especie, definida por umbrales cardinales.
@@ -122,18 +137,21 @@ class EColi(Microorganismo):
     que es una bacteria.
     """
 
+    #: Fluencia UV₂₅₄ que la especie NO sobrevive (J/m², literatura).
+    FLUENCIA_LETAL_J_M2: float = 870.0
+
     # Crecimiento
     t_min: float = 7.5
     t_opt: float = 37.0
     t_max: float = 47.0
     a_w_min: float = 0.95
-    uv_max: float = 0.5  # PROVISIONAL — re-derivar (Esmeralda, ADR-0014)
+    uv_max: float = FLUENCIA_LETAL_J_M2 / (RAZON_INHIBICION_UV * SEGUNDOS_UV_POR_TICK)
 
     # Supervivencia
     t_sup_min: float = -20.0
     t_sup_max: float = 55.0
-    a_w_sup_min: float = 0.50  # desecación tolerada pobremente
-    uv_letal: float = 5.0  # PROVISIONAL — re-derivar (Esmeralda, ADR-0014)
+    a_w_sup_min: float = 0.50  # desecación tolerada pobremente (estimación)
+    uv_letal: float = FLUENCIA_LETAL_J_M2 / SEGUNDOS_UV_POR_TICK
 
     mu_opt: float = 2.1  # h⁻¹ — la más rápida de las tres
 
@@ -148,18 +166,22 @@ class DRadiodurans(Microorganismo):
     Atacama queda `LATENTE`, que es lo que hace en la realidad.
     """
 
+    #: Fluencia UV₂₅₄ que la especie NO sobrevive (J/m², literatura): 58× la de
+    #: *E. coli*, que es de donde sale su fama de radiorresistente.
+    FLUENCIA_LETAL_J_M2: float = 50_760.0
+
     # Crecimiento
     t_min: float = 4.0
     t_opt: float = 30.0  # mesófila, pese a su fama de extremófila
     t_max: float = 39.0
     a_w_min: float = 0.90  # límite de metabolismo activo
-    uv_max: float = 10.0  # PROVISIONAL — ~20x E. coli (Esmeralda, ADR-0014)
+    uv_max: float = FLUENCIA_LETAL_J_M2 / (RAZON_INHIBICION_UV * SEGUNDOS_UV_POR_TICK)
 
     # Supervivencia
     t_sup_min: float = -25.0
     t_sup_max: float = 50.0
     a_w_sup_min: float = 0.0  # anhidrobiosis: sobrevive la desecación total
-    uv_letal: float = 100.0  # PROVISIONAL — re-derivar (Esmeralda, ADR-0014)
+    uv_letal: float = FLUENCIA_LETAL_J_M2 / SEGUNDOS_UV_POR_TICK
 
     mu_opt: float = 0.26  # h⁻¹ — costo metabólico de la extremofilia
 
@@ -174,17 +196,24 @@ class MBurtonii(Microorganismo):
     `a_w_sup_min` es alto: no es anhidrobiótica.
     """
 
+    #: Fluencia UV₂₅₄ letal (J/m²). **No hay dato publicado para esta especie.**
+    #: Se asume el de *E. coli* como cota conservadora: es una arquea anaerobia
+    #: estricta, sin la maquinaria de reparación de *Deinococcus*, así que no hay
+    #: motivo para suponerla más resistente. En Encelado nunca se activa (UV = 0);
+    #: solo importa en Modo Sandbox. Es el parámetro más débil del modelo.
+    FLUENCIA_LETAL_J_M2: float = 870.0
+
     # Crecimiento
     t_min: float = -2.5
     t_opt: float = 23.4
     t_max: float = 29.5
     a_w_min: float = 0.95  # medio marino; deja margen sobre el A_w=0.98 del campo
-    uv_max: float = 1.0  # irrelevante en subglacial (UV = 0), se fija por completitud
+    uv_max: float = FLUENCIA_LETAL_J_M2 / (RAZON_INHIBICION_UV * SEGUNDOS_UV_POR_TICK)
 
     # Supervivencia
     t_sup_min: float = -20.0
     t_sup_max: float = 35.0
-    a_w_sup_min: float = 0.80  # no es anhidrobiótica: necesita agua
-    uv_letal: float = 10.0  # PROVISIONAL — re-derivar (Esmeralda, ADR-0014)
+    a_w_sup_min: float = 0.80  # no es anhidrobiótica: necesita agua (estimación)
+    uv_letal: float = FLUENCIA_LETAL_J_M2 / SEGUNDOS_UV_POR_TICK
 
     mu_opt: float = 0.069  # h⁻¹ — la más lenta: metanógena psicrotolerante

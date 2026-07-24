@@ -17,11 +17,11 @@
 - Este documento dice **qué** falta; `docs/instrucciones/<nombre>.md` dice **cómo**
   hacerlo, y `docs/adr/` dice **por qué** se decidió así.
 
-**Progreso global:** 21/96 criterios (22%)
+**Progreso global:** 22/98 criterios (22%)
 
 | Integrante | Área | Criterios cumplidos |
 |---|---|---|
-| 🟢 **Esmeralda** | Motor biológico + notebook | 8/24 (33%) |
+| 🟢 **Esmeralda** | Motor biológico + notebook | 9/26 (35%) |
 | 🟡 **Fidel** | Datos análogos + validación | 0/15 (0%) |
 | 🔵 **Jose** | Motor ambiental + eventos | 13/24 (54%) |
 | 🟣 **Erick** | Autómata Celular + UI | 0/33 (0%) |
@@ -61,7 +61,7 @@
 
 ---
 
-## Hito 2 — Dominio — 0/33 criterios
+## Hito 2 — Dominio — 1/35 criterios
 
 ### ⬜ 🟡 Remuestreo + Modo Analogico
 
@@ -131,17 +131,19 @@
 - [ ] Tests de bordes numericos (T = t_min, t_opt, t_max) sin division por cero
 - [ ] `pytest tests/unit/test_transition.py` en verde
 
-### ⬜ 🟢 Re-derivar umbrales UV y de supervivencia
+### 🔸 🟢 Re-derivar umbrales UV y de supervivencia
 
-**Dueño:** Esmeralda · **Criterios:** 0/5
+**Dueño:** Esmeralda · **Criterios:** 1/7
 
-> ADR-0012 y ADR-0014. Es el unico grupo de parametros del modelo que hoy NO esta citado: los puse por orden de magnitud para desbloquear al resto y estan marcados '# PROVISIONAL' en el codigo.
+> ADR-0012 y ADR-0014. PARCIALMENTE RESUELTO: los umbrales UV de E. coli y D. radiodurans ya se derivaron de fluencias publicadas (870 y 50.760 J/m2, factor 58x) dividiendo por SEGUNDOS_UV_POR_TICK. Ver docs/parametros.md. Queda el UV de M. burtonii (sin dato publicado) y los umbrales de supervivencia.
 
-- [ ] `uv_max` y `uv_letal` de las 3 especies citan fuente de literatura
+- [x] UV de E. coli y D. radiodurans derivados de fluencia publicada (870 / 50.760 J/m2) — ver docs/parametros.md §1.3
 - [ ] `t_sup_min`, `t_sup_max` y `a_w_sup_min` de las 3 especies citan fuente
 - [ ] Ningun `a_w_min` de crecimiento baja de 0.605 (limite de division celular conocido)
-- [ ] La banda UV usada coincide con la que usa Fidel en el adaptador
+- [ ] La banda usada (UV254) coincide con la que aplica Fidel en el adaptador
 - [ ] `pytest tests/unit/test_microorganism.py` en verde
+- [ ] Cerrar el UV de M. burtonii: hoy es [EST] (se asume el de E. coli), el unico parametro del modelo sin ninguna base publicada
+- [ ] Confirmar SEGUNDOS_UV_POR_TICK (28.800 s) con el dt que elija Erick: si divergen, los umbrales UV dejan de significar lo que dicen
 
 ### ⬜ 🟡 Radiacion a banda UV + a_w media de Atacama
 

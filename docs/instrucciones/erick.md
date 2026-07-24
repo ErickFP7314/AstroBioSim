@@ -97,6 +97,11 @@ Respondé esto antes de que tu Claude implemente; si no, asumirá defaults que q
 
 # 🔄 Actualización 2026-07-23 — ADR-0012 a 0015
 
+> 📐 **Todo valor numérico del modelo vive en `docs/parametros.md`** con su
+> procedencia y su cita. Antes de fijar o cambiar un umbral, mirá ahí — y si lo
+> cambiás, actualizá esa tabla en el mismo commit.
+
+
 > Es el bloque que más te toca: **dos de los cuatro ADRs son matemática pura y son
 > tuyos.** Nada de tu código estaba escrito todavía, así que no hay que corregir,
 > solo implementar sobre la base nueva.
