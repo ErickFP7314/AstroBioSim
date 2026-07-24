@@ -58,7 +58,7 @@ Respondé esto antes de que tu Claude implemente; si no, asumirá defaults que q
 3. **Encelado:** ¿dónde se ubican las fumarolas en la grilla y cuál es el pico hidrotermal `ΔT ~ N(μ, σ²)` (valores de μ y σ)?
 4. **Micro-fisura marciana:** ¿probabilidad de disparo por tick, radio de celdas afectadas y magnitud de la caída de A_w?
 5. **Disipación hidrotermal:** ¿qué kernel de difusión (gaussiano, radio de alcance) y cuánto decae por celda?
-6. **Radiación (ADR-0010, W/m²):** ¿qué valor de R por entorno en superficie? ¿Encelado `R=0` confirmado?
+6. ~~**Radiación (ADR-0010, W/m²)**~~ — RESUELTO por ADR-0014: `R` es **irradiancia UV**, no flujo total. Marte usa `global × FRACCION_UV ≈ 42.2 W/m²`; Tierra subsuelo y Encelado quedan en `R = 0`.
 7. **Valores iniciales:** los campos T/R/A_w de cada entorno, ¿salen del dataset real (Fidel) o de valores teóricos tuyos?
 
 ---
@@ -91,7 +91,15 @@ Respondé esto antes de que tu Claude implemente; si no, asumirá defaults que q
 2. **[Hito 2] Decaimiento del refugio.** El refugio no puede ser permanente: definí
    cómo se disipa (exponencial en el tiempo, o duración fija). Tratalo como
    **parámetro**, no como constante — Erick va a barrerlo.
-3. **[Hito 4] Revisar la asíntota térmica de Marte.** `T_PROFUNDO_C = 7.8` es la
+3. **[Hito 2] Unificar el retorno de `aplicar()`.** Los dos eventos devuelven un
+   `CampoAmbiental` **nuevo** cuando disparan, pero devuelven **el mismo objeto**
+   (`return campo`) cuando no disparan. Esa inconsistencia es una trampa para
+   Erick en `simulation.py`: si encadena eventos y muta el campo devuelto, en los
+   ticks donde el evento no dispara estaría mutando el campo **original** sin
+   querer. Y como depende de la semilla, el bug aparecería de forma intermitente,
+   que es la peor clase. Devolvé siempre una copia (o documentá el contrato como
+   "solo lectura" y hacé que Erick lo respete).
+4. **[Hito 4] Revisar la asíntota térmica de Marte.** `T_PROFUNDO_C = 7.8` es la
    media de los **mínimos** diarios, pero una onda térmica amortigua hacia la **media
    anual** (≈ 22.4 °C), no hacia el mínimo. No lo toqué porque es tu dominio, pero
    creo que está mal y cambia dónde queda la banda habitable. Decidilo vos.

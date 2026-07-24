@@ -17,13 +17,13 @@
 - Este documento dice **qué** falta; `docs/instrucciones/<nombre>.md` dice **cómo**
   hacerlo, y `docs/adr/` dice **por qué** se decidió así.
 
-**Progreso global:** 21/95 criterios (22%)
+**Progreso global:** 21/96 criterios (22%)
 
 | Integrante | Área | Criterios cumplidos |
 |---|---|---|
 | 🟢 **Esmeralda** | Motor biológico + notebook | 8/24 (33%) |
 | 🟡 **Fidel** | Datos análogos + validación | 0/15 (0%) |
-| 🔵 **Jose** | Motor ambiental + eventos | 13/23 (57%) |
+| 🔵 **Jose** | Motor ambiental + eventos | 13/24 (54%) |
 | 🟣 **Erick** | Autómata Celular + UI | 0/33 (0%) |
 
 ---
@@ -61,7 +61,7 @@
 
 ---
 
-## Hito 2 — Dominio — 0/32 criterios
+## Hito 2 — Dominio — 0/33 criterios
 
 ### ⬜ 🟡 Remuestreo + Modo Analogico
 
@@ -108,7 +108,7 @@
 
 ### ⬜ 🔵 Evento SalmueraDelicuescente (microrefugios)
 
-**Dueño:** Jose · **Criterios:** 0/5
+**Dueño:** Jose · **Criterios:** 0/6
 
 > ADR-0015. Contraparte de MicroFisuraMarte: hoy TODOS los eventos degradan el ambiente, lo que sesga cada corrida hacia la extincion por construccion. Este evento es el que le da a Marte algo que estudiar.
 
@@ -117,6 +117,7 @@
 - [ ] El refugio decae/expira: no es permanente y su duracion es un PARAMETRO (Erick lo va a barrer)
 - [ ] Test: aplicado al campo de Marte, `DRadiodurans.condiciones_crecimiento` pasa de 0% a >0%
 - [ ] `pytest tests/unit/test_stochastic.py` en verde
+- [ ] `aplicar()` devuelve SIEMPRE un CampoAmbiental nuevo, tambien cuando el evento no dispara (hoy devuelve el mismo objeto: aliasing intermitente segun la semilla)
 
 ### ⬜ 🟣 Cinetica de crecimiento continua (CTMI + gamma)
 

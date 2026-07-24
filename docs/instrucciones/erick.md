@@ -10,10 +10,33 @@
 
 ## Instrucciones para tu Claude
 
-1. `transition_rules.py`: reglas **puras y vectorizadas**:
+> ⚠️ **La tarea 1 de abajo quedó OBSOLETA por ADR-0012 y ADR-0013** y está
+> reescrita acá mismo. Las tareas 2 a 6 siguen vigentes, con el detalle de que
+> `paso()` ahora devuelve tres estados y recibe `rng`. **Leé también la sección
+> "🔄 Actualización 2026-07-23" al final del archivo antes de implementar.**
+
+1. `transition_rules.py`: reglas **puras y vectorizadas**, con **tres estados**
+   (`MUERTA=0`, `LATENTE=1`, `ACTIVA=2`) y **tasa continua**:
+   - Clasificación por celda (ADR-0012):
+     dentro de `especie.condiciones_crecimiento(campo)` → `ACTIVA`;
+     fuera de crecimiento pero dentro de `condiciones_supervivencia(campo)` →
+     `LATENTE`; fuera de supervivencia → `MUERTA`. `MUERTA` es **absorbente**:
+     aplicá esa máscara al final, pisando todo lo demás.
+   - Reproducción (ADR-0013): una celda vacía nace con probabilidad
+     `p_repro = clip(μ·Δt, 0, 1)`, muestreada con el `rng` **inyectado**, donde
+     `μ = μ_opt · γ_T(T) · γ_aw(a_w) · γ_UV(UV)` y `γ_T` es el CTMI. El conteo de
+     vecinos de Moore para reproducir cuenta **solo celdas `ACTIVA`**.
+   - Los umbrales de Conway (muere con `<2` o `>3` vecinos) quedan **a decidir**:
+     con la cinética continua puede que sobren. Ver pregunta 10 al final.
+
+   <details><summary>Versión original (histórico — no implementar)</summary>
+
    - Muerte por estrés: `~especie.condiciones_habitables(campo)` mata celdas vivas.
    - Muerte por soledad/sobrepoblación: viva muere si vecinos `<2` o `>3`.
    - Reproducción: vacía nace si vecinos `==3` **y** condiciones habitables.
+
+   </details>
+
 2. `cellular_automaton.py`: `paso(...)` del contrato §3.3 con **conteo de vecinos de
    Moore vectorizado** (convolución o suma de 8 desplazamientos) y **doble buffer**
    síncrono. Definí la condición de borde (por defecto frontera muerta) y documentala.
