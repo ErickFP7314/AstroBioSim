@@ -106,18 +106,16 @@ class TierraSubsuelo(PlanetaSubsuelo):
     anual** del dataset (19.85 °C), que es el valor al que amortigua la onda
     térmica.
 
-    **Corrección (ADR-0014 y nota de datos):** la columna `Actividad_Agua_aw`
-    del dataset de control (media 0.55, rango 0.16–0.93, sd 0.23) es **humedad
-    relativa del aire**, no actividad de agua del suelo — su origen es el
-    `A_w = HR / 100` que documentó ADR-0008, y un suelo no puede oscilar así de
-    un día para otro. Para un modelo de **subsuelo** el valor correcto es el de
-    un suelo a capacidad de campo, `a_w ≈ 0.99`. El 0.75 anterior hacía que
-    *E. coli* —cuyo mínimo de 0.95 es un dato duro— no creciera en su propio
-    control.
+    **`a_w` del control (corregido en el dataset):** la columna
+    `Actividad_Agua_aw` original se había calculado con la humedad relativa del
+    **aire** (`A_w = HR / 100`, ADR-0008), no del suelo — por eso oscilaba
+    0.16–0.93, lo que un suelo no hace. Esmeralda lo detectó y el dataset se
+    corrigió a `a_w = 0.99` constante (suelo a capacidad de campo). Este valor y
+    el del dataset ahora coinciden.
     """
 
     T_SUBSUELO_C: float = 19.8  # media anual del dataset (la onda diurna amortigua acá)
-    A_W_SUBSUELO: float = 0.99  # suelo a capacidad de campo (NO la HR del aire)
+    A_W_SUBSUELO: float = 0.99  # suelo a capacidad de campo (coincide con el dataset corregido)
     UV_SUBSUELO: float = 0.0  # el suelo bloquea el UV por completo
 
     def campo_inicial(self, rng: np.random.Generator | None = None) -> CampoAmbiental:

@@ -58,7 +58,9 @@ class _Stats:
 # qué el fallback "parece" el dato real sin serlo.
 _TIERRA: dict[str, _Stats] = {
     "temperature": _Stats(19.85, 9.10, 4.86, 36.45),
-    "a_w": _Stats(0.550, 0.227, 0.161, 0.928),
+    # a_w corregida a suelo a capacidad de campo (constante); la columna original
+    # era humedad del aire (media 0.55, sd 0.23) — ver data/README.md.
+    "a_w": _Stats(0.99, 0.0, 0.99, 0.99),
     "radiation": _Stats(802.6, 362.5, 85.0, 1352.9),
 }
 _ATACAMA: dict[str, _Stats] = {

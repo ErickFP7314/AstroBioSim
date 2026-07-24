@@ -99,13 +99,12 @@ Respondé esto antes de que tu Claude implemente; si no, asumirá defaults que q
    `Actividad_Agua_Minima_aw`, o sea el **mínimo diario**: una cota inferior
    pesimista, no el valor típico. Usarla como valor del campo garantizaba la
    extinción. Necesitamos la media (y ojalá la dispersión) de la serie real.
-3. **[Hito 1] Documentar el problema del control terrestre.** La columna
-   `Actividad_Agua_aw` de Fresno (media 0.55, rango 0.16–0.93) es **humedad relativa
-   del aire**, no actividad de agua del suelo — un suelo no oscila así de un día
-   para otro. Para un modelo de **subsuelo** no sirve directa. Dos salidas: conseguir
-   `a_w` de suelo, o documentar explícitamente que el control usa un valor teórico de
-   capacidad de campo (0.99). Esto es exactamente el tipo de límite que tu sección
-   "Qué reviso yo" existe para cazar.
+3. ~~**[Hito 1] Documentar el problema del control terrestre.**~~ ✅ **RESUELTO
+   (2026-07-24).** Esmeralda confirmó que la `a_w` de Fresno se calculó con humedad
+   del **aire** (por eso oscilaba 0.16–0.93). Como no hay medición de `a_w` de
+   suelo, el dataset `datos_tierra_control_2025.csv` se corrigió a **`a_w = 0.99`
+   constante** (suelo a capacidad de campo, asunción física documentada en
+   `data/README.md`). Coincide con `TierraSubsuelo.A_W_SUBSUELO`.
 4. **[Hito 2] `resampling.py`:** el mapeo por entorno ahora es UV. Superficies:
    `radiation × fracción UV`. **Encelado sigue en `R = 0`** — y ahora hay un motivo
    más fuerte: sus 320 W/m² de `Radiacion_Infrarroja_W_m2` son **calor**, no UV.

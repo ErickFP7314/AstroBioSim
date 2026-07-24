@@ -120,7 +120,7 @@ importa para comparar dinámicas.
 |---|---|---|---|
 | `FRACCION_UV` | 0.05 | **[CONV]** | fracción UV-A+UV-B de la irradiancia global |
 | **Tierra** `T_SUBSUELO_C` | 19.8 | **[LIT]** | media anual del dataset: es el valor al que amortigua la onda térmica |
-| **Tierra** `A_W_SUBSUELO` | 0.99 | **[LIT]** | suelo a capacidad de campo. **NO** la columna del dataset (ver §4) |
+| **Tierra** `A_W_SUBSUELO` | 0.99 | **[CONV]** | suelo a capacidad de campo. El dataset se corrigió a este mismo valor (la columna original era humedad del aire — resuelto, ver §4) |
 | **Tierra** `UV_SUBSUELO` | 0.0 | **[LIT]** | el suelo bloquea el UV por completo |
 | **Marte** `T_SUPERFICIE_C` | 36.9 | **[LIT]** | media de máximos diarios de Atacama |
 | **Marte** `T_PROFUNDO_C` | 7.8 | **[EST]** | media de **mínimos** diarios — **probablemente incorrecto**, ver §4 |
@@ -168,7 +168,7 @@ Ordenado por impacto sobre la credibilidad del resultado.
 |---|---|---|---|
 | 1 | **`a_w` media de Atacama.** Hoy usamos el **mínimo diario** (0.187) como valor del campo. Es una cota pesimista, no el valor típico. | Fidel | Sesga toda corrida hacia la extinción. Es el parámetro que más mueve el resultado. |
 | 2 | **`T_PROFUNDO_C` de Marte.** Es la media de los mínimos diarios, pero una onda térmica amortigua hacia la **media anual** (≈ 22.4 °C), no hacia el mínimo. | Jose | Cambia dónde queda la banda habitable. Creemos que está mal. |
-| 3 | **`a_w` del control terrestre.** La columna del dataset es humedad del **aire** (media 0.55, rango 0.16–0.93, sd 0.23); un suelo no oscila así. Usamos 0.99 teórico. | Fidel | O se consigue `a_w` de suelo, o se documenta como limitación conocida. |
+| ~~3~~ | ~~**`a_w` del control terrestre.**~~ ✅ **RESUELTO (2026-07-24):** Esmeralda confirmó que la columna era humedad del aire; el dataset se corrigió a `a_w = 0.99` constante (suelo a capacidad de campo, [CONV] documentada). | Fidel | — |
 | 4 | **`a_w_sup_min` de *E. coli* y *M. burtonii*.** **[EST]**. | Esmeralda | Define cuánto aguantan antes de morir, no cuándo crecen. **Es la única [EST] que queda.** |
 | 6 | **`ΔT = 25` del evento hidrotermal.** Apilado sobre una fumarola existente lleva T a 59 °C y mata a *M. burtonii* en el 29 % de los disparos. Puede ser correcto (el núcleo de una ventila **es** letal), pero hay que decidirlo. | Jose | Afecta la dinámica de Encelado. |
 | 7 | **`SEGUNDOS_UV_POR_TICK` y el Δt del autómata.** Tienen que ser coherentes. | Erick + Esmeralda | Si divergen, los umbrales UV dejan de significar lo que dicen, en silencio. |

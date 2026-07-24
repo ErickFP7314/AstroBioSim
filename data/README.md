@@ -39,9 +39,13 @@ Todos: series diarias de 2025 (365 filas). Ver **ADR-0010** para el esquema can�
 - **`Actividad_Agua_Minima_aw` (Atacama) es el MÍNIMO diario**, una cota inferior
   pesimista — no el valor típico. Usarla como constante del campo garantiza la
   extinción (ADR-0015). Falta re-extraer la media.
-- **`Actividad_Agua_aw` (Tierra) es humedad relativa del AIRE**, no actividad de
-  agua del suelo: media 0.55 con rango 0.16–0.93 y sd 0.23; un suelo no oscila
-  así de un día para otro. Para el modelo de **subsuelo** no sirve directa.
+- **`Actividad_Agua_aw` (Tierra) — CORREGIDA (2026-07-24).** La columna original
+  se había calculado con la humedad relativa del **aire** (`A_w = HR / 100`), no
+  del suelo, y por eso oscilaba 0.16–0.93 (media 0.55, sd 0.23) — un suelo no hace
+  eso. Esmeralda lo detectó. Al no haber medición de `a_w` de suelo, se reemplazó
+  por **`a_w = 0.99` constante**, valor de un suelo a **capacidad de campo**
+  (asunción física del control, no un dato medido). Con esto el control es un
+  subsuelo húmedo estable, coherente con `TierraSubsuelo`.
 
 ## Fuera de alcance (no se usan)
 - **NASA Exoplanet Archive**, **PHL Habitable Worlds Catalog**: exoplanetas — fuera del
