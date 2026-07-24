@@ -4,6 +4,12 @@
 - **Fecha:** 2026-07-17
 - **Modifica:** ADR-0002, ADR-0003, ADR-0005, ADR-0006
 
+
+> **Modificado por ADR-0012 y ADR-0014:** los atributos de especie ya no son
+> `t_min/t_max/r_letal/a_w_min/mu_max` sino dos juegos de umbrales (crecimiento y
+> supervivencia), y `R` pasó de flujo radiativo a irradiancia UV. El `A_w = HR/100`
+> que documenta este ADR resultó ser humedad del AIRE, no del suelo: ver ADR-0014.
+
 ## Contexto
 El documento de especificación original define **cuatro** variables críticas:
 temperatura (`T`), radiación (`R`), presión (`P`) y actividad de agua (`A_w`).

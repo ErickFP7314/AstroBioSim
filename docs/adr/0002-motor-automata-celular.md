@@ -4,6 +4,12 @@
 - **Fecha:** 2026-07-15
 - **Modificado por:** [ADR-0008](0008-reduccion-a-tres-variables-ambientales.md) — la variable presión (`P`) fue eliminada de las reglas de transición.
 
+
+> **Modificado por ADR-0012 y ADR-0013:** el estado deja de ser binario (pasa a
+> `MUERTA`/`LATENTE`/`ACTIVA`) y la regla de transición deja de ser una máscara
+> booleana (pasa a la tasa continua `μ = μ_opt·γ(T)·γ(a_w)·γ(UV)`). La muerte sigue
+> siendo irreversible.
+
 ## Contexto
 El espacio de simulación es una grilla 2D `G` de dimensiones `M×N` que
 representa un corte transversal del subsuelo. El estado de cada celda

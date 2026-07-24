@@ -30,8 +30,18 @@ Todos: series diarias de 2025 (365 filas). Ver **ADR-0010** para el esquema can�
   de mar a 34.5 psu). **T≈2.4 °C**: agua de fondo, coherente con la especie
   psicrotolerante `MBurtonii` (ADR-0011), no con la termófila previa.
 - `tierra`, `atacama`: sin NaN. Rangos físicos correctos.
-- **Radiación en W/m²** (flujo), no dosis en Gy: se usa como proxy operativo de `R`
-  (ADR-0010). Encelado mapea `R≈0` (su IR es calor, no dosis ionizante).
+- **Radiación en W/m²**: la columna trae **irradiancia global**, y `R` es
+  **irradiancia UV** (ADR-0014, reemplaza el proxy de flujo de ADR-0010). El
+  adaptador convierte multiplicando por la fracción UV, con el factor documentado.
+  No se usa dosis en Gy: a 0.077 Gy/año en Marte, la dosis ionizante no
+  discrimina en la escala de la simulación. Encelado mapea `R = 0` (su IR es
+  calor, no UV).
+- **`Actividad_Agua_Minima_aw` (Atacama) es el MÍNIMO diario**, una cota inferior
+  pesimista — no el valor típico. Usarla como constante del campo garantiza la
+  extinción (ADR-0015). Falta re-extraer la media.
+- **`Actividad_Agua_aw` (Tierra) es humedad relativa del AIRE**, no actividad de
+  agua del suelo: media 0.55 con rango 0.16–0.93 y sd 0.23; un suelo no oscila
+  así de un día para otro. Para el modelo de **subsuelo** no sirve directa.
 
 ## Fuera de alcance (no se usan)
 - **NASA Exoplanet Archive**, **PHL Habitable Worlds Catalog**: exoplanetas — fuera del

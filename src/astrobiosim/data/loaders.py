@@ -8,7 +8,8 @@ Columnas canónicas EXACTAS que devuelve cada adaptador:
     "t"           índice temporal
     "temperature" (°C)
     "a_w"         (0..1, provista directamente — ya NO se calcula humidity/100)
-    "radiation"   (W/m², flujo; proxy operativo de R, no dosis en Gy)
+    "radiation"   (W/m², irradiancia solar GLOBAL. `mapear_radiacion` la
+                   convierte a la banda UV, que es lo que alimenta `R` — ADR-0014)
 (cargar_atacama expone además "temperature_min"/"temperature_max".)
 """
 from __future__ import annotations

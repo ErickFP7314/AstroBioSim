@@ -220,7 +220,7 @@
 
 > *Como biotecnologa, quiero umbrales de especie realistas para que los resultados sean defendibles.*
 >
-> Calibrar `t_min/t_max/r_letal/a_w_min` de cada especie con literatura.
+> Calibrar `t_min/t_opt/t_max/a_w_min/uv_max` y los umbrales de supervivencia de cada especie con literatura.
 > Rama: `fix/bio-calibracion`.
 
 - [ ] Los umbrales de cada especie citan fuente de literatura

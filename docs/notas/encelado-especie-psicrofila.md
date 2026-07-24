@@ -13,7 +13,7 @@
 |---|---|---|
 | **T** | ~2.4 °C, casi constante | Necesita **psicrófila/psicrotolerante** |
 | **A_w** | ~0.9817 (agua de mar, 34.5 psu) | Medio acuoso salino: `a_w_min` alto, ~0.94–0.96 |
-| **R** | mapeada a ≈0 (subglacial, ver ADR-0010) | Radiación **no es limitante** → `r_letal` alto/no crítico |
+| **R** | mapeada a 0 (subglacial, ADR-0014) | UV **no es limitante** → `uv_max`/`uv_letal` altos, no críticos |
 
 ## Por qué Methanococcoides burtonii
 
@@ -40,15 +40,17 @@ class MBurtonii(Microorganismo):
     t_min = -2.0      # °C
     t_max = 29.0      # °C  (cubre los ~2.4 °C del dato con holgura)
     a_w_min = 0.94    # medio marino, necesita agua líquida
-    r_letal = 1_000.0 # W/m² — alto: R≈0 subglacial, radiación no limita (ADR-0010)
-    mu_max = ...      # menor que E. coli: crecimiento lento en frío
+    uv_max = 1.0      # W/m² — irrelevante: R=0 subglacial (ADR-0014)
+    uv_letal = 10.0   # W/m² — idem; se fija por completitud
+    mu_opt = 0.069    # h⁻¹ — la más lenta de las tres: metanógena psicrotolerante
 ```
 
-> **Nota sobre `r_letal`:** como Encelado mapea `R≈0`, el valor concreto es casi
+> **Nota sobre los umbrales UV:** como Encelado mapea `R≈0`, el valor concreto es casi
 > irrelevante mientras sea positivo; ponelo alto para que la radiación nunca sea
 > el factor que mata. El estrés real en Encelado es térmico/salino, no radiativo.
 
 ## Qué falta cerrar (Hito 4)
-1. Re-calibrar `t_min/t_max/a_w_min/r_letal` finales de `MBurtonii` con literatura.
-2. Fijar `mu_max` **relativo** entre las tres especies.
+1. ~~Re-calibrar los umbrales finales de `MBurtonii`~~ — HECHO: `-2.5 / 23.4 / 29.5`,
+   `a_w_min = 0.95` (ADR-0012). Queda pendiente re-derivar `uv_max`/`uv_letal`.
+2. ~~Fijar `mu_opt` **relativo**~~ — HECHO: 2.1 / 0.26 / 0.069 h⁻¹.
 3. Documentar la fuente de literatura de cada umbral en el test de la especie.

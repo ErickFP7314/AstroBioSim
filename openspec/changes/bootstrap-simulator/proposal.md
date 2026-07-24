@@ -19,20 +19,27 @@ arquitectura de software implementable, dividida en incrementos verificables.
 
 ### Incluye
 1. **Motor biológico** — jerarquía POO:
-   - `Microorganismo` (clase base abstracta) con atributos:
-     `t_min`, `t_max` (°C), `r_letal` (W/m², ADR-0010), `a_w_min`, `mu_max`.
+   - `Microorganismo` (clase base abstracta) con **dos** juegos de umbrales
+     (ADR-0012): crecimiento (`t_min`, `t_opt`, `t_max`, `a_w_min`, `uv_max`) y
+     supervivencia (`t_sup_min`, `t_sup_max`, `a_w_sup_min`, `uv_letal`), más
+     `mu_opt`. `R` es irradiancia UV en W/m² (ADR-0014).
    - Especies derivadas: `EColi` (control terrestre), `DRadiodurans` (Marte),
      `MBurtonii` (Encelado, ADR-0011).
 2. **Motor ambiental** — jerarquía POO:
    - `PlanetaSubsuelo` (base) → `TierraSubsuelo`, `MarteSubsuelo`, `EnceladoSubglacial`.
    - Vector ambiental por celda `E_{x,y} = {T, R, A_w}`.
 3. **Motor de Autómata Celular**:
-   - Grilla 2D `M×N`, estado de celda ∈ {0 vacía, 1 ocupada}.
-   - Vecindad de Moore (8 vecinos).
-   - Reglas de transición: muerte por estrés ambiental (`T<T_min ∨ T>T_max ∨
-     R>R_letal ∨ A_w<A_w_min`), muerte por sobrepoblación/aislamiento,
-     reproducción condicionada a los tres umbrales.
-   - **Restricción estricta:** sin latencia/esporulación — la muerte es irreversible.
+   - Grilla 2D `M×N`, estado de celda ∈ {0 `MUERTA`, 1 `LATENTE`, 2 `ACTIVA`}
+     (ADR-0012).
+   - Vecindad de Moore (8 vecinos); para reproducir se cuentan **solo** las
+     celdas `ACTIVA`.
+   - Reglas de transición: dentro de `condiciones_crecimiento` → `ACTIVA`; fuera
+     de crecimiento pero dentro de `condiciones_supervivencia` → `LATENTE`; fuera
+     de supervivencia → `MUERTA`. La reproducción usa la tasa continua
+     `μ = μ_opt·γ(T)·γ(a_w)·γ(UV)` de ADR-0013, no una máscara binaria.
+   - **Restricción estricta:** la muerte es **irreversible** (`MUERTA` es
+     absorbente) y **no hay esporulación**. `LATENTE → ACTIVA` sí es reversible:
+     es quiescencia/anhidrobiosis, no una resurrección.
 4. **Modo Sandbox**: parámetros ambientales estáticos o vía sliders.
 5. **Modo Analógico**: ingesta del dataset de Atacama (CRC1211DB) con limpieza y
    remuestreo al marco temporal de la simulación.

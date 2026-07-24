@@ -4,6 +4,13 @@
 - **Fecha:** 2026-07-21
 - **Modifica:** ADR-0010 (resuelve su cuestión abierta #1). Relacionado: ADR-0001, ADR-0003.
 
+> **Modificado por ADR-0012 y ADR-0014:** los valores de partida de abajo fueron
+> re-calibrados. `MBurtonii` quedó en los cardinales publicados
+> `t_min = -2.5 / t_opt = 23.4 / t_max = 29.5` con `a_w_min = 0.95`, y el `r_letal`
+> se reemplazó por `uv_max` / `uv_letal`. Con `t_max = 29.5` los núcleos de las
+> fumarolas (~27 °C) quedan **habitables**: la vida se agrupa en las ventilas en
+> vez de evitarlas, que es la lectura ecológica que este ADR buscaba.
+
 ## Contexto
 ADR-0010 dejó abierta una incompatibilidad biológica: los datos reales 2025 de las
 ventilas hidrotermales dan **T ≈ 2.4 °C** (agua de fondo del océano subglacial),

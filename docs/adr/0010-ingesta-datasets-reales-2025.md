@@ -6,6 +6,12 @@
   matiza la definición de `R` de [ADR-0003](0003-representacion-estado-y-ambiente.md) /
   [ADR-0008](0008-reduccion-a-tres-variables-ambientales.md).
 
+
+> **Modificado por ADR-0014:** `R` deja de ser un "proxy operativo" de flujo
+> radiativo total y pasa a ser **irradiancia UV** (W/m²). La cuestión abierta sobre
+> si el flujo total era defendible como proxy queda resuelta: no lo era. Los
+> umbrales `r_letal` se reemplazan por `uv_max` / `uv_letal`.
+
 ## Contexto
 El equipo consiguió datos reales 2025 (procesados por Esmeralda) para los **tres**
 entornos, no solo Atacama. Al inspeccionar su estructura aparecen tres diferencias

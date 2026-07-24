@@ -8,6 +8,15 @@
 
 ## Instrucciones para tu Claude
 
+> ⚠️ **Esta sección ya está HECHA y sus valores quedaron OBSOLETOS.** Se conserva
+> como registro de cómo arrancó la tarea. Los atributos `r_letal` y `mu_max` ya no
+> existen, y los umbrales de abajo fueron reemplazados por ADR-0012 y ADR-0014.
+> **Andá directo a la sección "🔄 Actualización 2026-07-23" al final del archivo**:
+> ahí está el estado real y lo que falta.
+
+<details>
+<summary>Ver instrucciones originales (histórico — no implementar)</summary>
+
 1. Implementá la clase base abstracta `Microorganismo` según el contrato §3.2 del
    `CLAUDE.md`: atributos `t_min, t_max, r_letal, a_w_min, mu_max` y el método
    vectorizado `condiciones_habitables(campo)`.
@@ -22,21 +31,18 @@
 3. Escribí tests: cada especie devuelve la máscara correcta cuando **una sola**
    variable está fuera de umbral (una prueba por variable y por especie).
 
-> **Cambios por los datos reales 2025 (ADR-0010) — a resolver con Jose/Fidel:**
-> - **`r_letal` ahora en W/m²**, no en Gy (los datos dan flujo radiativo, no dosis).
->   Los valores 50/5000 "Gy" quedan obsoletos como magnitud: **re-derivá los umbrales
->   de radiación en W/m²** con literatura.
-> - **Encelado — especie decidida (ADR-0011):** la termófila *M. okinawensis* se
->   reemplaza por **`MBurtonii`** (metanógena psicrotolerante, T≈-2…29 °C), porque
->   los datos de ventila dan **T≈2.4 °C**. Umbrales de partida y justificación en
->   **`docs/notas/encelado-especie-psicrofila.md`**. Solo falta que re-calibres los
->   valores finales con literatura.
+</details>
+
+**Estado real (2026-07-23):** implementado y mergeado en `main`, con los valores
+corregidos por ADR-0012/0013/0014. La especie de Encelado es `MBurtonii` (ADR-0011)
+con los cardinales publicados `-2.5 / 23.4 / 29.5`.
 
 ## Criterios de aceptación
 - Las tres especies instancian y heredan de `Microorganismo`.
 - `condiciones_habitables` es **vectorizada** (sin bucles) y devuelve `bool (M,N)`.
 - No existe ningún atributo ni lógica de **presión**.
-- No hay estados de **latencia** (la muerte es definitiva).
+- La **muerte es definitiva** (`MUERTA` es absorbente). Sí existe el estado
+  `LATENTE` (viva, sin reproducirse) desde ADR-0012 — eso NO es resucitar.
 
 ## Tarea de Hito 3 — Notebook de análisis (`notebooks/analisis.ipynb`)
 Después del motor biológico (Hito 1), construís el notebook de análisis
@@ -56,8 +62,9 @@ verifico, con mi criterio de biotecnología:
 - ¿Los **umbrales** de cada especie son coherentes con la literatura? (E. coli
   mesófila; *D. radiodurans* radiorresistente y anhidrobiótica; *M. burtonii*
   metanógena psicrotolerante que necesita agua líquida — ADR-0011). Ajusto los valores de partida.
-- ¿La `mu_max` (tasa de reproducción) tiene sentido **relativo** entre especies?
-- ¿Se respeta que **no hay latencia**? Ninguna célula debería "revivir".
+- ¿La `mu_opt` (tasa de crecimiento en el óptimo) tiene sentido **relativo** entre especies?
+- ¿Se respeta que **ninguna célula muerta revive**? `LATENTE → ACTIVA` sí es
+  válido (ADR-0012); `MUERTA → cualquier cosa` nunca lo es.
 - ¿La asignación especie↔entorno es defendible (*D. radiodurans* para Marte, etc.)?
 
 ## Mapa: tarea → historia de usuario (Trello)
@@ -73,9 +80,9 @@ aceptación de cada historia están en el checklist de su tarjeta.
 
 ## Preguntas para configurar tu agente de IA
 Respondé esto antes de que tu Claude implemente; si no, asumirá defaults que quizá no querés:
-1. **Encelado (especie ya decidida — `MBurtonii`, ADR-0011):** ¿confirmás los umbrales de partida (`t_min≈-2`, `t_max≈29`, `a_w_min≈0.94`, `r_letal` alto) o los ajustás con literatura antes de implementar?
-2. **Umbrales:** ¿fijás vos los valores calibrados (`t_min`/`t_max`/`r_letal` en W/m²/`a_w_min`) o el agente propone y vos ajustás con literatura?
-3. **mu_max relativo:** ¿qué especie se reproduce más rápido? ¿Qué orden relativo entre las tres?
+1. ~~**Encelado — umbrales de partida**~~ — RESUELTO: `MBurtonii` quedó en los cardinales publicados `-2.5 / 23.4 / 29.5` con `a_w_min = 0.95` (ADR-0011 + ADR-0012).
+2. **Umbrales:** ¿fijás vos los valores calibrados (`t_min`/`t_opt`/`t_max`/`uv_max`/`a_w_min` y los de supervivencia) o el agente propone y vos ajustás con literatura?
+3. **`mu_opt` relativo:** ¿qué especie se reproduce más rápido? ¿Qué orden relativo entre las tres?
 4. **Estado inicial de la grilla:** ¿% de celdas vivas al arranque y cómo se distribuyen (aleatorio uniforme, cluster central)?
 5. **Notebook:** ¿nº de repeticiones Montecarlo y semilla(s) por defecto?
 6. **Curvas:** ¿qué métrica graficás (población absoluta viva, fracción viva, media ± σ)?
