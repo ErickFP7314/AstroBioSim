@@ -17,12 +17,12 @@
 - Este documento dice **qué** falta; `docs/instrucciones/<nombre>.md` dice **cómo**
   hacerlo, y `docs/adr/` dice **por qué** se decidió así.
 
-**Progreso global:** 32/103 criterios (31%)
+**Progreso global:** 36/103 criterios (35%)
 
 | Integrante | Área | Criterios cumplidos |
 |---|---|---|
 | 🟢 **Esmeralda** | Motor biológico + notebook | 10/26 (38%) |
-| 🟡 **Fidel** | Datos análogos + validación | 4/15 (27%) |
+| 🟡 **Fidel** | Datos análogos + validación | 8/15 (53%) |
 | 🔵 **Jose** | Motor ambiental + eventos | 13/24 (54%) |
 | 🟣 **Erick** | Autómata Celular + UI | 5/38 (13%) |
 
@@ -34,21 +34,7 @@ _(vacío)_
 
 ---
 
-## Hito 2 — Dominio — 2/35 criterios
-
-### ⬜ 🟡 Remuestreo + Modo Analogico
-
-**Dueño:** Fidel · **Criterios:** 0/4
-
-> *Como capa de datos, quiero convertir las series reales en una secuencia de CampoAmbiental para inyectarlas iteracion por iteracion.*
->
-> `resampling.py` -> secuencia de CampoAmbiental; `modes/analog.py` la entrega al orquestador.
-> Ramas: `feat/data-resampling` + `feat/modes-analogico`.
-
-- [ ] El remuestreo produce una secuencia de CampoAmbiental (uno por iteracion) en rango fisico
-- [ ] Imputa/enmascara el hueco de 8 dias de ventilas SIN inventar valores fuera de rango
-- [ ] `mapear_radiacion`: superficies convierten a banda UV con el factor DOCUMENTADO; Encelado mapea R=0 (ADR-0014)
-- [ ] El Modo Analogico no duplica el bucle de Sandbox (DRY); `pytest` en verde
+## Hito 2 — Dominio — 2/31 criterios
 
 ### ⬜ 🟣 Orquestador: simulation.py
 
@@ -268,7 +254,21 @@ _(vacío)_
 
 ---
 
-## En revisión — 5/5 criterios
+## En revisión — 9/9 criterios
+
+### ✅ 🟡 Remuestreo + Modo Analogico
+
+**Dueño:** Fidel · **Criterios:** 4/4
+
+> *Como capa de datos, quiero convertir las series reales en una secuencia de CampoAmbiental para inyectarlas iteracion por iteracion.*
+>
+> `resampling.py` -> secuencia de CampoAmbiental; `modes/analog.py` la entrega al orquestador.
+> Ramas: `feat/data-resampling` + `feat/modes-analogico`.
+
+- [x] El remuestreo produce una secuencia de CampoAmbiental (uno por iteracion) en rango fisico
+- [x] Imputa/enmascara el hueco de 8 dias de ventilas SIN inventar valores fuera de rango
+- [x] `mapear_radiacion`: superficies convierten a banda UV con el factor DOCUMENTADO; Encelado mapea R=0 (ADR-0014)
+- [x] El Modo Analogico no duplica el bucle de Sandbox (DRY); `pytest` en verde
 
 ### ✅ 🟣 Automata Celular: reglas de transicion + paso()
 
@@ -288,20 +288,6 @@ _(vacío)_
 ---
 
 ## ✅ Hecho — 25/25 criterios
-
-### ✅ 🟡 Capa de datos: loaders + DataFrame canonico
-
-**Dueño:** Fidel · **Criterios:** 4/4
-
-> *Como capa de datos, quiero cargar los datasets reales 2025 en un esquema unico para alimentar el Modo Analogico.*
->
-> Implementar `cargar_control_tierra` / `cargar_atacama` / `cargar_ventilas` + fallback sintetico (contrato §3.5, ADR-0010).
-> Rama: `feat/data-loaders`.
-
-- [x] Cada loader devuelve DataFrame con columnas EXACTAS `t, temperature, a_w, radiation` (Atacama ademas `temperature_min/max`)
-- [x] `a_w` siempre en `[0,1]` y se usa directa (ya no `humidity/100`)
-- [x] El fallback sintetico respeta la misma interfaz canonica
-- [x] `pytest tests/unit/test_data.py` pasa en verde
 
 ### ✅ 🔵 Motor ambiental: CampoAmbiental + 3 entornos
 
@@ -355,6 +341,20 @@ _(vacío)_
 - [x] `condiciones_habitables()` sigue existiendo como alias: no rompe codigo previo
 - [x] Ningun `a_w_min` de crecimiento baja de 0.605, verificado por test
 - [x] `tests/integration/test_especie_en_su_entorno.py` en verde
+
+### ✅ 🟡 Capa de datos: loaders + DataFrame canonico
+
+**Dueño:** Fidel · **Criterios:** 4/4
+
+> *Como capa de datos, quiero cargar los datasets reales 2025 en un esquema unico para alimentar el Modo Analogico.*
+>
+> Implementar `cargar_control_tierra` / `cargar_atacama` / `cargar_ventilas` + fallback sintetico (contrato §3.5, ADR-0010).
+> Rama: `feat/data-loaders`.
+
+- [x] Cada loader devuelve DataFrame con columnas EXACTAS `t, temperature, a_w, radiation` (Atacama ademas `temperature_min/max`)
+- [x] `a_w` siempre en `[0,1]` y se usa directa (ya no `humidity/100`)
+- [x] El fallback sintetico respeta la misma interfaz canonica
+- [x] `pytest tests/unit/test_data.py` pasa en verde
 
 ---
 
