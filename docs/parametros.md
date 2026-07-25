@@ -137,6 +137,30 @@ importa para comparar dinámicas.
 
 ---
 
+## 2.1 Eventos estocásticos (`engine/stochastic.py` — dueño: Jose)
+
+| Evento | Constante | Valor | Proc. | Justificación |
+|---|---|---|---|---|
+| `MicroFisuraMarte` | `probabilidad_disparo` | 0.05 | **[CONV]** | tasa de disparo por tick, sin dato directo de frecuencia de fisuras |
+| `MicroFisuraMarte` | `radio_celdas` | 3.0 | **[CONV]** | alcance espacial de la desecación puntual |
+| `MicroFisuraMarte` | `caida_min` / `caida_max` | 0.3 / 0.7 | **[CONV]** | fracción de `A_w` perdida dentro del radio |
+| `EmisionHidrotermalEncelado` | `probabilidad_disparo` | 0.1 | **[CONV]** | tasa de disparo por tick |
+| `EmisionHidrotermalEncelado` | `mu_delta_t` | 25.0 | **[EST]** | pico térmico sobre el fondo oceánico; ver deuda §4.6 (apilado sobre una fumarola existente puede llevar a *M. burtonii* a su `t_max`) |
+| `EmisionHidrotermalEncelado` | `sigma_delta_t` | 5.0 | **[EST]** | dispersión del pico, sin dato directo |
+| `EmisionHidrotermalEncelado` | `sigma_espacial` | 4.0 | **[CONV]** | mismo radio de decaimiento que las fumarolas fijas de `EnceladoSubglacial` |
+| `SalmueraDelicuescente` | `probabilidad_disparo` | 0.05 | **[CONV]** | espejo de `MicroFisuraMarte`: sin dato directo de frecuencia de salmueras |
+| `SalmueraDelicuescente` | `radio_celdas` | 3.0 | **[CONV]** | espejo de `MicroFisuraMarte` |
+| `SalmueraDelicuescente` | `a_w_objetivo_min` | 0.90 | **[DER]** | igual al `a_w_min` de *D. radiodurans* (§1.2): por debajo, el evento no reactivaría a la especie que motiva ADR-0015 |
+| `SalmueraDelicuescente` | `a_w_objetivo_max` | 0.98 | **[CONV]** | igual al `A_W_OCEANO` de Encelado: techo físicamente plausible para agua líquida en un subsuelo |
+| `SalmueraDelicuescente` | `duracion_min_ticks` / `duracion_max_ticks` | 3.0 / 10.0 | **[EST]** | constante de decaimiento (ticks) del refugio; **es deuda declarada por ADR-0015**: se deja como parámetro explícito para que Erick lo barra (`frecuencia × magnitud → persistencia`), no un valor fijo a defender |
+
+> `SalmueraDelicuescente` es la contraparte de `MicroFisuraMarte` (ADR-0015):
+> sube `A_w` en vez de bajarla, y su efecto se disipa exponencialmente
+> (`intensidad = exp(-edad / duracion)`) en vez de ser instantáneo, por eso
+> necesita estado interno entre ticks (ver docstring de la clase).
+
+---
+
 ## 3. Qué produce el modelo con estos valores
 
 | Especie / entorno | `ACTIVA` | `LATENTE` | `MUERTA` |
