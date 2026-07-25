@@ -34,21 +34,21 @@ _(vacío)_
 
 ---
 
-## Hito 2 — Dominio — 2/26 criterios
+## Hito 2 — Dominio — 6/26 criterios
 
-### ⬜ 🟢 Modo Sandbox
+### ✅ 🟢 Modo Sandbox
 
-**Dueño:** Esmeralda · **Criterios:** 0/4
+**Dueño:** Esmeralda · **Criterios:** 4/4
 
 > *Como usuario, quiero fijar T, R y A_w manualmente para explorar escenarios sin depender de un dataset.*
 >
 > `modes/sandbox.py`: parametros ambientales estaticos/ajustables.
 > Rama: `feat/modes-sandbox`.
 
-- [ ] Sandbox construye un CampoAmbiental a partir de parametros T / UV / A_w dados (R es irradiancia UV, ADR-0014)
-- [ ] Cambiar un parametro cambia el resultado de la corrida de forma esperada
-- [ ] Comparte el mismo bucle que el Modo Analogico (DRY)
-- [ ] `pytest` en verde
+- [x] Sandbox construye un CampoAmbiental a partir de parametros T / UV / A_w dados (R es irradiancia UV, ADR-0014)
+- [x] Cambiar un parametro cambia el resultado de la corrida de forma esperada
+- [x] Comparte el mismo bucle que el Modo Analogico (DRY)
+- [x] `pytest` en verde
 
 ### ⬜ 🔵 Evento SalmueraDelicuescente (microrefugios)
 
