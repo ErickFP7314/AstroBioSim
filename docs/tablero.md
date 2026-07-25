@@ -6,7 +6,7 @@
 > ver qué está hecho, qué falta y con qué criterios de aceptación se da por
 > terminada cada tarea.
 >
-> **Última sincronización:** 2026-07-24 · regenerar con `python scripts/sync_tablero.py`
+> **Última sincronización:** 2026-07-25 · regenerar con `python scripts/sync_tablero.py`
 
 ## Cómo leerlo
 
@@ -17,14 +17,14 @@
 - Este documento dice **qué** falta; `docs/instrucciones/<nombre>.md` dice **cómo**
   hacerlo, y `docs/adr/` dice **por qué** se decidió así.
 
-**Progreso global:** 41/103 criterios (40%)
+**Progreso global:** 56/103 criterios (54%)
 
 | Integrante | Área | Criterios cumplidos |
 |---|---|---|
-| 🟢 **Esmeralda** | Motor biológico + notebook | 10/26 (38%) |
+| 🟢 **Esmeralda** | Motor biológico + notebook | 14/26 (54%) |
 | 🟡 **Fidel** | Datos análogos + validación | 8/15 (53%) |
-| 🔵 **Jose** | Motor ambiental + eventos | 13/24 (54%) |
-| 🟣 **Erick** | Autómata Celular + UI | 10/38 (26%) |
+| 🔵 **Jose** | Motor ambiental + eventos | 19/24 (79%) |
+| 🟣 **Erick** | Autómata Celular + UI | 15/38 (39%) |
 
 ---
 
@@ -34,46 +34,7 @@ _(vacío)_
 
 ---
 
-## Hito 2 — Dominio — 6/26 criterios
-
-### ✅ 🟢 Modo Sandbox
-
-**Dueño:** Esmeralda · **Criterios:** 4/4
-
-> *Como usuario, quiero fijar T, R y A_w manualmente para explorar escenarios sin depender de un dataset.*
->
-> `modes/sandbox.py`: parametros ambientales estaticos/ajustables.
-> Rama: `feat/modes-sandbox`.
-
-- [x] Sandbox construye un CampoAmbiental a partir de parametros T / UV / A_w dados (R es irradiancia UV, ADR-0014)
-- [x] Cambiar un parametro cambia el resultado de la corrida de forma esperada
-- [x] Comparte el mismo bucle que el Modo Analogico (DRY)
-- [x] `pytest` en verde
-
-### ⬜ 🔵 Evento SalmueraDelicuescente (microrefugios)
-
-**Dueño:** Jose · **Criterios:** 0/6
-
-> ADR-0015. Contraparte de MicroFisuraMarte: hoy TODOS los eventos degradan el ambiente, lo que sesga cada corrida hacia la extincion por construccion. Este evento es el que le da a Marte algo que estudiar.
-
-- [ ] `SalmueraDelicuescente.aplicar()` SUBE `A_w` transitoriamente en un radio, con el `rng` inyectado
-- [ ] Misma semilla -> mismo campo (reproducible)
-- [ ] El refugio decae/expira: no es permanente y su duracion es un PARAMETRO (Erick lo va a barrer)
-- [ ] Test: aplicado al campo de Marte, `DRadiodurans.condiciones_crecimiento` pasa de 0% a >0%
-- [ ] `pytest tests/unit/test_stochastic.py` en verde
-- [ ] `aplicar()` devuelve SIEMPRE un CampoAmbiental nuevo, tambien cuando el evento no dispara (hoy devuelve el mismo objeto: aliasing intermitente segun la semilla)
-
-### ⬜ 🟣 Cinetica de crecimiento continua (CTMI + gamma)
-
-**Dueño:** Erick · **Criterios:** 0/5
-
-> ADR-0013. Reemplaza la mascara binaria por una tasa continua. Nace de la propuesta de Esmeralda de 'pesos que favorecen el crecimiento', con los pesos derivados de valores cardinales publicados.
-
-- [ ] `transition_rules.py` implementa mu = mu_opt * gamma_T * gamma_aw * gamma_UV, todos en [0,1]
-- [ ] gamma_T por CTMI vale 1.0 exactamente en t_opt y 0.0 en t_min / t_max
-- [ ] p_repro = clip(mu*dt, 0, 1) se muestrea con el `rng` inyectado (nunca np.random global)
-- [ ] Tests de bordes numericos (T = t_min, t_opt, t_max) sin division por cero
-- [ ] `pytest tests/unit/test_transition.py` en verde
+## Hito 2 — Dominio — 2/11 criterios
 
 ### 🔸 🟢 Re-derivar umbrales UV y de supervivencia
 
@@ -239,55 +200,25 @@ _(vacío)_
 
 ---
 
-## En revisión — 14/14 criterios
+## En revisión
 
-### ✅ 🟣 Orquestador: simulation.py
-
-**Dueño:** Erick · **Criterios:** 5/5
-
-> *Como orquestador, quiero acoplar el motor biologico y el ambiental en el bucle del AC para correr una simulacion completa.*
->
-> `simulation.py` une motores. Necesita el Hito 1 mergeado en `main`.
-> Rama: `feat/simulation-orquestador`.
-
-- [x] `simulation.py` corre N iteraciones acoplando campo + especie + `paso()` sin errores
-- [x] Misma semilla -> misma corrida (reproducible)
-- [x] Devuelve la serie de estados/poblaciones esperada para un caso de prueba
-- [x] `pytest tests/integration/` pasa en verde
-- [x] El orquestador propaga los tres estados y aplica los eventos (incluida la salmuera) antes de `paso()`
-
-### ✅ 🟡 Remuestreo + Modo Analogico
-
-**Dueño:** Fidel · **Criterios:** 4/4
-
-> *Como capa de datos, quiero convertir las series reales en una secuencia de CampoAmbiental para inyectarlas iteracion por iteracion.*
->
-> `resampling.py` -> secuencia de CampoAmbiental; `modes/analog.py` la entrega al orquestador.
-> Ramas: `feat/data-resampling` + `feat/modes-analogico`.
-
-- [x] El remuestreo produce una secuencia de CampoAmbiental (uno por iteracion) en rango fisico
-- [x] Imputa/enmascara el hueco de 8 dias de ventilas SIN inventar valores fuera de rango
-- [x] `mapear_radiacion`: superficies convierten a banda UV con el factor DOCUMENTADO; Encelado mapea R=0 (ADR-0014)
-- [x] El Modo Analogico no duplica el bucle de Sandbox (DRY); `pytest` en verde
-
-### ✅ 🟣 Automata Celular: reglas de transicion + paso()
-
-**Dueño:** Erick · **Criterios:** 5/5
-
-> *Como motor de AC, quiero calcular S^{t+1} desde S^t de forma sincrona para simular la evolucion poblacional.*
->
-> Implementar `transition_rules` + `paso(estado, campo, especie)` con vecindad de Moore, contra stubs de campo/especie (contrato §3.3).
-> Rama: `feat/engine-transicion`.
-
-- [x] `paso()` devuelve nuevo estado `(M,N) int8` SIN modificar el estado de entrada (doble buffer)
-- [x] Conteo de vecinos de Moore correcto en casos de prueba (esquinas y bordes)
-- [x] Estado int8 {MUERTA=0, LATENTE=1, ACTIVA=2}: fuera de crecimiento -> LATENTE; fuera de supervivencia -> MUERTA, absorbente (ADR-0012)
-- [x] Vectorizado (sin bucles Python); pytest tests/unit/test_transition.py en verde (19 tests)
-- [x] `paso()` recibe el `rng` inyectado; el conteo de vecinos de Moore cuenta SOLO celdas ACTIVA
+_(vacío)_
 
 ---
 
-## ✅ Hecho — 25/25 criterios
+## ✅ Hecho — 54/54 criterios
+
+### ✅ 🟣 Cinetica de crecimiento continua (CTMI + gamma)
+
+**Dueño:** Erick · **Criterios:** 5/5
+
+> ADR-0013. Reemplaza la mascara binaria por una tasa continua. Nace de la propuesta de Esmeralda de 'pesos que favorecen el crecimiento', con los pesos derivados de valores cardinales publicados.
+
+- [x] `transition_rules.py` implementa mu = mu_opt * gamma_T * gamma_aw * gamma_UV, todos en [0,1]
+- [x] gamma_T por CTMI vale 1.0 exactamente en t_opt y 0.0 en t_min / t_max
+- [x] p_repro = clip(mu*dt, 0, 1) se muestrea con el `rng` inyectado (nunca np.random global)
+- [x] Tests de bordes numericos (T = t_min, t_opt, t_max) sin division por cero
+- [x] `pytest tests/unit/test_transition.py` en verde
 
 ### ✅ 🔵 Motor ambiental: CampoAmbiental + 3 entornos
 
@@ -355,6 +286,77 @@ _(vacío)_
 - [x] `a_w` siempre en `[0,1]` y se usa directa (ya no `humidity/100`)
 - [x] El fallback sintetico respeta la misma interfaz canonica
 - [x] `pytest tests/unit/test_data.py` pasa en verde
+
+### ✅ 🟣 Automata Celular: reglas de transicion + paso()
+
+**Dueño:** Erick · **Criterios:** 5/5
+
+> *Como motor de AC, quiero calcular S^{t+1} desde S^t de forma sincrona para simular la evolucion poblacional.*
+>
+> Implementar `transition_rules` + `paso(estado, campo, especie)` con vecindad de Moore, contra stubs de campo/especie (contrato §3.3).
+> Rama: `feat/engine-transicion`.
+
+- [x] `paso()` devuelve nuevo estado `(M,N) int8` SIN modificar el estado de entrada (doble buffer)
+- [x] Conteo de vecinos de Moore correcto en casos de prueba (esquinas y bordes)
+- [x] Estado int8 {MUERTA=0, LATENTE=1, ACTIVA=2}: fuera de crecimiento -> LATENTE; fuera de supervivencia -> MUERTA, absorbente (ADR-0012)
+- [x] Vectorizado (sin bucles Python); pytest tests/unit/test_transition.py en verde (19 tests)
+- [x] `paso()` recibe el `rng` inyectado; el conteo de vecinos de Moore cuenta SOLO celdas ACTIVA
+
+### ✅ 🟡 Remuestreo + Modo Analogico
+
+**Dueño:** Fidel · **Criterios:** 4/4
+
+> *Como capa de datos, quiero convertir las series reales en una secuencia de CampoAmbiental para inyectarlas iteracion por iteracion.*
+>
+> `resampling.py` -> secuencia de CampoAmbiental; `modes/analog.py` la entrega al orquestador.
+> Ramas: `feat/data-resampling` + `feat/modes-analogico`.
+
+- [x] El remuestreo produce una secuencia de CampoAmbiental (uno por iteracion) en rango fisico
+- [x] Imputa/enmascara el hueco de 8 dias de ventilas SIN inventar valores fuera de rango
+- [x] `mapear_radiacion`: superficies convierten a banda UV con el factor DOCUMENTADO; Encelado mapea R=0 (ADR-0014)
+- [x] El Modo Analogico no duplica el bucle de Sandbox (DRY); `pytest` en verde
+
+### ✅ 🟣 Orquestador: simulation.py
+
+**Dueño:** Erick · **Criterios:** 5/5
+
+> *Como orquestador, quiero acoplar el motor biologico y el ambiental en el bucle del AC para correr una simulacion completa.*
+>
+> `simulation.py` une motores. Necesita el Hito 1 mergeado en `main`.
+> Rama: `feat/simulation-orquestador`.
+
+- [x] `simulation.py` corre N iteraciones acoplando campo + especie + `paso()` sin errores
+- [x] Misma semilla -> misma corrida (reproducible)
+- [x] Devuelve la serie de estados/poblaciones esperada para un caso de prueba
+- [x] `pytest tests/integration/` pasa en verde
+- [x] El orquestador propaga los tres estados y aplica los eventos (incluida la salmuera) antes de `paso()`
+
+### ✅ 🟢 Modo Sandbox
+
+**Dueño:** Esmeralda · **Criterios:** 4/4
+
+> *Como usuario, quiero fijar T, R y A_w manualmente para explorar escenarios sin depender de un dataset.*
+>
+> `modes/sandbox.py`: parametros ambientales estaticos/ajustables.
+> Rama: `feat/modes-sandbox`.
+
+- [x] Sandbox construye un CampoAmbiental a partir de parametros T / UV / A_w dados (R es irradiancia UV, ADR-0014)
+- [x] Cambiar un parametro cambia el resultado de la corrida de forma esperada
+- [x] Comparte el mismo bucle que el Modo Analogico (DRY)
+- [x] `pytest` en verde
+
+### ✅ 🔵 Evento SalmueraDelicuescente (microrefugios)
+
+**Dueño:** Jose · **Criterios:** 6/6
+
+> ADR-0015. Contraparte de MicroFisuraMarte: hoy TODOS los eventos degradan el ambiente, lo que sesga cada corrida hacia la extincion por construccion. Este evento es el que le da a Marte algo que estudiar.
+
+- [x] `SalmueraDelicuescente.aplicar()` SUBE `A_w` transitoriamente en un radio, con el `rng` inyectado
+- [x] Misma semilla -> mismo campo (reproducible)
+- [x] El refugio decae/expira: no es permanente y su duracion es un PARAMETRO (Erick lo va a barrer)
+- [x] Test: aplicado al campo de Marte, `DRadiodurans.condiciones_crecimiento` pasa de 0% a >0%
+- [x] `pytest tests/unit/test_stochastic.py` en verde
+- [x] `aplicar()` devuelve SIEMPRE un CampoAmbiental nuevo, tambien cuando el evento no dispara (hoy devuelve el mismo objeto: aliasing intermitente segun la semilla)
 
 ---
 
