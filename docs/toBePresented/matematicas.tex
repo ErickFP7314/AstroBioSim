@@ -8,6 +8,7 @@
 \usepackage{booktabs}
 \usepackage{xcolor}
 \usepackage{enumitem}
+\usepackage{graphicx}
 \usepackage{parskip}
 \usepackage[colorlinks=true,linkcolor=black,urlcolor=blue]{hyperref}
 
@@ -129,6 +130,24 @@ $\Delta t=1$~h porque produce un gradiente informativo entre especies en el ópt
 \emph{D.\ radiodurans}, $0{,}07$ para \emph{M.\ burtonii}), en lugar de saturar a
 $1$ como haría un paso diario.
 
+% La figura se genera con scripts/plot_cinetica.py (los PDF están gitignorados,
+% así que el .tex compila igual sin ella, mostrando una nota en su lugar).
+\begin{figure}[h]
+\centering
+\IfFileExists{cinetica_ctmi.pdf}{%
+  \includegraphics[width=0.82\linewidth]{cinetica_ctmi.pdf}%
+}{%
+  \fbox{\parbox{0.82\linewidth}{\centering\vspace{2ex}\itshape
+  Generá la figura con \texttt{python scripts/plot\_cinetica.py} antes de
+  compilar.\vspace{2ex}}}%
+}
+\caption{Curvas de crecimiento CTMI $\mu(T)=\mu_{\mathrm{opt}}\,\gamma_T(T)$ (con
+$a_w=1$, $\mathrm{UV}=0$) de las tres especies, generadas con el código real del
+motor. Cada curva vale $\mu_{\mathrm{opt}}$ en su óptimo (marcado) y $0$ en sus
+cardinales, sin parámetros libres. Reproducible con
+\texttt{scripts/plot\_cinetica.py}.}
+\end{figure}
+
 \section{Reglas de transición intercambiables (ADR-0016)}
 
 La función de transición $\phi$ no está cableada: es una \textbf{estrategia
@@ -172,6 +191,24 @@ Los umbrales $2$–$3/3$ son del autómata, no de la microbiología.
 reglas por bloques de la interfaz (Hito 3) produce nuevas reglas sobre esta misma
 firma, sin tocar el motor.
 
+\section{El orquestador y los dos modos de corrida (ADR-0017)}
+
+Un \textbf{orquestador} único (\textsf{simular}) corre el bucle: por cada tick toma
+un \textsf{CampoAmbiental} de un \emph{modo}, le aplica los eventos estocásticos y
+avanza el autómata con $\phi$, registrando el historial de las tres poblaciones.
+El orquestador \textbf{no sabe de dónde salen los campos}: itera cualquier objeto
+que cumpla la interfaz \textsf{ModoSimulacion} ($\mathtt{campos()}\!\to$ iterador de
+campos). Así, los dos modos comparten \emph{el mismo bucle} (DRY):
+\begin{itemize}[nosep]
+  \item \textbf{Modo Sandbox:} campo homogéneo con $T$, $R$, $a_w$ fijados a mano
+  (sliders), sin dataset. Explora el espacio de parámetros.
+  \item \textbf{Modo Analógico:} una secuencia temporal de campos derivada de los
+  datos reales 2025. Para no aplanar el subsuelo (un campo uniforme dejaría el UV de
+  superficie esterilizando toda la grilla), cada dato diario se propaga con la
+  \emph{estructura espacial} del entorno físico (banda de profundidad en Marte,
+  fumarolas en Encelado): el análogo reusa el modelo de campo en vez de duplicarlo.
+\end{itemize}
+
 \section{Reproducibilidad y ensambles Montecarlo}
 
 Toda la aleatoriedad (reproducción, eventos estocásticos) usa un único
@@ -213,6 +250,7 @@ poco cubierto por la literatura de habitabilidad, que suele ser puntual (0-D).
 Tres estados (no binario) & representar la latencia sin violar la muerte irreversible (ADR-0012)\\
 Cinética CTMI continua & $\mu$ deja de ser decorativa; ``crece a tal tasa'' en vez de ``vive/muere'' (ADR-0013)\\
 Reglas intercambiables & menú de reglas + editor por bloques + panel de notación (ADR-0016)\\
+Orquestador agnóstico del modo & Sandbox y Analógico comparten un único bucle (DRY, ADR-0017)\\
 Frontera muerta & la grilla es una ventana del subsuelo, no un toro\\
 $\Delta t = 1$~h & gradiente informativo de $p_{\mathrm{rep}}$ entre especies\\
 Semilla inyectada & reproducibilidad exacta; base de los ensambles Montecarlo\\

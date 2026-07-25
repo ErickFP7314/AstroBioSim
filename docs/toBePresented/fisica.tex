@@ -48,7 +48,10 @@ piso oceánico).
 \paragraph{Tierra (control).} Subsuelo somero, térmicamente estable: la onda diurna
 ya está amortiguada, de modo que el campo es uniforme a la media anual
 ($T\approx 19{,}8\,^\circ$C), con $R=0$ (el suelo bloquea el UV) y $a_w\approx
-0{,}99$ (suelo a capacidad de campo). Es el escenario benigno de referencia.
+0{,}99$ (suelo a capacidad de campo). Es el escenario benigno de referencia. El
+valor de $a_w$ es una corrección: el dataset traía la humedad relativa del
+\emph{aire} (que oscilaba $0{,}16$--$0{,}93$), no la actividad de agua del suelo;
+un subsuelo húmedo es estable y alto, no meteorológico.
 
 \paragraph{Marte (análogo Atacama).} La onda térmica diurna se amortigua
 \emph{exponencialmente} con la profundidad $z$ hacia una asíntota fría (modelo
@@ -132,7 +135,25 @@ estado biológico), todas con el generador sembrado inyectado:
 ambiente, sesgando cada corrida hacia la extinción por construcción. El evento de
 salmuera es el que da a Marte algo que estudiar: sin él, la pregunta de
 investigación no tiene mecanismo. Su frecuencia y magnitud son los parámetros del
-barrido central del proyecto.
+barrido central del proyecto. Ya está implementado y verificado: sobre un refugio
+transitorio (que sube $a_w$ hacia $0{,}90$--$0{,}98$ y decae con el tiempo),
+\emph{D.\ radiodurans} recupera el crecimiento activo que el regolito en bulk le
+niega.
+
+\section{Dos modos de alimentar el campo (ADR-0017)}
+
+El mismo motor corre bajo dos fuentes de campo intercambiables, sin duplicar el
+bucle de simulación:
+\begin{itemize}[nosep]
+  \item \textbf{Sandbox:} campo homogéneo con $T$, $R$ y $a_w$ fijados a mano
+  (sliders); explora el espacio de parámetros sin depender de datos.
+  \item \textbf{Analógico:} la serie temporal real 2025. Cada dato diario se
+  propaga con la \emph{estructura espacial} de estos modelos de subsuelo —el
+  gradiente de profundidad en Marte, las fumarolas en Encelado— en vez de aplanar
+  el campo. La decisión importa físicamente: un campo uniforme pondría el UV de
+  superficie en todas las celdas y esterilizaría la grilla entera, borrando la
+  banda de profundidad.
+\end{itemize}
 
 \section*{Deuda física abierta (honestidad para la defensa)}
 \begin{itemize}[nosep]
