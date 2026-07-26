@@ -125,8 +125,18 @@ Respondé esto antes de que tu Claude implemente; si no, asumirá defaults que q
   muerta/latente/activa por tick, grillas opcionales), reproducible. Consume la
   interfaz `ModoSimulacion`, así que Analógico y Sandbox comparten el bucle (DRY).
   Helper `sembrar_estado` para el estado inicial; `ModoEstatico` para campo fijo.
-  12 tests de integración. **Falta que exista el Modo Sandbox de Esmeralda** para
-  cerrar el modo interactivo; el orquestador ya lo consumiría sin cambios.
+  12 tests de integración. El Modo Sandbox de Esmeralda ya está mergeado y lo
+  consume sin cambios.
+- ✅ **Hito 3 — Integración Montecarlo IMPLEMENTADA** en la rama `feat/montecarlo`:
+  `simular_montecarlo(construir_modo, especie, estado_inicial, ...)` corre N réplicas
+  independientes y agrega media ± desviación por tick de las tres fracciones
+  (`ResultadoMontecarlo`, con `.curva(estado)` y las corridas crudas opcionales).
+  Decisiones: **factories** (`construir_modo(rng)` / `construir_eventos(rng)`) para
+  instancias frescas por réplica —clave con la salmuera, que tiene estado—; estado
+  inicial **fijo por defecto** (configurable con `re_sembrar`); semillas por
+  **`SeedSequence.spawn(N=30)`** o lista explícita. 12 tests de integración.
+  ⚠️ Ojo con el ~2% de crecimiento de fondo de Marte (por el `A_W_SIGMA` nuevo de
+  Fidel) al definir el barrido de ADR-0015: el control "sin salmuera" ya no es 0%.
 - La regla logística (proceso de contacto) es la de fábrica; hay también `ReglaConway`
   y `ReglaHibrida`, todas en `REGLAS_DISPONIBLES`. Cada una expone `notacion()` (LaTeX)
   para el **panel de notación formal** que pediste.
