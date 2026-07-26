@@ -108,7 +108,7 @@ class ConfigCorrida(BaseModel):
     fraccion_activa: float = Field(default=0.15, ge=0.0, le=1.0)
     patron: Literal["uniforme", "cluster"] = "uniforme"
     semilla: int | None = 42
-    n_iteraciones: int | None = None  # Sandbox; en Analógico se ignora (365)
+    n_iteraciones: int | None = None  # ticks a simular (ambos modos; Analógico se recorta al dataset)
     # Eventos
     salmuera: bool = False  # microrefugios (solo tiene sentido en Marte)
     # Montecarlo
@@ -129,9 +129,10 @@ def _especie(cfg: ConfigCorrida) -> Microorganismo:
     return _ESPECIES[cfg.especie]()
 
 
-def _n_iter(cfg: ConfigCorrida) -> int | None:
-    if cfg.modo == "analogico":
-        return None  # la serie completa (finita)
+def _n_iter(cfg: ConfigCorrida) -> int:
+    """Nº de ticks a simular, en AMBOS modos. En Analógico el iterador de campos
+    es finito, así que `islice` recorta a lo que haya en el dataset si se pide de
+    más (nunca falla ni rellena)."""
     return min(cfg.n_iteraciones or _ITER_SANDBOX_DEFECTO, _ITER_MAX)
 
 
@@ -289,10 +290,7 @@ async def stream(ws: WebSocket) -> None:
     eventos = _construir_eventos(cfg)
     estado = _estado_inicial(cfg, rng_estado)
 
-    campos = modo.campos()
-    n_iter = _n_iter(cfg)
-    if n_iter is not None:
-        campos = islice(campos, n_iter)
+    campos = islice(modo.campos(), _n_iter(cfg))
 
     try:
         await ws.send_json(_frame(0, estado))
