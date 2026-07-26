@@ -65,7 +65,7 @@ def test_misma_semilla_base_mismo_agregado() -> None:
     e = DRadiodurans()
     shape = (12, 12)
     estado = sembrar_estado(shape, rng=np.random.default_rng(0), fraccion_activa=0.2)
-    kw = dict(n_corridas=15, semilla=42, n_iteraciones=12)
+    kw = {"n_corridas": 15, "semilla": 42, "n_iteraciones": 12}
     a = simular_montecarlo(_modo_optimo(e, shape), e, estado, **kw)
     b = simular_montecarlo(_modo_optimo(e, shape), e, estado, **kw)
     np.testing.assert_array_equal(a.media, b.media)
@@ -130,7 +130,7 @@ def test_evento_con_estado_no_filtra_entre_corridas() -> None:
         return [SalmueraDelicuescente(probabilidad_disparo=0.3,
                                       a_w_objetivo_min=0.95, a_w_objetivo_max=0.98)]
 
-    kw = dict(n_corridas=8, semilla=7, construir_eventos=ce, n_iteraciones=20)
+    kw = {"n_corridas": 8, "semilla": 7, "construir_eventos": ce, "n_iteraciones": 20}
     a = simular_montecarlo(cm, e, estado, **kw)
     b = simular_montecarlo(cm, e, estado, **kw)
     np.testing.assert_array_equal(a.media, b.media)

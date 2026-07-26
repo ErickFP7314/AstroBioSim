@@ -97,7 +97,7 @@ def sembrar_estado(
     if patron == "uniforme":
         estado[rng.random(shape) < fraccion_activa] = ACTIVA
     elif patron == "cluster":
-        lado = max(1, min(int(round((fraccion_activa * m * n) ** 0.5)), m, n))
+        lado = max(1, min(round((fraccion_activa * m * n) ** 0.5), m, n))
         i0, j0 = (m - lado) // 2, (n - lado) // 2
         estado[i0 : i0 + lado, j0 : j0 + lado] = ACTIVA
     else:
