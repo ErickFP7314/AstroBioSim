@@ -22,9 +22,16 @@ uvicorn astrobiosim.ui.api:app --reload
 
 ```bash
 npm install
-npm run dev
-# abre http://localhost:5173
+npm run dev                 # abre http://localhost:5173
 ```
+
+> **¿Falla con `ENOSPC: System limit for number of file watchers reached`?**
+> No es un bug del proyecto ni falta de optimización: es un límite del sistema
+> (ver *Solución de problemas*). Arrancá con **polling**, sin sudo:
+>
+> ```bash
+> VITE_POLLING=1 npm run dev
+> ```
 
 Vite proxya `/api` (HTTP y WebSocket) hacia `:8000`, así que no hay que tocar CORS
 ni URLs en desarrollo. Para producción: `npm run build` genera `dist/`.
