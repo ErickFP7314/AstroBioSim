@@ -102,6 +102,13 @@ export function ControlPanel(p: Props) {
           <input type="number" value={cfg.semilla ?? 0}
             onChange={(e) => update({ semilla: Number(e.target.value) })} />
         </label>
+        {esAnalogico ? (
+          <p className="nota-ticks">Ticks: los del dataset (~365 días 2025)</p>
+        ) : (
+          <Slider label="Iteraciones (ticks)" unidad="" value={cfg.n_iteraciones ?? 200}
+            min={20} max={catalogo.limites.iter_max} step={10}
+            onChange={(v) => update({ n_iteraciones: v })} fmt={(v) => String(v)} />
+        )}
       </div>
 
       <div>

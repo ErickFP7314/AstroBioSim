@@ -89,7 +89,7 @@ export default function App() {
           onEditarRegla={() => setEditorRegla(true)}
         />
 
-        <AutomatonGrid frame={sim.frameActual} />
+        <AutomatonGrid frame={sim.frameActual} indice={sim.indice} total={sim.total} irA={sim.irA} />
 
         <aside className="panel">
           <div className="card">

@@ -2,9 +2,18 @@ import { useEffect, useRef } from "react";
 import { decodeGrid, type Frame } from "../api";
 import { ESTADO_COLOR, ESTADOS, GRID_BG } from "../theme";
 
-/** La grilla del autómata en un <canvas>: protagonista de la vista. */
-export function AutomatonGrid({ frame }: { frame: Frame | null }) {
+/** La grilla del autómata en un <canvas>: protagonista de la vista. Debajo, la
+ *  línea de tiempo (scrubber) para ver y mover el tick actual. */
+export function AutomatonGrid({
+  frame, indice, total, irA,
+}: {
+  frame: Frame | null;
+  indice: number;
+  total: number;
+  irA: (i: number) => void;
+}) {
   const ref = useRef<HTMLCanvasElement | null>(null);
+  const ultimo = total > 0 ? total - 1 : 0;
 
   useEffect(() => {
     const canvas = ref.current;
@@ -47,6 +56,22 @@ export function AutomatonGrid({ frame }: { frame: Frame | null }) {
           aria-label="Grilla del autómata celular: cada celda es Muerta, Latente o Activa."
         />
       </div>
+      <div className="scrubber">
+        <span className="tk-lbl">tick</span>
+        <input
+          type="range"
+          min={0}
+          max={ultimo}
+          value={total > 0 ? indice : 0}
+          disabled={total === 0}
+          onChange={(e) => irA(Number(e.target.value))}
+          aria-label="Línea de tiempo: mover al tick"
+        />
+        <span className="tk-val">
+          <b>{total > 0 ? indice : 0}</b> <i>/ {ultimo}</i>
+        </span>
+      </div>
+
       <div className="legend">
         {ESTADOS.map((e) => (
           <span key={e.valor}>
