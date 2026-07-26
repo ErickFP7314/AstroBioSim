@@ -1,4 +1,4 @@
-import type { Catalogo, ConfigCorrida, EntornoId, EspecieId } from "../api";
+import type { Catalogo, ConfigCorrida, EntornoId, EspecieId, ReglaSpec } from "../api";
 import { ESTADO_COLOR } from "../theme";
 
 interface Props {
@@ -15,6 +15,7 @@ interface Props {
   reset: () => void;
   fps: number;
   setFps: (n: number) => void;
+  onEditarRegla: () => void;
 }
 
 const DOT: Record<EspecieId, string> = {
@@ -43,6 +44,8 @@ function Slider(props: {
 export function ControlPanel(p: Props) {
   const { catalogo, cfg, update } = p;
   const esAnalogico = cfg.modo === "analogico";
+  const reglaEsSpec = typeof cfg.regla === "object" && cfg.regla !== null;
+  const reglaSel = reglaEsSpec ? "__custom__" : (typeof cfg.regla === "string" ? cfg.regla : "logistica");
 
   return (
     <aside className="ctrl">
@@ -99,6 +102,22 @@ export function ControlPanel(p: Props) {
           <input type="number" value={cfg.semilla ?? 0}
             onChange={(e) => update({ semilla: Number(e.target.value) })} />
         </label>
+      </div>
+
+      <div>
+        <p className="lbl">Regla de transición</p>
+        <select className="regla-sel" value={reglaSel}
+          onChange={(e) => update({ regla: e.target.value })}>
+          {reglaEsSpec && (
+            <option value="__custom__" disabled>
+              ✎ {(cfg.regla as ReglaSpec).nombre} · personalizada
+            </option>
+          )}
+          {catalogo.reglas.map((r) => (
+            <option key={r.id} value={r.id}>{r.nombre}</option>
+          ))}
+        </select>
+        <button className="edit-regla" onClick={p.onEditarRegla}>✎ Editar por bloques</button>
       </div>
 
       <div className="run-block">

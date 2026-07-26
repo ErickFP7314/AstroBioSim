@@ -150,9 +150,17 @@ Respondé esto antes de que tu Claude implemente; si no, asumirá defaults que q
 - La regla logística (proceso de contacto) es la de fábrica; hay también `ReglaConway`
   y `ReglaHibrida`, todas en `REGLAS_DISPONIBLES`. Cada una expone `notacion()` (LaTeX)
   para el **panel de notación formal** que pediste.
-- **Pendiente Hito 3 (UI):** el **editor de reglas por bloques** (tipo Scratch) que
-  produce nuevas `ReglaTransicion`, y el panel que renderiza `notacion()`. El motor ya
-  está preparado: el editor es una *fábrica* de reglas, no toca `engine/`.
+- ✅ **Hito 3 — Editor de reglas por bloques IMPLEMENTADO** en la rama
+  `feat/editor-reglas-bloques` (ADR-0018). Se eligió el estilo **filas "SI condición
+  → estado"** (cascada) en vez de bloques encastrables. `transition_rules.py`:
+  `ReglaDesdeBloques` interpreta un **spec JSON** vectorizado + `regla_desde_spec()`
+  con validación + `VOCABULARIO`/`PRESETS`; la guardia de **MUERTA absorbente** se
+  fuerza en el motor (colonización solo con vecino ACTIVA), sea cual sea el spec.
+  API: `ConfigCorrida.regla` (preset id o spec inline), vocabulario en `/api/config`
+  y `POST /api/regla/validar` (notación en vivo). Frontend: `RuleEditor.tsx` (modal
+  con presets como plantilla, agregar/reordenar/borrar filas y condiciones,
+  validación en vivo). 21 tests nuevos (incluida la equivalencia EXACTA del preset
+  `logistica` con `ReglaLogistica`); build limpio.
 - Decisiones tomadas: frontera muerta, LATENTE ocupa pero no reproduce, Δt = 1 h.
   ⚠️ Δt = 1 h se acopla con `SEGUNDOS_UV_POR_TICK` (hoy 8 h) — reconciliar con
   Esmeralda (deuda #7 de `docs/parametros.md`).

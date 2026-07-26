@@ -66,3 +66,8 @@ reproducción (play / pausa / paso / velocidad) sobre ese buffer.
 - La **grilla** (canvas) muestra los tres estados; el panel derecho grafica las
   curvas poblacionales del run y, con el botón *Banda Montecarlo*, superpone la
   media ± σ sobre N réplicas.
+- **Editor de reglas por bloques** (ADR-0018): en el panel izquierdo, *Regla de
+  transición* → *Editar por bloques* abre un editor de filas «SI condición →
+  estado» (cascada). Cargá un preset como plantilla (Logística / Conway /
+  Híbrida), agregá/reordená filas y condiciones, y la regla se valida en vivo
+  contra el backend. La grilla se recorre con la regla que armes.

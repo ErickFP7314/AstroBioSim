@@ -6,6 +6,8 @@ import {
   type ConfigCorrida,
   type Modo,
   type Montecarlo,
+  type PresetRegla,
+  type ReglaSpec,
 } from "./api";
 import { ESTADOS } from "./theme";
 import { useSimulation } from "./hooks/useSimulation";
@@ -13,13 +15,21 @@ import { TopBar } from "./components/TopBar";
 import { ControlPanel } from "./components/ControlPanel";
 import { AutomatonGrid } from "./components/AutomatonGrid";
 import { PopulationChart } from "./components/PopulationChart";
+import { RuleEditor } from "./components/RuleEditor";
 
 const CFG_INICIAL: ConfigCorrida = {
   modo: "sandbox", especie: "dradiodurans", entorno: "marte",
   T: 20, R: 0, A_w: 0.9, m: 60, n: 60,
   fraccion_activa: 0.15, patron: "uniforme", semilla: 42,
-  n_iteraciones: 200, salmuera: true, n_corridas: 30,
+  n_iteraciones: 200, salmuera: true, n_corridas: 30, regla: "logistica",
 };
+
+/** Devuelve el spec editable de la regla actual (resuelve preset id → spec). */
+function specDeRegla(regla: ConfigCorrida["regla"], reglas: PresetRegla[]): ReglaSpec {
+  if (regla && typeof regla === "object") return regla;
+  const id = typeof regla === "string" ? regla : "logistica";
+  return (reglas.find((r) => r.id === id) ?? reglas[0]).spec;
+}
 
 export default function App() {
   const [catalogo, setCatalogo] = useState<Catalogo | null>(null);
@@ -27,6 +37,7 @@ export default function App() {
   const [cfg, setCfg] = useState<ConfigCorrida>(CFG_INICIAL);
   const [mc, setMc] = useState<Montecarlo | null>(null);
   const [mcCargando, setMcCargando] = useState(false);
+  const [editorRegla, setEditorRegla] = useState(false);
   const sim = useSimulation();
 
   useEffect(() => {
@@ -75,6 +86,7 @@ export default function App() {
           reset={sim.reset}
           fps={sim.fps}
           setFps={sim.setFps}
+          onEditarRegla={() => setEditorRegla(true)}
         />
 
         <AutomatonGrid frame={sim.frameActual} />
@@ -103,6 +115,16 @@ export default function App() {
           {sim.error && <div className="card err">{sim.error}</div>}
         </aside>
       </div>
+
+      {editorRegla && (
+        <RuleEditor
+          vocabulario={catalogo.vocabulario}
+          presets={catalogo.reglas}
+          specInicial={specDeRegla(cfg.regla, catalogo.reglas)}
+          onUsar={(spec) => { update({ regla: spec }); setEditorRegla(false); }}
+          onCerrar={() => setEditorRegla(false)}
+        />
+      )}
     </div>
   );
 }
