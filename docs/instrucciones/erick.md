@@ -137,6 +137,16 @@ Respondé esto antes de que tu Claude implemente; si no, asumirá defaults que q
   **`SeedSequence.spawn(N=30)`** o lista explícita. 12 tests de integración.
   ⚠️ Ojo con el ~2% de crecimiento de fondo de Marte (por el `A_W_SIGMA` nuevo de
   Fidel) al definir el barrido de ADR-0015: el control "sin salmuera" ya no es 0%.
+- ✅ **Hito 3 — UI (backend FastAPI + dashboard React) IMPLEMENTADA** en la rama
+  `feat/ui-dashboard` (ADR-0009). Backend `ui/api.py`: `GET /api/config`,
+  `WS /api/stream` (grilla base64 + conteos por tick) y `POST /api/montecarlo`
+  (media ± σ), envolviendo el orquestador. Frontend `frontend/` (React+Vite+TS,
+  **compila limpio**): dashboard con la estética **Espectro** (la que elegiste),
+  selector Sandbox/Analógico, sliders T/UV/A_w, la grilla del autómata en canvas
+  animada por WebSocket, y curvas + banda Montecarlo. Correr: `uvicorn
+  astrobiosim.ui.api:app --reload` + `cd frontend && npm install && npm run dev`.
+  Ver `frontend/README.md`. Stitch y Magic no sirvieron (colgados); el diseño se
+  hizo con la skill ui-ux-pro-max.
 - La regla logística (proceso de contacto) es la de fábrica; hay también `ReglaConway`
   y `ReglaHibrida`, todas en `REGLAS_DISPONIBLES`. Cada una expone `notacion()` (LaTeX)
   para el **panel de notación formal** que pediste.
