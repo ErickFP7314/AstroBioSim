@@ -43,10 +43,22 @@ pip install -e ".[dev]"
 
 ## Ejecución
 
+### Backend:
+
 ```bash
 uvicorn astrobiosim.ui.api:app --reload   # backend API (FastAPI) — desde Hito 3
+```
+
+### Frontend (desde Hito 3):
+
+```bash
+cd frontend && npm install && npm run dev
+```
+
+## Testing
+
+```bash
 pytest                                     # tests
-# Frontend (desde Hito 3):  cd frontend && npm install && npm run dev
 ```
 
 ## Documentación clave
