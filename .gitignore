@@ -36,3 +36,11 @@ data/processed/*
 
 # Documento fuente original (contenido ya volcado en openspec/)
 *.pdf
+
+# Frontend (Node / Vite)
+node_modules/
+frontend/dist/
+*.tsbuildinfo
+.vite/
+frontend/vite.config.js
+frontend/vite.config.d.ts
