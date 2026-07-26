@@ -29,6 +29,24 @@ npm run dev
 Vite proxya `/api` (HTTP y WebSocket) hacia `:8000`, así que no hay que tocar CORS
 ni URLs en desarrollo. Para producción: `npm run build` genera `dist/`.
 
+### Solución de problemas
+
+**`Error: ENOSPC: System limit for number of file watchers reached`** — no es un
+problema de seguridad, es un límite del kernel (`fs.inotify.max_user_watches`)
+que Vite agota al vigilar archivos. Dos formas de resolverlo:
+
+- **Sin sudo (recomendada, funciona ya):** `VITE_POLLING=1 npm run dev`. Usa
+  *polling* en vez de inotify; arranca igual, con un poco más de CPU.
+- **Permanente (sube el límite del sistema, requiere sudo):**
+  ```bash
+  echo 'fs.inotify.max_user_watches=524288' | sudo tee /etc/sysctl.d/99-inotify.conf
+  sudo sysctl --system
+  ```
+
+**Vulnerabilidades de `npm audit`** — el proyecto está en **0 vulnerabilidades**
+(vite 8 + override de esbuild). Cambiar de `npm` a `pnpm` **no** afecta esto: las
+vulnerabilidades vienen de las versiones de las dependencias, no del gestor.
+
 ## Endpoints del backend
 
 | Método | Ruta | Qué hace |
