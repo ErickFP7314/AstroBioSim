@@ -29,6 +29,18 @@ Cada valor lleva una etiqueta de procedencia:
 Los tres puntos cardinales son exactamente lo que consume el modelo CTMI de
 ADR-0013: no hay parámetros libres que ajustar.
 
+### 1.1bis Temperatura — rango de supervivencia (°C)
+
+| Especie | `t_sup_min` | `t_sup_max` | Proc. | Nota |
+|---|---|---|---|---|
+| *E. coli* | −20.0 | 55.0 | **[EST]** | sin fluencia de frío/calor publicada para esta cepa; −20 °C sigue la práctica estándar de crioconservación (viable, sin división) y 55 °C queda por debajo del rango de letalidad térmica típicamente reportado (≈60 °C) |
+| *D. radiodurans* | −25.0 | 50.0 | **[EST]** | sin dato puntual; rango algo más amplio que *E. coli* por su tolerancia general al estrés (radiorresistencia, desecación), pero no hay cita directa de choque térmico |
+| *M. burtonii* | −20.0 | 35.0 | **[EST]** | psicrotolerante de aguas subglaciales; el techo queda apenas sobre su `t_max` de crecimiento (29.5 °C) porque no hay dato publicado de choque térmico letal |
+
+> Las tres son la mejor estimación de Esmeralda (Hito 2), no literatura citable.
+> Junto con `a_w_sup_min` de *E. coli* y *M. burtonii* (§1.2), son los únicos
+> umbrales de supervivencia sin cita directa — ver deuda §4.4.
+
 ### 1.2 Actividad de agua (0..1)
 
 | Especie | `a_w_min` (crece) | `a_w_sup_min` (sobrevive) | Proc. | Nota |
@@ -55,14 +67,14 @@ uv_max   = uv_letal / RAZON_INHIBICION_UV
 
 | Constante | Valor | Proc. | Justificación |
 |---|---|---|---|
-| `SEGUNDOS_UV_POR_TICK` | 28 800 s (8 h) | **[CONV]** | sol útil en un tick diario, que es la resolución de los datasets |
+| `SEGUNDOS_UV_POR_TICK` | 3 600 s (1 h) | **[DER]** | igual a `DT_HORAS_DEFECTO = 1.0 h` del autómata (`engine/transition_rules.py`, ADR-0013): `paso()` trata `campo.R` como irradiancia sostenida durante un tick, así que la fluencia de ese tick es `R × duración_del_tick`. **Corregido 2026-07-25** (Hito 4): antes eran 8 h, arrastradas de un diseño anterior donde un tick representaba un día de datos; nunca se actualizaron cuando el Δt del automatón bajó a 1 h, y dejaban los umbrales UV 8× más permisivos de lo que la cinética asumía (deuda §4.7, ahora resuelta) |
 | `RAZON_INHIBICION_UV` | 10 | **[CONV]** | el estrés subletal frena la división antes de matar |
 
 | Especie | Fluencia letal (J/m²) | Proc. | `uv_letal` (W/m²) | `uv_max` (W/m²) |
 |---|---|---|---|---|
-| *E. coli* | 870 | **[LIT]** | 0.0302 | 0.0030 |
-| *D. radiodurans* | 50 760 | **[LIT]** | 1.7625 | 0.1763 |
-| *M. burtonii* | 2 175 (= 870 × 2.5) | **[ANA]** | 0.0755 | 0.0076 |
+| *E. coli* | 870 | **[LIT]** | 0.2417 | 0.0242 |
+| *D. radiodurans* | 50 760 | **[LIT]** | 14.1000 | 1.4100 |
+| *M. burtonii* | 2 175 (= 870 × 2.5) | **[ANA]** | 0.6042 | 0.0604 |
 
 El cociente **58×** entre *D. radiodurans* y *E. coli* sale directo de las
 fluencias publicadas — es de donde viene su fama de radiorresistente, y ya no es
@@ -93,8 +105,13 @@ error que un revisor perdona.
 > que dice `uv_max`. Como en Encelado `R = 0`, esto **solo afecta al Modo Sandbox**.
 
 > ⚠️ **`SEGUNDOS_UV_POR_TICK` acopla dos módulos.** Si Erick cambia el Δt del
-> autómata, esta constante **tiene que cambiar con él**, o los umbrales dejan de
-> significar lo que dicen. Es el punto de acoplamiento más silencioso del modelo.
+> autómata (`DT_HORAS_DEFECTO` en `engine/transition_rules.py`), esta constante
+> **tiene que cambiar con él**, o los umbrales dejan de significar lo que dicen.
+> No se importa directamente entre módulos para evitar un ciclo de imports
+> (`transition_rules` ya importa de `microorganism`); la consistencia la verifica
+> `test_segundos_uv_por_tick_coincide_con_dt_automata` en
+> `tests/unit/test_microorganism.py`. Es el punto de acoplamiento más silencioso
+> del modelo — ya se rompió una vez (§4.7).
 
 > ⚠️ **El UV de *M. burtonii* es [EST]**, el parámetro más débil que tenemos. No
 > hay dato publicado; se asume el de *E. coli* como cota conservadora (arquea
@@ -163,6 +180,14 @@ importa para comparar dinámicas.
 
 ## 3. Qué produce el modelo con estos valores
 
+> ⚠️ **Tabla pendiente de recalcular tras la corrección de `SEGUNDOS_UV_POR_TICK`
+> (§1.3, 2026-07-25).** Los porcentajes de abajo se midieron con el `uv_letal` /
+> `uv_max` viejos (8× más bajos); con los valores corregidos, más filas quedan
+> por debajo del umbral letal y el patrón cualitativo (banda estéril superficial
+> → latente en profundidad) debería sostenerse, pero los números exactos no. No
+> se re-ejecutó la corrida como parte de este cambio — es la continuación
+> natural de esta tarea.
+
 | Especie / entorno | `ACTIVA` | `LATENTE` | `MUERTA` |
 |---|---|---|---|
 | *E. coli* / Tierra | 100 % | 0 % | 0 % |
@@ -193,9 +218,9 @@ Ordenado por impacto sobre la credibilidad del resultado.
 | 1 | **`a_w` media de Atacama.** Hoy usamos el **mínimo diario** (0.187) como valor del campo. Es una cota pesimista, no el valor típico. | Fidel | Sesga toda corrida hacia la extinción. Es el parámetro que más mueve el resultado. |
 | 2 | **`T_PROFUNDO_C` de Marte.** Es la media de los mínimos diarios, pero una onda térmica amortigua hacia la **media anual** (≈ 22.4 °C), no hacia el mínimo. | Jose | Cambia dónde queda la banda habitable. Creemos que está mal. |
 | ~~3~~ | ~~**`a_w` del control terrestre.**~~ ✅ **RESUELTO (2026-07-24):** Esmeralda confirmó que la columna era humedad del aire; el dataset se corrigió a `a_w = 0.99` constante (suelo a capacidad de campo, [CONV] documentada). | Fidel | — |
-| 4 | **`a_w_sup_min` de *E. coli* y *M. burtonii*.** **[EST]**. | Esmeralda | Define cuánto aguantan antes de morir, no cuándo crecen. **Es la única [EST] que queda.** |
+| 4 | **`t_sup_min`/`t_sup_max` de las 3 especies y `a_w_sup_min` de *E. coli* y *M. burtonii*.** **[EST]** (§1.1bis, §1.2). | Esmeralda | Definen cuánto aguantan antes de morir, no cuándo crecen. Son los únicos umbrales de supervivencia sin cita directa. |
 | 6 | **`ΔT = 25` del evento hidrotermal.** Apilado sobre una fumarola existente lleva T a 59 °C y mata a *M. burtonii* en el 29 % de los disparos. Puede ser correcto (el núcleo de una ventila **es** letal), pero hay que decidirlo. | Jose | Afecta la dinámica de Encelado. |
-| 7 | **`SEGUNDOS_UV_POR_TICK` y el Δt del autómata.** Tienen que ser coherentes. | Erick + Esmeralda | Si divergen, los umbrales UV dejan de significar lo que dicen, en silencio. |
+| ~~7~~ | ~~**`SEGUNDOS_UV_POR_TICK` y el Δt del autómata.**~~ ✅ **RESUELTO (2026-07-25):** `SEGUNDOS_UV_POR_TICK` pasó de 8 h a 1 h para coincidir con `DT_HORAS_DEFECTO`; verificado por test. **Pendiente:** la tabla de §3 se midió con el valor viejo y falta recalcularla. | Erick + Esmeralda | Si divergen, los umbrales UV dejan de significar lo que dicen, en silencio. |
 
 ---
 
