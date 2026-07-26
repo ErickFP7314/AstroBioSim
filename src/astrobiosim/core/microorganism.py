@@ -36,15 +36,25 @@ MUERTA: int = 0
 LATENTE: int = 1
 ACTIVA: int = 2
 
-#: Exposición UV efectiva por tick, en segundos (~8 h de sol útil en un tick
-#: diario, que es la resolución de los datasets).
+#: Exposición UV efectiva por tick, en segundos.
 #:
 #: Hace falta porque la letalidad del UV es una **fluencia** (J/m²) mientras que
 #: el campo `R` es una **irradiancia** (W/m²), que es lo que miden los datos. Los
 #: umbrales de abajo se derivan como ``fluencia_publicada / SEGUNDOS_UV_POR_TICK``.
-#: Si Erick cambia el Δt del autómata, **este valor tiene que cambiar con él** o
-#: los umbrales dejan de significar lo que dicen. Ver `docs/parametros.md`.
-SEGUNDOS_UV_POR_TICK: float = 8 * 3600
+#:
+#: **Tiene que ser el mismo Δt que usa el autómata** (`DT_HORAS_DEFECTO` en
+#: `engine/transition_rules.py`, dueño Erick), o los umbrales dejan de significar
+#: lo que dicen: `paso()` trata `campo.R` como la irradiancia sostenida durante
+#: **un tick**, así que la fluencia de ese tick es `R × (duración del tick)`, no
+#: un valor de "sol útil" independiente. No se importa directamente para evitar
+#: un import circular (`transition_rules` ya importa de este módulo) — si Erick
+#: cambia `DT_HORAS_DEFECTO`, este valor se actualiza a mano y ambos quedan
+#: verificados por `test_segundos_uv_por_tick_coincide_con_dt_automata`.
+#: Corregido 2026-07-25 (Hito 4): antes eran 8 h (asumía un tick = 1 día de
+#: datos), pero el automatón corre con `DT_HORAS_DEFECTO = 1.0` h desde
+#: ADR-0013; el valor de 8 h nunca se actualizó y dejaba los umbrales UV
+#: 8× más permisivos de lo que la cinética asume. Ver `docs/parametros.md`.
+SEGUNDOS_UV_POR_TICK: float = 1 * 3600
 
 #: Factor entre la fluencia que **inhibe el crecimiento** y la que **mata**.
 #: Convención del modelo (no dato de literatura): el estrés subletal frena la

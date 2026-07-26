@@ -15,11 +15,13 @@ from astrobiosim.core.microorganism import (
     ACTIVA,
     LATENTE,
     MUERTA,
+    SEGUNDOS_UV_POR_TICK,
     DRadiodurans,
     EColi,
     MBurtonii,
     Microorganismo,
 )
+from astrobiosim.engine.transition_rules import DT_HORAS_DEFECTO
 
 ESPECIES = [EColi(), DRadiodurans(), MBurtonii()]
 IDS = ["EColi", "DRadiodurans", "MBurtonii"]
@@ -159,6 +161,16 @@ def test_no_existe_atributo_ni_logica_de_presion() -> None:
         assert not hasattr(especie, "p_min")
         assert not hasattr(especie, "p_max")
         assert not hasattr(especie, "presion")
+
+
+def test_segundos_uv_por_tick_coincide_con_dt_automata() -> None:
+    """ADR-0013/0014: la fluencia UV de un tick es R × su duración.
+
+    Si `SEGUNDOS_UV_POR_TICK` diverge del `DT_HORAS_DEFECTO` real del autómata
+    (`engine/transition_rules.py`, dueño Erick), `uv_letal`/`uv_max` dejan de
+    significar lo que dicen. Ver docs/parametros.md §1.3.
+    """
+    assert SEGUNDOS_UV_POR_TICK == pytest.approx(DT_HORAS_DEFECTO * 3600.0)
 
 
 def test_a_w_min_de_crecimiento_respeta_el_limite_de_la_vida() -> None:

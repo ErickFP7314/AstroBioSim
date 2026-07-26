@@ -38,17 +38,17 @@ _(vacío)_
 
 ### 🔸 🟢 Re-derivar umbrales UV y de supervivencia
 
-**Dueño:** Esmeralda · **Criterios:** 2/7
+**Dueño:** Esmeralda · **Criterios:** 5/7
 
-> ADR-0012 y ADR-0014. PARCIALMENTE RESUELTO: los umbrales UV de E. coli y D. radiodurans ya se derivaron de fluencias publicadas (870 y 50.760 J/m2, factor 58x) dividiendo por SEGUNDOS_UV_POR_TICK. Ver docs/parametros.md. Queda el UV de M. burtonii (sin dato publicado) y los umbrales de supervivencia.
+> ADR-0012 y ADR-0014. Los umbrales UV de las 3 especies ya se derivaron de fluencias publicadas/analogía. Queda pendiente que Fidel confirme la banda UV254 en su adaptador (criterio compartido, fuera del alcance de `microorganism.py`).
 
 - [x] UV de E. coli y D. radiodurans derivados de fluencia publicada (870 / 50.760 J/m2) — ver docs/parametros.md §1.3
-- [ ] `t_sup_min`, `t_sup_max` y `a_w_sup_min` de las 3 especies citan fuente
-- [ ] Ningun `a_w_min` de crecimiento baja de 0.605 (limite de division celular conocido)
+- [x] `t_sup_min`, `t_sup_max` y `a_w_sup_min` de las 3 especies citan fuente — documentados como [EST] en docs/parametros.md §1.1bis/§1.2 (sin literatura puntual; deuda §4.4 sigue abierta para cerrarlos con cita)
+- [x] Ningun `a_w_min` de crecimiento baja de 0.605 (limite de division celular conocido) — verificado (0.95 / 0.90 / 0.95) y cubierto por `test_a_w_min_de_crecimiento_respeta_el_limite_de_la_vida`
 - [ ] La banda usada (UV254) coincide con la que aplica Fidel en el adaptador
-- [ ] `pytest tests/unit/test_microorganism.py` en verde
+- [x] `pytest tests/unit/test_microorganism.py` en verde
 - [x] UV de M. burtonii cerrado por analogia [ANA]: metanogenas adaptadas al frio resisten 2.5-13.8x mas que M. barkeri (~E. coli). Se toma 2.5x -> 2175 J/m2. Ver docs/parametros.md §1.3
-- [ ] Confirmar SEGUNDOS_UV_POR_TICK (28.800 s) con el dt que elija Erick: si divergen, los umbrales UV dejan de significar lo que dicen
+- [x] Confirmar SEGUNDOS_UV_POR_TICK (28.800 s) con el dt que elija Erick: si divergen, los umbrales UV dejan de significar lo que dicen — **NO coincidían** (8h vs. `DT_HORAS_DEFECTO=1h`). Corregido a 3.600 s el 2026-07-25; ver docs/parametros.md §1.3 y §4.7. Pendiente: recalcular la tabla de resultados de §3 con los umbrales nuevos.
 
 ### ⬜ 🟡 Radiacion a banda UV + a_w media de Atacama
 
