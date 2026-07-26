@@ -177,6 +177,14 @@ Respondé esto antes de que tu Claude implemente; si no, asumirá defaults que q
   sin agua), que necesita refugios grandes (radio ≥ ~10-16) Y frecuentes (≥ ~0.27/tick).
   Figura de muestra: `docs/toBePresented/barrido_microrefugios_marte_ecoli_radio_viva.png`.
   Se hizo con **script (sin notebook)** para no tocar el de Esmeralda.
+- ✅ **Validación estadística de Montecarlo IMPLEMENTADA** en la rama
+  `chore/validacion-estadistica`. Módulo `analysis/validacion_montecarlo.py`
+  (`estudio_convergencia` → media acumulada + `SE = σ/√N` + `n_suficiente`;
+  métrica `viva`/`activa`/`muerta`/`persistencia`) y `scripts/validacion_montecarlo.py`
+  (figura convergencia: media ± IC 95% y SE ∝ 1/√N). 13 tests. Los 3 criterios:
+  (1) N suficiente = **180 réplicas** para SE ≤ 3% cerca del umbral (E. coli/Marte),
+  (2) reporta **media ± σ** muestral, (3) reproducible con semilla fija. Figura:
+  `docs/toBePresented/validacion_montecarlo_marte_ecoli_persistencia.png`.
 - Decisiones tomadas: frontera muerta, LATENTE ocupa pero no reproduce, Δt = 1 h.
   ⚠️ Δt = 1 h se acopla con `SEGUNDOS_UV_POR_TICK` (hoy 8 h) — reconciliar con
   Esmeralda (deuda #7 de `docs/parametros.md`).
