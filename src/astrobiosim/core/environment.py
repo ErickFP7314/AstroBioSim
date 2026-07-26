@@ -198,10 +198,29 @@ class MarteSubsuelo(PlanetaSubsuelo):
     0.187 de la columna procesada — confirma que es la misma estación). La
     heterogeneidad espacial la genera el modelo cuando se le inyecta un `rng`.
     Metodología reproducible en `scripts/derivar_a_w_media_atacama.py`.
+
+    **Asíntota térmica corregida (Hito 4, sanidad física, 2026-07-26):**
+    `T_PROFUNDO_C` era la media de los **mínimos** diarios (7.8 °C) — el mismo
+    sesgo pesimista que el de `A_w`. Una onda térmica diurna amortigua hacia la
+    media **anual**, no hacia el mínimo. Recalculada como la media de
+    `(Temp_Maxima_Superficie_C + Temp_Minima_Superficie_C) / 2` sobre los 365
+    días del dataset ya versionado (`scripts/derivar_t_profundo_atacama.py`):
+    da 22.4 °C, sin necesitar el crudo. No cambia la tabla de §3 de
+    `docs/parametros.md`: tanto 7.8 como 22.4 quedan por encima del `t_min` de
+    las especies modeladas, así que la banda habitable de Marte la sigue
+    poniendo `A_w`, no `T`.
     """
 
     T_SUPERFICIE_C: float = 36.9  # media de Temp_Maxima_Superficie_C (Atacama 2025)
-    T_PROFUNDO_C: float = 7.8  # media de Temp_Minima_Superficie_C (asíntota fría)
+    #: Asíntota fría de la onda térmica diurna: la media ANUAL, no la media de
+    #: los mínimos diarios (esa era una cota pesimista, mismo sesgo de
+    #: muestreo que `A_W_MEDIA` — ver docstring de la clase y
+    #: `docs/parametros.md` §4, deuda #2 resuelta 2026-07-26). Derivada como
+    #: la media de `(Temp_Maxima + Temp_Minima) / 2` sobre los 365 días del
+    #: dataset ya versionado (`scripts/derivar_t_profundo_atacama.py`), la
+    #: aproximación meteorológica estándar de la media diaria a partir de
+    #: extremos.
+    T_PROFUNDO_C: float = 22.4
     RADIACION_GLOBAL_W_M2: float = 844.2  # media de Radiacion_Solar_Maxima_W_m2
     UV_SUPERFICIE: float = RADIACION_GLOBAL_W_M2 * FRACCION_UV  # ≈ 42.2 W/m²
     A_W_MEDIA: float = 0.382  # media de la MEDIA diaria real (CRC1211DB estación 13)

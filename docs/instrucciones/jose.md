@@ -119,6 +119,22 @@ cambió y tus tests siguen verdes. **Revisá `campo_modulado` al mergear**
    anual** (≈ 22.4 °C), no hacia el mínimo. No lo toqué porque es tu dominio, pero
    creo que está mal y cambia dónde queda la banda habitable. Decidilo vos.
 
+## 🔄 Actualización 2026-07-26 — Hito 4 (sanidad física) cerrado
+
+> Tus dos tareas nuevas del punto 4 y la deuda #6 quedaron resueltas en la rama
+> `chore/sanidad-fisica`, con tests nuevos en `tests/unit/test_sanidad_fisica.py`
+> que cubren los 5 criterios de la tarjeta "Sanidad física de gradientes y
+> eventos" del tablero.
+
+| Qué | Antes | Ahora | Por qué |
+|---|---|---|---|
+| `T_PROFUNDO_C` | 7.8 (media de mínimos diarios) | **22.4** (media anual real, `(max+min)/2` sobre el dataset ya versionado — `scripts/derivar_t_profundo_atacama.py`) | mismo sesgo pesimista que tenía `A_w`; la onda térmica amortigua hacia la media anual, no el mínimo. **No cambia** la tabla de resultados de `parametros.md` §3: ambos valores quedan sobre el `t_min` de las especies, así que Marte lo sigue limitando `A_w` |
+| `ΔT=25` hidrotermal apilado | deuda abierta sin decidir | **decidido: se acepta.** El núcleo de una ventila real es letal; se agregó un test que exige que el evento siga siendo *local* (nunca mata toda la grilla) | evitaba dejar una ambigüedad física sin resolver en el modelo |
+
+Falta que marques manualmente los 5 checkboxes de la tarjeta en Trello (el
+tablero.md se regenera *desde* Trello con `scripts/sync_tablero.py`, no al
+revés, así que no alcanza con editar el `.md`).
+
 ## Preguntas nuevas para tu agente
 
 8. **Salmuera:** ¿probabilidad de disparo, radio, y hasta qué `a_w` sube? (Para

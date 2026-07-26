@@ -140,7 +140,7 @@ importa para comparar dinámicas.
 | **Tierra** `A_W_SUBSUELO` | 0.99 | **[CONV]** | suelo a capacidad de campo. El dataset se corrigió a este mismo valor (la columna original era humedad del aire — resuelto, ver §4) |
 | **Tierra** `UV_SUBSUELO` | 0.0 | **[LIT]** | el suelo bloquea el UV por completo |
 | **Marte** `T_SUPERFICIE_C` | 36.9 | **[LIT]** | media de máximos diarios de Atacama |
-| **Marte** `T_PROFUNDO_C` | 7.8 | **[EST]** | media de **mínimos** diarios — **probablemente incorrecto**, ver §4 |
+| **Marte** `T_PROFUNDO_C` | 22.4 | **[DER]** | media de `(Temp_Maxima+Temp_Minima)/2` sobre los 365 días del dataset (aprox. de la media anual real). Corregido 2026-07-26, ver §4 deuda #2 resuelta — antes era 7.8, la media de los **mínimos** diarios |
 | **Marte** `RADIACION_GLOBAL_W_M2` | 844.2 | **[LIT]** | media de radiación solar máxima de Atacama |
 | **Marte** `UV_SUPERFICIE` | 42.2 | **[DER]** | `844.2 × 0.05`. **Validación fuerte:** cae dentro del rango publicado de UV marciano (**42–55 W/m²**) |
 | **Marte** `A_W_MEDIA` | 0.382 | **[DER]** | media de la media diaria real de `a_w = RH/100` (estación CRC1211DB 13, 2025-03-27..12-06, 146 días) — **[EST] hasta 2026-07-26**, cuando se re-derivó de la humedad relativa cruda (§4, deuda #1 resuelta) |
@@ -162,7 +162,7 @@ importa para comparar dinámicas.
 | `MicroFisuraMarte` | `radio_celdas` | 3.0 | **[CONV]** | alcance espacial de la desecación puntual |
 | `MicroFisuraMarte` | `caida_min` / `caida_max` | 0.3 / 0.7 | **[CONV]** | fracción de `A_w` perdida dentro del radio |
 | `EmisionHidrotermalEncelado` | `probabilidad_disparo` | 0.1 | **[CONV]** | tasa de disparo por tick |
-| `EmisionHidrotermalEncelado` | `mu_delta_t` | 25.0 | **[EST]** | pico térmico sobre el fondo oceánico; ver deuda §4.6 (apilado sobre una fumarola existente puede llevar a *M. burtonii* a su `t_max`) |
+| `EmisionHidrotermalEncelado` | `mu_delta_t` | 25.0 | **[EST]** | pico térmico sobre el fondo oceánico. Apilado sobre una fumarola fija existente puede llevar el núcleo a 59 °C y matar a *M. burtonii* ahí (~29 % de los disparos) — **decisión (Hito 4, 2026-07-26): se acepta como físicamente correcto**, el núcleo de una ventila real es letal; ver deuda §4.6 resuelta y `tests/unit/test_sanidad_fisica.py` (el resto de la grilla se mantiene habitable) |
 | `EmisionHidrotermalEncelado` | `sigma_delta_t` | 5.0 | **[EST]** | dispersión del pico, sin dato directo |
 | `EmisionHidrotermalEncelado` | `sigma_espacial` | 4.0 | **[CONV]** | mismo radio de decaimiento que las fumarolas fijas de `EnceladoSubglacial` |
 | `SalmueraDelicuescente` | `probabilidad_disparo` | 0.05 | **[CONV]** | espejo de `MicroFisuraMarte`: sin dato directo de frecuencia de salmueras |
@@ -213,10 +213,10 @@ Ordenado por impacto sobre la credibilidad del resultado.
 | # | Qué | Dueño | Por qué importa |
 |---|---|---|---|
 | ~~1~~ | ~~**`a_w` media de Atacama.**~~ ✅ **RESUELTO (2026-07-26):** re-derivada de la humedad relativa cruda de la estación CRC1211DB 13 (`a_w = RH/100`, ADR-0005). `A_W_MEDIA` pasa de 0.187 (media de los **mínimos** diarios) a **0.382** (media de las **medias** diarias reales) — el doble, como se esperaba. Metodología reproducible en `scripts/derivar_a_w_media_atacama.py`. **Caveat:** la estación solo tiene datos 2025-03-27..12-06 (146 días; falta verano austral, ene-feb); no cambia la tabla de §3 porque 0.382 sigue muy por debajo de `a_w_min = 0.90` de *D. radiodurans* (verificado corriendo `campo_inicial()` con ambos valores). | Fidel | — |
-| 2 | **`T_PROFUNDO_C` de Marte.** Es la media de los mínimos diarios, pero una onda térmica amortigua hacia la **media anual** (≈ 22.4 °C), no hacia el mínimo. | Jose | Cambia dónde queda la banda habitable. Creemos que está mal. |
+| ~~2~~ | ~~**`T_PROFUNDO_C` de Marte.**~~ ✅ **RESUELTO (2026-07-26):** era la media de los mínimos diarios (7.8 °C); una onda térmica amortigua hacia la **media anual**, no hacia el mínimo. Recalculada como `(Temp_Maxima+Temp_Minima)/2` sobre el dataset ya versionado (`scripts/derivar_t_profundo_atacama.py`): **22.4 °C**. **No cambia** la tabla de §3: tanto 7.8 como 22.4 quedan por encima del `t_min` de las especies modeladas, así que la banda habitable de Marte la sigue poniendo `A_w`, no `T` (verificado en `tests/unit/test_sanidad_fisica.py`). | Jose | — |
 | ~~3~~ | ~~**`a_w` del control terrestre.**~~ ✅ **RESUELTO (2026-07-24):** Esmeralda confirmó que la columna era humedad del aire; el dataset se corrigió a `a_w = 0.99` constante (suelo a capacidad de campo, [CONV] documentada). | Fidel | — |
 | 4 | **`t_sup_min`/`t_sup_max` de las 3 especies y `a_w_sup_min` de *E. coli* y *M. burtonii*.** **[EST]** (§1.1bis, §1.2). | Esmeralda | Definen cuánto aguantan antes de morir, no cuándo crecen. Son los únicos umbrales de supervivencia sin cita directa. |
-| 6 | **`ΔT = 25` del evento hidrotermal.** Apilado sobre una fumarola existente lleva T a 59 °C y mata a *M. burtonii* en el 29 % de los disparos. Puede ser correcto (el núcleo de una ventila **es** letal), pero hay que decidirlo. | Jose | Afecta la dinámica de Encelado. |
+| ~~6~~ | ~~**`ΔT = 25` del evento hidrotermal.**~~ ✅ **DECIDIDO (2026-07-26):** apilado sobre una fumarola fija existente lleva el núcleo a 59 °C y mata a *M. burtonii* ahí en el 29 % de los disparos. **Se acepta como físicamente correcto** — el núcleo de una ventila real es letal — sin cambiar `mu_delta_t`. Se agregó `tests/unit/test_sanidad_fisica.py::test_nucleo_de_fumarola_puede_ser_letal_pero_el_resto_de_encelado_sigue_habitable`, que exige que el evento siga siendo **local**: nunca mata toda la grilla, solo el núcleo. | Jose | — |
 | ~~7~~ | ~~**`SEGUNDOS_UV_POR_TICK` y el Δt del autómata.**~~ ✅ **RESUELTO (2026-07-25):** `SEGUNDOS_UV_POR_TICK` pasó de 8 h a 1 h para coincidir con `DT_HORAS_DEFECTO`; verificado por `test_segundos_uv_por_tick_coincide_con_dt_automata`, y la tabla de §3 recalculada. | Erick + Esmeralda | — |
 
 ---
