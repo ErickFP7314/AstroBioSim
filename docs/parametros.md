@@ -180,29 +180,26 @@ importa para comparar dinámicas.
 
 ## 3. Qué produce el modelo con estos valores
 
-> ⚠️ **Tabla pendiente de recalcular tras la corrección de `SEGUNDOS_UV_POR_TICK`
-> (§1.3, 2026-07-25).** Los porcentajes de abajo se midieron con el `uv_letal` /
-> `uv_max` viejos (8× más bajos); con los valores corregidos, más filas quedan
-> por debajo del umbral letal y el patrón cualitativo (banda estéril superficial
-> → latente en profundidad) debería sostenerse, pero los números exactos no. No
-> se re-ejecutó la corrida como parte de este cambio — es la continuación
-> natural de esta tarea.
+> Recalculado el 2026-07-25 tras corregir `SEGUNDOS_UV_POR_TICK` (§1.3), sobre
+> grilla 50×50. Solo cambió *D. radiodurans* / Marte: con los umbrales UV 8× más
+> altos, la capa estéril de superficie es más fina (de ~3 filas a 1), así que
+> `MUERTA` baja de 6 % a 2 % y `LATENTE` sube. Tierra y Encelado no cambian
+> (tienen `R = 0`, el UV no interviene).
 
 | Especie / entorno | `ACTIVA` | `LATENTE` | `MUERTA` |
 |---|---|---|---|
 | *E. coli* / Tierra | 100 % | 0 % | 0 % |
-| *D. radiodurans* / Marte | **0 %** | **94 %** | **6 %** |
+| *D. radiodurans* / Marte | **0 %** | **98 %** | **2 %** |
 | *M. burtonii* / Encelado | 100 % | 0 % | 0 % |
 
 **La banda de profundidad marciana emerge sola de los datos**, sin ajustar nada:
 
 | Filas | Estado | Causa |
 |---|---|---|
-| 0–2 | `MUERTA` | UV por encima de la fluencia letal: superficie estéril |
-| 3–4 | `LATENTE` | el UV ya no mata pero inhibe; y falta agua |
-| 5+ | `LATENTE` | el UV deja de limitar; sigue faltando agua |
+| 0 | `MUERTA` | UV por encima de la fluencia letal: superficie estéril |
+| 1+ | `LATENTE` | el UV ya no mata (cae a <14 W/m² en una celda); falta agua para crecer |
 
-Con un microrefugio húmedo (`a_w = 0.95`) **por debajo de la fila 5**, el
+Con un microrefugio húmedo (`a_w ≥ 0.90`) **bajo la fila estéril**, el
 crecimiento se reactiva. Ese es exactamente el objeto de la pregunta de
 investigación de ADR-0015: **cuánta agua transitoria, y cada cuánto, hace falta
 para que la población persista.**
@@ -220,7 +217,7 @@ Ordenado por impacto sobre la credibilidad del resultado.
 | ~~3~~ | ~~**`a_w` del control terrestre.**~~ ✅ **RESUELTO (2026-07-24):** Esmeralda confirmó que la columna era humedad del aire; el dataset se corrigió a `a_w = 0.99` constante (suelo a capacidad de campo, [CONV] documentada). | Fidel | — |
 | 4 | **`t_sup_min`/`t_sup_max` de las 3 especies y `a_w_sup_min` de *E. coli* y *M. burtonii*.** **[EST]** (§1.1bis, §1.2). | Esmeralda | Definen cuánto aguantan antes de morir, no cuándo crecen. Son los únicos umbrales de supervivencia sin cita directa. |
 | 6 | **`ΔT = 25` del evento hidrotermal.** Apilado sobre una fumarola existente lleva T a 59 °C y mata a *M. burtonii* en el 29 % de los disparos. Puede ser correcto (el núcleo de una ventila **es** letal), pero hay que decidirlo. | Jose | Afecta la dinámica de Encelado. |
-| ~~7~~ | ~~**`SEGUNDOS_UV_POR_TICK` y el Δt del autómata.**~~ ✅ **RESUELTO (2026-07-25):** `SEGUNDOS_UV_POR_TICK` pasó de 8 h a 1 h para coincidir con `DT_HORAS_DEFECTO`; verificado por test. **Pendiente:** la tabla de §3 se midió con el valor viejo y falta recalcularla. | Erick + Esmeralda | Si divergen, los umbrales UV dejan de significar lo que dicen, en silencio. |
+| ~~7~~ | ~~**`SEGUNDOS_UV_POR_TICK` y el Δt del autómata.**~~ ✅ **RESUELTO (2026-07-25):** `SEGUNDOS_UV_POR_TICK` pasó de 8 h a 1 h para coincidir con `DT_HORAS_DEFECTO`; verificado por `test_segundos_uv_por_tick_coincide_con_dt_automata`, y la tabla de §3 recalculada. | Erick + Esmeralda | — |
 
 ---
 

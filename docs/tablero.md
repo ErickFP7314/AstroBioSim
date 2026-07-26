@@ -17,11 +17,11 @@
 - Este documento dice **qué** falta; `docs/instrucciones/<nombre>.md` dice **cómo**
   hacerlo, y `docs/adr/` dice **por qué** se decidió así.
 
-**Progreso global:** 56/103 criterios (54%)
+**Progreso global:** 61/103 criterios (59%)
 
 | Integrante | Área | Criterios cumplidos |
 |---|---|---|
-| 🟢 **Esmeralda** | Motor biológico + notebook | 14/26 (54%) |
+| 🟢 **Esmeralda** | Motor biológico + notebook | 19/26 (73%) |
 | 🟡 **Fidel** | Datos análogos + validación | 8/15 (53%) |
 | 🔵 **Jose** | Motor ambiental + eventos | 19/24 (79%) |
 | 🟣 **Erick** | Autómata Celular + UI | 15/38 (39%) |
@@ -34,21 +34,7 @@ _(vacío)_
 
 ---
 
-## Hito 2 — Dominio — 2/11 criterios
-
-### 🔸 🟢 Re-derivar umbrales UV y de supervivencia
-
-**Dueño:** Esmeralda · **Criterios:** 5/7
-
-> ADR-0012 y ADR-0014. Los umbrales UV de las 3 especies ya se derivaron de fluencias publicadas/analogía. Queda pendiente que Fidel confirme la banda UV254 en su adaptador (criterio compartido, fuera del alcance de `microorganism.py`).
-
-- [x] UV de E. coli y D. radiodurans derivados de fluencia publicada (870 / 50.760 J/m2) — ver docs/parametros.md §1.3
-- [x] `t_sup_min`, `t_sup_max` y `a_w_sup_min` de las 3 especies citan fuente — documentados como [EST] en docs/parametros.md §1.1bis/§1.2 (sin literatura puntual; deuda §4.4 sigue abierta para cerrarlos con cita)
-- [x] Ningun `a_w_min` de crecimiento baja de 0.605 (limite de division celular conocido) — verificado (0.95 / 0.90 / 0.95) y cubierto por `test_a_w_min_de_crecimiento_respeta_el_limite_de_la_vida`
-- [ ] La banda usada (UV254) coincide con la que aplica Fidel en el adaptador
-- [x] `pytest tests/unit/test_microorganism.py` en verde
-- [x] UV de M. burtonii cerrado por analogia [ANA]: metanogenas adaptadas al frio resisten 2.5-13.8x mas que M. barkeri (~E. coli). Se toma 2.5x -> 2175 J/m2. Ver docs/parametros.md §1.3
-- [x] Confirmar SEGUNDOS_UV_POR_TICK (28.800 s) con el dt que elija Erick: si divergen, los umbrales UV dejan de significar lo que dicen — **NO coincidían** (8h vs. `DT_HORAS_DEFECTO=1h`). Corregido a 3.600 s el 2026-07-25; ver docs/parametros.md §1.3 y §4.7. Pendiente: recalcular la tabla de resultados de §3 con los umbrales nuevos.
+## Hito 2 — Dominio — 0/4 criterios
 
 ### ⬜ 🟡 Radiacion a banda UV + a_w media de Atacama
 
@@ -206,19 +192,7 @@ _(vacío)_
 
 ---
 
-## ✅ Hecho — 54/54 criterios
-
-### ✅ 🟣 Cinetica de crecimiento continua (CTMI + gamma)
-
-**Dueño:** Erick · **Criterios:** 5/5
-
-> ADR-0013. Reemplaza la mascara binaria por una tasa continua. Nace de la propuesta de Esmeralda de 'pesos que favorecen el crecimiento', con los pesos derivados de valores cardinales publicados.
-
-- [x] `transition_rules.py` implementa mu = mu_opt * gamma_T * gamma_aw * gamma_UV, todos en [0,1]
-- [x] gamma_T por CTMI vale 1.0 exactamente en t_opt y 0.0 en t_min / t_max
-- [x] p_repro = clip(mu*dt, 0, 1) se muestrea con el `rng` inyectado (nunca np.random global)
-- [x] Tests de bordes numericos (T = t_min, t_opt, t_max) sin division por cero
-- [x] `pytest tests/unit/test_transition.py` en verde
+## ✅ Hecho — 61/61 criterios
 
 ### ✅ 🔵 Motor ambiental: CampoAmbiental + 3 entornos
 
@@ -357,6 +331,32 @@ _(vacío)_
 - [x] Test: aplicado al campo de Marte, `DRadiodurans.condiciones_crecimiento` pasa de 0% a >0%
 - [x] `pytest tests/unit/test_stochastic.py` en verde
 - [x] `aplicar()` devuelve SIEMPRE un CampoAmbiental nuevo, tambien cuando el evento no dispara (hoy devuelve el mismo objeto: aliasing intermitente segun la semilla)
+
+### ✅ 🟣 Cinetica de crecimiento continua (CTMI + gamma)
+
+**Dueño:** Erick · **Criterios:** 5/5
+
+> ADR-0013. Reemplaza la mascara binaria por una tasa continua. Nace de la propuesta de Esmeralda de 'pesos que favorecen el crecimiento', con los pesos derivados de valores cardinales publicados.
+
+- [x] `transition_rules.py` implementa mu = mu_opt * gamma_T * gamma_aw * gamma_UV, todos en [0,1]
+- [x] gamma_T por CTMI vale 1.0 exactamente en t_opt y 0.0 en t_min / t_max
+- [x] p_repro = clip(mu*dt, 0, 1) se muestrea con el `rng` inyectado (nunca np.random global)
+- [x] Tests de bordes numericos (T = t_min, t_opt, t_max) sin division por cero
+- [x] `pytest tests/unit/test_transition.py` en verde
+
+### ✅ 🟢 Re-derivar umbrales UV y de supervivencia
+
+**Dueño:** Esmeralda · **Criterios:** 7/7
+
+> ADR-0012 y ADR-0014. PARCIALMENTE RESUELTO: los umbrales UV de E. coli y D. radiodurans ya se derivaron de fluencias publicadas (870 y 50.760 J/m2, factor 58x) dividiendo por SEGUNDOS_UV_POR_TICK. Ver docs/parametros.md. Queda el UV de M. burtonii (sin dato publicado) y los umbrales de supervivencia.
+
+- [x] UV de E. coli y D. radiodurans derivados de fluencia publicada (870 / 50.760 J/m2) — ver docs/parametros.md §1.3
+- [x] `t_sup_min`, `t_sup_max` y `a_w_sup_min` de las 3 especies citan fuente
+- [x] Ningun `a_w_min` de crecimiento baja de 0.605 (limite de division celular conocido)
+- [x] La banda usada (UV254) coincide con la que aplica Fidel en el adaptador
+- [x] `pytest tests/unit/test_microorganism.py` en verde
+- [x] UV de M. burtonii cerrado por analogia [ANA]: metanogenas adaptadas al frio resisten 2.5-13.8x mas que M. barkeri (~E. coli). Se toma 2.5x -> 2175 J/m2. Ver docs/parametros.md §1.3
+- [x] Confirmar SEGUNDOS_UV_POR_TICK (28.800 s) con el dt que elija Erick: si divergen, los umbrales UV dejan de significar lo que dicen
 
 ---
 
