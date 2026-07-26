@@ -161,6 +161,11 @@ Respondé esto antes de que tu Claude implemente; si no, asumirá defaults que q
   con presets como plantilla, agregar/reordenar/borrar filas y condiciones,
   validación en vivo). 21 tests nuevos (incluida la equivalencia EXACTA del preset
   `logistica` con `ReglaLogistica`); build limpio.
+- ✅ **Panel de notación IMPLEMENTADO** en la rama `feat/panel-notacion` (cierra el
+  criterio que faltaba de la tarea "Editor + panel de notación"). Componente
+  `Notacion.tsx` con **KaTeX** renderiza el LaTeX de `notacion()`: panel "Notación de
+  la regla" en el dashboard (regla activa, preset o personalizada) + notación **en
+  vivo** dentro del editor mientras armás la regla. 0 vulnerabilidades, build limpio.
 - ✅ **Barrido: umbral crítico de microrefugios IMPLEMENTADO** en la rama
   `feat/barrido-microrefugios` (ADR-0015, el entregable de más peso académico).
   Módulo `src/astrobiosim/analysis/barrido.py` (`barrido_microrefugios` + `evaluar_punto`

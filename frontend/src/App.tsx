@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   fetchCatalogo,
   fetchMontecarlo,
+  fetchValidarRegla,
   type Catalogo,
   type ConfigCorrida,
   type Modo,
@@ -16,6 +17,7 @@ import { ControlPanel } from "./components/ControlPanel";
 import { AutomatonGrid } from "./components/AutomatonGrid";
 import { PopulationChart } from "./components/PopulationChart";
 import { RuleEditor } from "./components/RuleEditor";
+import { Notacion } from "./components/Notacion";
 
 const CFG_INICIAL: ConfigCorrida = {
   modo: "sandbox", especie: "dradiodurans", entorno: "marte",
@@ -38,11 +40,26 @@ export default function App() {
   const [mc, setMc] = useState<Montecarlo | null>(null);
   const [mcCargando, setMcCargando] = useState(false);
   const [editorRegla, setEditorRegla] = useState(false);
+  const [notacion, setNotacion] = useState<string | null>(null);
   const sim = useSimulation();
 
   useEffect(() => {
     fetchCatalogo().then(setCatalogo).catch((e) => setErrCat(String(e)));
   }, []);
+
+  // Notación de la regla activa: si es un preset, sale del catálogo; si es un
+  // spec de bloques, la pide al backend (única fuente de la notación).
+  useEffect(() => {
+    if (!catalogo) return;
+    const r = cfg.regla;
+    if (r && typeof r === "object") {
+      let vivo = true;
+      fetchValidarRegla(r).then((v) => vivo && setNotacion(v.notacion)).catch(() => vivo && setNotacion(null));
+      return () => { vivo = false; };
+    }
+    const id = typeof r === "string" ? r : "logistica";
+    setNotacion(catalogo.reglas.find((x) => x.id === id)?.notacion ?? null);
+  }, [cfg.regla, catalogo]);
 
   const update = useCallback((patch: Partial<ConfigCorrida>) => {
     setCfg((c) => ({ ...c, ...patch }));
@@ -61,6 +78,12 @@ export default function App() {
   const n = sim.frameActual?.n ?? null;
   const tot = n ? n.m + n.l + n.a : 0;
   const frac = (x: number) => (tot ? ((x / tot) * 100).toFixed(1) + " %" : "—");
+  const nombreReglaActiva = ((): string => {
+    const r = cfg.regla;
+    if (r && typeof r === "object") return r.nombre;
+    const id = typeof r === "string" ? r : "logistica";
+    return catalogo.reglas.find((x) => x.id === id)?.nombre ?? id;
+  })();
 
   return (
     <div className="app">
@@ -111,6 +134,13 @@ export default function App() {
                 </div>
               ))}
             </div>
+          </div>
+          <div className="card">
+            <div className="card-head">
+              <p className="ttl">Notación de la regla</p>
+              <span className="mini-txt">{nombreReglaActiva}</span>
+            </div>
+            <Notacion tex={notacion} />
           </div>
           {sim.error && <div className="card err">{sim.error}</div>}
         </aside>
