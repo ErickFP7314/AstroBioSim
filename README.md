@@ -52,7 +52,15 @@ uvicorn astrobiosim.ui.api:app --reload   # backend API (FastAPI) — desde Hito
 ### Frontend (desde Hito 3):
 
 ```bash
-cd frontend && npm install && npm run dev
+cd frontend
+npm install
+npm run dev
+```
+
+En caso de que falle el comando `npm run dev` debe ir de la siguiente manera:
+
+```bash
+VITE_POLLING=1 npm run dev
 ```
 
 ## Testing
