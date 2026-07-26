@@ -17,11 +17,11 @@
 - Este documento dice **qué** falta; `docs/instrucciones/<nombre>.md` dice **cómo**
   hacerlo, y `docs/adr/` dice **por qué** se decidió así.
 
-**Progreso global:** 86/103 criterios (83%)
+**Progreso global:** 89/103 criterios (86%)
 
 | Integrante | Área | Criterios cumplidos |
 |---|---|---|
-| 🟢 **Esmeralda** | Motor biológico + notebook | 23/26 (88%) |
+| 🟢 **Esmeralda** | Motor biológico + notebook | 26/26 (100%) |
 | 🟡 **Fidel** | Datos análogos + validación | 12/15 (80%) |
 | 🔵 **Jose** | Motor ambiental + eventos | 19/24 (79%) |
 | 🟣 **Erick** | Autómata Celular + UI | 32/38 (84%) |
@@ -46,20 +46,7 @@ _(vacío)_
 
 ---
 
-## Sprint 4 — Validacion — 0/17 criterios
-
-### ⬜ 🟢 Calibracion de umbrales con literatura
-
-**Dueño:** Esmeralda · **Criterios:** 0/3
-
-> *Como biotecnologa, quiero umbrales de especie realistas para que los resultados sean defendibles.*
->
-> Calibrar `t_min/t_opt/t_max/a_w_min/uv_max` y los umbrales de supervivencia de cada especie con literatura.
-> Rama: `fix/bio-calibracion`.
-
-- [ ] Los umbrales de cada especie citan fuente de literatura
-- [ ] Ninguna especie queda con 0% de SUPERVIVENCIA en su entorno; tests/integration/test_especie_en_su_entorno.py en verde
-- [ ] Los tests de especies siguen en verde tras la calibracion
+## Sprint 4 — Validacion — 0/14 criterios
 
 ### ⬜ 🟡 Validacion biologica de las salidas
 
@@ -120,7 +107,20 @@ _(vacío)_
 
 ---
 
-## ✅ Hecho — 86/86 criterios
+## ✅ Hecho — 89/89 criterios
+
+### ✅ 🟢 Calibracion de umbrales con literatura
+
+**Dueño:** Esmeralda · **Criterios:** 3/3
+
+> *Como biotecnologa, quiero umbrales de especie realistas para que los resultados sean defendibles.*
+>
+> Calibrar `t_min/t_opt/t_max/a_w_min/uv_max` y los umbrales de supervivencia de cada especie con literatura.
+> Rama: `fix/bio-calibracion`.
+
+- [x] Los umbrales de cada especie citan fuente de literatura (`docs/parametros.md` §1, cada valor con etiqueta de procedencia; los [EST] sin cita directa quedan declarados como deuda en §4.4)
+- [x] Ninguna especie queda con 0% de SUPERVIVENCIA en su entorno; tests/integration/test_especie_en_su_entorno.py en verde (8/8 — D. radiodurans/Marte al 98% de supervivencia)
+- [x] Los tests de especies siguen en verde tras la calibracion (`pytest` completo: 213/213)
 
 ### ✅ 🔵 Motor ambiental: CampoAmbiental + 3 entornos
 
