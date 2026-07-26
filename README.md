@@ -7,6 +7,9 @@ críticas: **temperatura (T), radiación (R) y actividad de agua (A_w)**.
 
 Proyecto final — *1era Escuela de Invierno en Métodos Computacionales*.
 
+
+![Prevista del sistema en funcionamiento](image.png)
+
 ## Arquitectura
 
 Dos motores desacoplados coordinados por un orquestador de simulación
