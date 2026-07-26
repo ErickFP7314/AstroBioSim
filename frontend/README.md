@@ -22,9 +22,16 @@ uvicorn astrobiosim.ui.api:app --reload
 
 ```bash
 npm install
-npm run dev
-# abre http://localhost:5173
+npm run dev                 # abre http://localhost:5173
 ```
+
+> **¿Falla con `ENOSPC: System limit for number of file watchers reached`?**
+> No es un bug del proyecto ni falta de optimización: es un límite del sistema
+> (ver *Solución de problemas*). Arrancá con **polling**, sin sudo:
+>
+> ```bash
+> VITE_POLLING=1 npm run dev
+> ```
 
 Vite proxya `/api` (HTTP y WebSocket) hacia `:8000`, así que no hay que tocar CORS
 ni URLs en desarrollo. Para producción: `npm run build` genera `dist/`.
@@ -66,3 +73,8 @@ reproducción (play / pausa / paso / velocidad) sobre ese buffer.
 - La **grilla** (canvas) muestra los tres estados; el panel derecho grafica las
   curvas poblacionales del run y, con el botón *Banda Montecarlo*, superpone la
   media ± σ sobre N réplicas.
+- **Editor de reglas por bloques** (ADR-0018): en el panel izquierdo, *Regla de
+  transición* → *Editar por bloques* abre un editor de filas «SI condición →
+  estado» (cascada). Cargá un preset como plantilla (Logística / Conway /
+  Híbrida), agregá/reordená filas y condiciones, y la regla se valida en vivo
+  contra el backend. La grilla se recorre con la regla que armes.

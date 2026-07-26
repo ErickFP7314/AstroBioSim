@@ -23,7 +23,7 @@ from pathlib import Path
 from typing import Literal
 
 import numpy as np
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -44,6 +44,13 @@ from astrobiosim.data.loaders import (
 from astrobiosim.data.resampling import Entorno
 from astrobiosim.engine.cellular_automaton import paso
 from astrobiosim.engine.stochastic import SalmueraDelicuescente
+from astrobiosim.engine.transition_rules import (
+    PRESETS,
+    REGLAS_DISPONIBLES,
+    VOCABULARIO,
+    ReglaTransicion,
+    regla_desde_spec,
+)
 from astrobiosim.modes.analog import ModoAnalogico
 from astrobiosim.modes.base import ModoSimulacion
 from astrobiosim.modes.sandbox import ModoSandbox
@@ -101,11 +108,14 @@ class ConfigCorrida(BaseModel):
     fraccion_activa: float = Field(default=0.15, ge=0.0, le=1.0)
     patron: Literal["uniforme", "cluster"] = "uniforme"
     semilla: int | None = 42
-    n_iteraciones: int | None = None  # Sandbox; en Analógico se ignora (365)
+    n_iteraciones: int | None = None  # ticks a simular (ambos modos; Analógico se recorta al dataset)
     # Eventos
     salmuera: bool = False  # microrefugios (solo tiene sentido en Marte)
     # Montecarlo
     n_corridas: int = Field(default=30, ge=1, le=_MC_MAX)
+    # Regla de transición (ADR-0016/0018): id de preset ("logistica"/"conway"/
+    # "hibrida"), spec de bloques inline (dict) o None → logística por defecto.
+    regla: str | dict | None = None
 
 
 # --------------------------------------------------------------------------
@@ -119,9 +129,10 @@ def _especie(cfg: ConfigCorrida) -> Microorganismo:
     return _ESPECIES[cfg.especie]()
 
 
-def _n_iter(cfg: ConfigCorrida) -> int | None:
-    if cfg.modo == "analogico":
-        return None  # la serie completa (finita)
+def _n_iter(cfg: ConfigCorrida) -> int:
+    """Nº de ticks a simular, en AMBOS modos. En Analógico el iterador de campos
+    es finito, así que `islice` recorta a lo que haya en el dataset si se pide de
+    más (nunca falla ni rellena)."""
     return min(cfg.n_iteraciones or _ITER_SANDBOX_DEFECTO, _ITER_MAX)
 
 
@@ -147,6 +158,24 @@ def _estado_inicial(cfg: ConfigCorrida, rng: np.random.Generator) -> np.ndarray:
     return sembrar_estado(
         _shape(cfg), rng=rng, fraccion_activa=cfg.fraccion_activa, patron=cfg.patron
     )
+
+
+def _regla(cfg: ConfigCorrida) -> ReglaTransicion | None:
+    """Resuelve `cfg.regla` a una `ReglaTransicion` (o None → logística por defecto).
+
+    Raises
+    ------
+    ValueError
+        Si el id de preset no existe o el spec de bloques está mal formado.
+    """
+    r = cfg.regla
+    if r is None:
+        return None  # paso()/simular usan ReglaLogistica por defecto
+    if isinstance(r, str):
+        if r not in REGLAS_DISPONIBLES:
+            raise ValueError(f"regla desconocida: {r!r} (usa {list(REGLAS_DISPONIBLES)})")
+        return REGLAS_DISPONIBLES[r]
+    return regla_desde_spec(r)  # spec de bloques inline (ADR-0018)
 
 
 # --------------------------------------------------------------------------
@@ -183,6 +212,11 @@ def config() -> dict:
                 "mu_opt": e.mu_opt,
             }
         )
+    # Reglas fijas como plantilla editable + su notación formal (ADR-0018).
+    reglas = []
+    for clave, spec in PRESETS.items():
+        r = regla_desde_spec(spec)
+        reglas.append({"id": clave, "nombre": r.nombre, "spec": spec, "notacion": r.notacion()})
     return {
         "especies": especies,
         "entornos": [
@@ -195,7 +229,24 @@ def config() -> dict:
             "iter_max": _ITER_MAX,
             "mc_max": _MC_MAX,
         },
+        # Editor de reglas por bloques (ADR-0018): plantillas + vocabulario.
+        "reglas": reglas,
+        "vocabulario": VOCABULARIO,
     }
+
+
+@app.post("/api/regla/validar")
+def validar_regla(spec: dict) -> dict:
+    """Valida un spec de bloques en construcción y devuelve su notación formal.
+
+    Devuelve ``{"valida": bool, "notacion": str | None, "error": str | None}``.
+    El frontend lo usa para dar feedback en vivo mientras se arma la regla.
+    """
+    try:
+        regla = regla_desde_spec(spec)
+    except ValueError as exc:
+        return {"valida": False, "notacion": None, "error": str(exc)}
+    return {"valida": True, "notacion": regla.notacion(), "error": None}
 
 
 def _frame(tick: int, estado: np.ndarray) -> dict:
@@ -223,7 +274,8 @@ async def stream(ws: WebSocket) -> None:
     await ws.accept()
     try:
         cfg = ConfigCorrida(**(await ws.receive_json()))
-    except Exception as exc:  # noqa: BLE001 — cualquier config inválida
+        regla = _regla(cfg)
+    except Exception as exc:  # noqa: BLE001 — cualquier config/regla inválida
         await ws.send_json({"type": "error", "detail": f"config inválida: {exc}"})
         await ws.close()
         return
@@ -238,10 +290,7 @@ async def stream(ws: WebSocket) -> None:
     eventos = _construir_eventos(cfg)
     estado = _estado_inicial(cfg, rng_estado)
 
-    campos = modo.campos()
-    n_iter = _n_iter(cfg)
-    if n_iter is not None:
-        campos = islice(campos, n_iter)
+    campos = islice(modo.campos(), _n_iter(cfg))
 
     try:
         await ws.send_json(_frame(0, estado))
@@ -250,7 +299,7 @@ async def stream(ws: WebSocket) -> None:
             campo = campo_base
             for evento in eventos:
                 campo = evento.aplicar(campo, rng_din)
-            estado = paso(estado, campo, especie, rng_din)
+            estado = paso(estado, campo, especie, rng_din, regla=regla)
             tick += 1
             await ws.send_json(_frame(tick, estado))
             await asyncio.sleep(0.004)  # cede el loop; el cliente marca el ritmo
@@ -270,6 +319,10 @@ def montecarlo(cfg: ConfigCorrida) -> dict:
 
     Columnas de `media`/`desviacion`: ``[MUERTA, LATENTE, ACTIVA]``.
     """
+    try:
+        regla = _regla(cfg)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     estado0 = _estado_inicial(cfg, np.random.default_rng(cfg.semilla))
     usa_eventos = bool(_construir_eventos(cfg))
     res = simular_montecarlo(
@@ -280,6 +333,7 @@ def montecarlo(cfg: ConfigCorrida) -> dict:
         n_corridas=min(cfg.n_corridas, _MC_MAX),
         semilla=cfg.semilla,
         n_iteraciones=_n_iter(cfg),
+        regla=regla,
     )
     return {
         "n_corridas": res.n_corridas,

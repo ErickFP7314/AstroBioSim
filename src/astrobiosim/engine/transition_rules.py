@@ -22,6 +22,7 @@ el `rng` inyectado.
 """
 from __future__ import annotations
 
+import operator
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
@@ -276,4 +277,429 @@ REGLAS_DISPONIBLES: dict[str, ReglaTransicion] = {
     "logistica": ReglaLogistica(),
     "conway": ReglaConway(),
     "hibrida": ReglaHibrida(),
+}
+
+
+# ==========================================================================
+# 4. Reglas por bloques — editor visual de la UI (ADR-0018)
+# ==========================================================================
+# Una regla se arma como una lista ordenada de CLÁUSULAS "SI <condición> →
+# <estado>". Se evalúan de arriba hacia abajo y **la primera que matchea gana**
+# (misma semántica de cascada que la `notacion()` de las reglas de arriba). Las
+# condiciones son máscaras booleanas sobre el `_Contexto`, así que el intérprete
+# sigue siendo vectorizado y síncrono. El frontend NO ejecuta nada: manda el
+# spec JSON y el motor lo convierte en una `ReglaTransicion`.
+
+#: Comparadores permitidos para el conteo de vecinos (nombre → función NumPy).
+_OPERADORES = {
+    "<": operator.lt,
+    "<=": operator.le,
+    "==": operator.eq,
+    ">=": operator.ge,
+    ">": operator.gt,
+}
+_ESTADOS_CELDA = ("vacia", "ocupada", "activa", "latente")
+_AMBIENTE = ("crece", "sobrevive")
+_VECINOS = ("activa", "ocupada")
+_RESULTADO_A_INT = {"MUERTA": MUERTA, "LATENTE": LATENTE, "ACTIVA": ACTIVA}
+_INT_A_RESULTADO = {v: k for k, v in _RESULTADO_A_INT.items()}
+#: Modos de probabilidad por cláusula (para las transiciones estocásticas).
+#: - ``contacto``: p_repro · nº vecinos ACTIVA / 8 (proceso de contacto).
+#: - ``mu``:       p_repro a secas (cinética pura, como el nacimiento de Conway).
+_PROBS = ("contacto", "mu")
+
+
+class Condicion(ABC):
+    """Predicado vectorizado: dada la `_Contexto`, devuelve una máscara (M, N)."""
+
+    @abstractmethod
+    def evaluar(self, ctx: _Contexto) -> np.ndarray:
+        """Máscara booleana (M, N): True en las celdas que cumplen la condición."""
+
+    @abstractmethod
+    def a_dict(self) -> dict:
+        """Serializa la condición al formato del spec JSON."""
+
+    @abstractmethod
+    def notacion(self) -> str:
+        """Fragmento LaTeX de la condición, para el panel de notación formal."""
+
+
+@dataclass(frozen=True)
+class CondEstado(Condicion):
+    """El estado actual de la celda: vacía (MUERTA), ocupada, ACTIVA o LATENTE."""
+
+    cual: str
+
+    def evaluar(self, ctx: _Contexto) -> np.ndarray:
+        e = ctx.estado
+        if self.cual == "vacia":
+            return e == MUERTA
+        if self.cual == "ocupada":
+            return (e == ACTIVA) | (e == LATENTE)
+        if self.cual == "activa":
+            return e == ACTIVA
+        return e == LATENTE  # "latente" (validado al construir)
+
+    def a_dict(self) -> dict:
+        return {"tipo": "estado", "cual": self.cual}
+
+    def notacion(self) -> str:
+        return {
+            "vacia": r"\text{vac}",
+            "ocupada": r"\text{ocup}",
+            "activa": r"\text{act}",
+            "latente": r"\text{lat}",
+        }[self.cual]
+
+
+@dataclass(frozen=True)
+class CondAmbiente(Condicion):
+    """El ambiente permite `crecer` o `sobrevivir` (o su negación)."""
+
+    cual: str
+    valor: bool = True
+
+    def evaluar(self, ctx: _Contexto) -> np.ndarray:
+        base = ctx.crece if self.cual == "crece" else ctx.sobrevive
+        return base if self.valor else ~base
+
+    def a_dict(self) -> dict:
+        return {"tipo": "ambiente", "cual": self.cual, "valor": self.valor}
+
+    def notacion(self) -> str:
+        simbolo = r"\mathrm{cre}" if self.cual == "crece" else r"\mathrm{sup}"
+        return simbolo if self.valor else rf"\neg\,{simbolo}"
+
+
+@dataclass(frozen=True)
+class CondVecinos(Condicion):
+    """Conteo de vecinos de Moore (ACTIVA u ocupados) comparado con un umbral."""
+
+    cual: str
+    op: str
+    n: int
+
+    def evaluar(self, ctx: _Contexto) -> np.ndarray:
+        arr = ctx.n_activa if self.cual == "activa" else ctx.n_ocupada
+        return _OPERADORES[self.op](arr, self.n)
+
+    def a_dict(self) -> dict:
+        return {"tipo": "vecinos", "cual": self.cual, "op": self.op, "n": self.n}
+
+    def notacion(self) -> str:
+        sub = "A" if self.cual == "activa" else "O"
+        return rf"n_{sub}{self.op}{self.n}"
+
+
+@dataclass(frozen=True)
+class Clausula:
+    """Una fila del editor: SI (todas las condiciones) → `resultado`.
+
+    `prob` opcional hace la transición estocástica: la cláusula solo matchea
+    donde además una tirada aleatoria cae bajo la probabilidad (ver `_PROBS`).
+    Sin condiciones = "en otro caso" (matchea siempre lo que quede libre).
+    """
+
+    condiciones: tuple[Condicion, ...]
+    resultado: int
+    prob: str | None = None
+
+    def a_dict(self) -> dict:
+        d: dict = {
+            "cuando": [c.a_dict() for c in self.condiciones],
+            "entonces": _INT_A_RESULTADO[self.resultado],
+        }
+        if self.prob is not None:
+            d["prob"] = self.prob
+        return d
+
+
+@dataclass
+class ReglaDesdeBloques(ReglaTransicion):
+    """Regla armada desde el editor de bloques (cascada de cláusulas, ADR-0018).
+
+    Se evalúan las cláusulas en orden y **la primera que matchea** fija el estado
+    siguiente de cada celda; lo que no matchea ninguna queda ``MUERTA``. Respeta
+    todos los invariantes del motor: vectorizada, síncrona, `rng` inyectado y
+    ``MUERTA`` absorbente (una celda vacía solo se ocupa por **colonización** de
+    un vecino ACTIVA, nunca por generación espontánea — se fuerza al final de
+    `aplicar`, sea cual sea el spec del usuario).
+    """
+
+    clausulas: tuple[Clausula, ...]
+    nombre: str = "Regla personalizada"
+
+    def aplicar(self, ctx: _Contexto) -> np.ndarray:
+        forma = ctx.estado.shape
+        nuevo = np.full(forma, MUERTA, dtype=np.int8)
+        libre = np.ones(forma, dtype=bool)  # celdas aún no asignadas por una cláusula
+        for cl in self.clausulas:
+            cumple = np.ones(forma, dtype=bool)
+            for cond in cl.condiciones:
+                cumple &= cond.evaluar(ctx)
+            if cl.prob is not None:
+                cumple = cumple & (ctx.rng.random(forma) < self._probabilidad(cl, ctx))
+            aplica = cumple & libre
+            nuevo[aplica] = cl.resultado
+            libre &= ~aplica
+        # Invariante ADR-0012: MUERTA es absorbente. Reponer una celda vacía es
+        # COLONIZACIÓN por un vecino que se reproduce (ACTIVA), no resurrección;
+        # sin un vecino ACTIVA, una celda vacía no puede ocuparse.
+        sin_colono = (ctx.estado == MUERTA) & (nuevo != MUERTA) & (ctx.n_activa == 0)
+        nuevo[sin_colono] = MUERTA
+        return nuevo
+
+    @staticmethod
+    def _probabilidad(cl: Clausula, ctx: _Contexto) -> np.ndarray:
+        if cl.prob == "contacto":
+            return ctx.p_repro * (ctx.n_activa / 8.0)
+        return ctx.p_repro  # "mu"
+
+    def a_spec(self) -> dict:
+        """Devuelve el spec JSON equivalente (para round-trip y la UI)."""
+        return {"nombre": self.nombre, "clausulas": [c.a_dict() for c in self.clausulas]}
+
+    def notacion(self) -> str:
+        filas = []
+        for cl in self.clausulas:
+            partes = [c.notacion() for c in cl.condiciones]
+            if cl.prob == "contacto":
+                partes.append(r"U<p_{\mathrm{rep}}\,n_A/8")
+            elif cl.prob == "mu":
+                partes.append(r"U<p_{\mathrm{rep}}")
+            cond = r"\wedge ".join(partes) if partes else r"\text{en otro caso}"
+            filas.append(rf"\text{{{_INT_A_RESULTADO[cl.resultado]}}} & {cond}")
+        cuerpo = r"\\".join(filas)
+        return r"S_{i,j}^{t+1}=\begin{cases}" + cuerpo + r"\end{cases}"
+
+
+def _condicion_desde_dict(d: object, ctx: str) -> Condicion:
+    """Parsea y valida una condición del spec. `ctx` describe dónde va (errores)."""
+    if not isinstance(d, dict) or "tipo" not in d:
+        raise ValueError(f"{ctx}: condición inválida {d!r} (falta 'tipo')")
+    tipo = d["tipo"]
+    if tipo == "estado":
+        cual = d.get("cual")
+        if cual not in _ESTADOS_CELDA:
+            raise ValueError(f"{ctx}: 'cual' de estado debe ser uno de {list(_ESTADOS_CELDA)}")
+        return CondEstado(cual)
+    if tipo == "ambiente":
+        cual = d.get("cual")
+        if cual not in _AMBIENTE:
+            raise ValueError(f"{ctx}: 'cual' de ambiente debe ser uno de {list(_AMBIENTE)}")
+        return CondAmbiente(cual, bool(d.get("valor", True)))
+    if tipo == "vecinos":
+        cual = d.get("cual")
+        if cual not in _VECINOS:
+            raise ValueError(f"{ctx}: 'cual' de vecinos debe ser uno de {list(_VECINOS)}")
+        op = d.get("op")
+        if op not in _OPERADORES:
+            raise ValueError(f"{ctx}: 'op' debe ser uno de {list(_OPERADORES)}")
+        n = d.get("n")
+        if not isinstance(n, int) or isinstance(n, bool) or not (0 <= n <= 8):
+            raise ValueError(f"{ctx}: 'n' de vecinos debe ser un entero en [0, 8]")
+        return CondVecinos(cual, op, n)
+    raise ValueError(f"{ctx}: tipo de condición desconocido {tipo!r}")
+
+
+def regla_desde_spec(spec: object) -> ReglaDesdeBloques:
+    """Construye una `ReglaDesdeBloques` desde un spec JSON, validándolo.
+
+    Parameters
+    ----------
+    spec : dict
+        ``{"nombre": str, "clausulas": [{"cuando": [cond...], "entonces": str,
+        "prob": str | None}, ...]}``. Ver `VOCABULARIO` para los valores válidos.
+
+    Raises
+    ------
+    ValueError
+        Si el spec está mal formado (tipo, valor, rango o estructura inválidos).
+    """
+    # Toda malformación del spec se reporta como ValueError (un único tipo de
+    # excepción para el contrato público: la API y los tests dependen de él); por
+    # eso los chequeos de tipo también lanzan ValueError y no TypeError.
+    if not isinstance(spec, dict):
+        raise ValueError("el spec de la regla debe ser un objeto")  # noqa: TRY004
+    clausulas_raw = spec.get("clausulas")
+    if not isinstance(clausulas_raw, list) or not clausulas_raw:
+        raise ValueError("el spec necesita al menos una cláusula en 'clausulas'")
+    clausulas: list[Clausula] = []
+    for i, cl in enumerate(clausulas_raw):
+        ctx = f"cláusula {i}"
+        if not isinstance(cl, dict):
+            raise ValueError(f"{ctx}: debe ser un objeto")  # noqa: TRY004
+        cuando = cl.get("cuando", [])
+        if not isinstance(cuando, list):
+            raise ValueError(f"{ctx}: 'cuando' debe ser una lista de condiciones")  # noqa: TRY004
+        conds = tuple(_condicion_desde_dict(c, ctx) for c in cuando)
+        res = cl.get("entonces")
+        if res not in _RESULTADO_A_INT:
+            raise ValueError(f"{ctx}: 'entonces' debe ser uno de {list(_RESULTADO_A_INT)}")
+        prob = cl.get("prob")
+        if prob is not None and prob not in _PROBS:
+            raise ValueError(f"{ctx}: 'prob' debe ser null o uno de {list(_PROBS)}")
+        clausulas.append(Clausula(conds, _RESULTADO_A_INT[res], prob))
+    nombre = str(spec.get("nombre") or "Regla personalizada")
+    return ReglaDesdeBloques(tuple(clausulas), nombre)
+
+
+#: Vocabulario de bloques que expone la API para que el frontend arme el editor
+#: sin hardcodear nada (cada entrada = un desplegable).
+VOCABULARIO: dict = {
+    "condiciones": [
+        {
+            "tipo": "estado",
+            "label": "Estado de la celda",
+            "campos": {
+                "cual": [
+                    {"id": "vacia", "label": "vacía (MUERTA)"},
+                    {"id": "ocupada", "label": "ocupada (ACTIVA o LATENTE)"},
+                    {"id": "activa", "label": "ACTIVA"},
+                    {"id": "latente", "label": "LATENTE"},
+                ]
+            },
+        },
+        {
+            "tipo": "ambiente",
+            "label": "El ambiente",
+            "campos": {
+                "cual": [
+                    {"id": "crece", "label": "permite crecer"},
+                    {"id": "sobrevive", "label": "permite sobrevivir"},
+                ],
+                "valor": [
+                    {"id": True, "label": "sí"},
+                    {"id": False, "label": "no"},
+                ],
+            },
+        },
+        {
+            "tipo": "vecinos",
+            "label": "Vecinos (Moore)",
+            "campos": {
+                "cual": [
+                    {"id": "activa", "label": "ACTIVA"},
+                    {"id": "ocupada", "label": "ocupados"},
+                ],
+                "op": [{"id": o, "label": o} for o in _OPERADORES],
+                "n": [{"id": k, "label": str(k)} for k in range(9)],
+            },
+        },
+    ],
+    "resultados": [
+        {"id": "ACTIVA", "label": "ACTIVA"},
+        {"id": "LATENTE", "label": "LATENTE"},
+        {"id": "MUERTA", "label": "MUERTA"},
+    ],
+    "probabilidades": [
+        {"id": None, "label": "siempre (determinista)"},
+        {"id": "contacto", "label": "reproducción por contacto (p·nA/8)"},
+        {"id": "mu", "label": "cinética (p)"},
+    ],
+}
+
+#: Las tres reglas fijas expresadas como spec, para usarlas de PLANTILLA en el
+#: editor (el usuario carga una y la modifica). La `logistica` es equivalente
+#: exacta a `ReglaLogistica`; conway/hibrida son puntos de partida (la guardia
+#: de MUERTA absorbente puede diferir del original ante vecinos solo LATENTE).
+PRESETS: dict[str, dict] = {
+    "logistica": {
+        "nombre": "Logística (proceso de contacto)",
+        "clausulas": [
+            {
+                "cuando": [
+                    {"tipo": "estado", "cual": "ocupada"},
+                    {"tipo": "ambiente", "cual": "sobrevive", "valor": True},
+                    {"tipo": "ambiente", "cual": "crece", "valor": True},
+                ],
+                "entonces": "ACTIVA",
+            },
+            {
+                "cuando": [
+                    {"tipo": "estado", "cual": "ocupada"},
+                    {"tipo": "ambiente", "cual": "sobrevive", "valor": True},
+                ],
+                "entonces": "LATENTE",
+            },
+            {
+                "cuando": [
+                    {"tipo": "estado", "cual": "vacia"},
+                    {"tipo": "ambiente", "cual": "crece", "valor": True},
+                    {"tipo": "vecinos", "cual": "activa", "op": ">", "n": 0},
+                ],
+                "entonces": "ACTIVA",
+                "prob": "contacto",
+            },
+            {"cuando": [], "entonces": "MUERTA"},
+        ],
+    },
+    "conway": {
+        "nombre": "Conway (Juego de la Vida, B3/S23)",
+        "clausulas": [
+            {
+                "cuando": [
+                    {"tipo": "estado", "cual": "ocupada"},
+                    {"tipo": "ambiente", "cual": "sobrevive", "valor": True},
+                    {"tipo": "vecinos", "cual": "ocupada", "op": ">=", "n": 2},
+                    {"tipo": "vecinos", "cual": "ocupada", "op": "<=", "n": 3},
+                    {"tipo": "ambiente", "cual": "crece", "valor": True},
+                ],
+                "entonces": "ACTIVA",
+            },
+            {
+                "cuando": [
+                    {"tipo": "estado", "cual": "ocupada"},
+                    {"tipo": "ambiente", "cual": "sobrevive", "valor": True},
+                    {"tipo": "vecinos", "cual": "ocupada", "op": ">=", "n": 2},
+                    {"tipo": "vecinos", "cual": "ocupada", "op": "<=", "n": 3},
+                ],
+                "entonces": "LATENTE",
+            },
+            {
+                "cuando": [
+                    {"tipo": "estado", "cual": "vacia"},
+                    {"tipo": "ambiente", "cual": "crece", "valor": True},
+                    {"tipo": "vecinos", "cual": "ocupada", "op": "==", "n": 3},
+                ],
+                "entonces": "ACTIVA",
+                "prob": "mu",
+            },
+            {"cuando": [], "entonces": "MUERTA"},
+        ],
+    },
+    "hibrida": {
+        "nombre": "Híbrida (contacto + tope de hacinamiento k=6)",
+        "clausulas": [
+            {
+                "cuando": [
+                    {"tipo": "estado", "cual": "ocupada"},
+                    {"tipo": "ambiente", "cual": "sobrevive", "valor": True},
+                    {"tipo": "vecinos", "cual": "ocupada", "op": "<=", "n": 6},
+                    {"tipo": "ambiente", "cual": "crece", "valor": True},
+                ],
+                "entonces": "ACTIVA",
+            },
+            {
+                "cuando": [
+                    {"tipo": "estado", "cual": "ocupada"},
+                    {"tipo": "ambiente", "cual": "sobrevive", "valor": True},
+                    {"tipo": "vecinos", "cual": "ocupada", "op": "<=", "n": 6},
+                ],
+                "entonces": "LATENTE",
+            },
+            {
+                "cuando": [
+                    {"tipo": "estado", "cual": "vacia"},
+                    {"tipo": "ambiente", "cual": "crece", "valor": True},
+                    {"tipo": "vecinos", "cual": "activa", "op": ">", "n": 0},
+                    {"tipo": "vecinos", "cual": "ocupada", "op": "<=", "n": 6},
+                ],
+                "entonces": "ACTIVA",
+                "prob": "contacto",
+            },
+            {"cuando": [], "entonces": "MUERTA"},
+        ],
+    },
 }

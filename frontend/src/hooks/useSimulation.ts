@@ -80,6 +80,7 @@ export function useSimulation() {
     setIndice(0);
   }, []);
   const irA = useCallback((i: number) => {
+    setReproduciendo(false); // arrastrar la línea de tiempo pausa la reproducción
     setIndice(Math.max(0, Math.min(framesRef.current.length - 1, i)));
   }, []);
 

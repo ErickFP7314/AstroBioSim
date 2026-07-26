@@ -17,11 +17,47 @@ export interface EspecieInfo {
   mu_opt: number;
 }
 
+// --- Editor de reglas por bloques (ADR-0018) ---
+export type ResultadoId = "MUERTA" | "LATENTE" | "ACTIVA";
+export type ProbId = null | "contacto" | "mu";
+
+export type Condicion =
+  | { tipo: "estado"; cual: string }
+  | { tipo: "ambiente"; cual: string; valor: boolean }
+  | { tipo: "vecinos"; cual: string; op: string; n: number };
+
+export interface Clausula {
+  cuando: Condicion[];
+  entonces: ResultadoId;
+  prob?: ProbId;
+}
+export interface ReglaSpec {
+  nombre: string;
+  clausulas: Clausula[];
+}
+export interface PresetRegla {
+  id: string;
+  nombre: string;
+  spec: ReglaSpec;
+  notacion: string;
+}
+export interface OpcionVoc {
+  id: string | number | boolean | null;
+  label: string;
+}
+export interface Vocabulario {
+  condiciones: { tipo: string; label: string; campos: Record<string, OpcionVoc[]> }[];
+  resultados: OpcionVoc[];
+  probabilidades: OpcionVoc[];
+}
+
 export interface Catalogo {
   especies: EspecieInfo[];
   entornos: { id: EntornoId; label: string }[];
   estados: { MUERTA: number; LATENTE: number; ACTIVA: number };
   limites: { lado: [number, number]; iter_max: number; mc_max: number };
+  reglas: PresetRegla[];
+  vocabulario: Vocabulario;
 }
 
 export interface ConfigCorrida {
@@ -39,6 +75,8 @@ export interface ConfigCorrida {
   n_iteraciones: number | null;
   salmuera: boolean;
   n_corridas: number;
+  // Regla de transición: id de preset, spec de bloques inline, o null (logística).
+  regla?: string | ReglaSpec | null;
 }
 
 export interface Frame {
@@ -72,6 +110,23 @@ export async function fetchMontecarlo(cfg: ConfigCorrida): Promise<Montecarlo> {
     body: JSON.stringify(cfg),
   });
   if (!r.ok) throw new Error(`montecarlo: ${r.status}`);
+  return r.json();
+}
+
+export interface ValidacionRegla {
+  valida: boolean;
+  notacion: string | null;
+  error: string | null;
+}
+
+/** Valida un spec de bloques en el backend y devuelve su notación o el error. */
+export async function fetchValidarRegla(spec: ReglaSpec): Promise<ValidacionRegla> {
+  const r = await fetch("/api/regla/validar", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(spec),
+  });
+  if (!r.ok) throw new Error(`validar: ${r.status}`);
   return r.json();
 }
 
