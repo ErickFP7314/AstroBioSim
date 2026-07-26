@@ -7,6 +7,9 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
+    // Si el sistema tiene pocos "file watchers" (ENOSPC), correr con
+    // `VITE_POLLING=1 npm run dev` usa polling en vez de inotify (sin sudo).
+    watch: process.env.VITE_POLLING ? { usePolling: true, interval: 120 } : undefined,
     proxy: {
       "/api": {
         target: "http://localhost:8000",
