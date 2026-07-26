@@ -161,6 +161,17 @@ Respondé esto antes de que tu Claude implemente; si no, asumirá defaults que q
   con presets como plantilla, agregar/reordenar/borrar filas y condiciones,
   validación en vivo). 21 tests nuevos (incluida la equivalencia EXACTA del preset
   `logistica` con `ReglaLogistica`); build limpio.
+- ✅ **Barrido: umbral crítico de microrefugios IMPLEMENTADO** en la rama
+  `feat/barrido-microrefugios` (ADR-0015, el entregable de más peso académico).
+  Módulo `src/astrobiosim/analysis/barrido.py` (`barrido_microrefugios` + `evaluar_punto`
+  + `ResultadoBarrido.curva_critica`, con paralelismo por procesos `fork`) y
+  `scripts/barrido_microrefugios.py` (CLI → PNG + CSV reproducibles). Eje de magnitud
+  (`a_w`/`duracion`/`radio`) y métrica de persistencia (`viva`/`activa`) **ajustables**.
+  14 tests. **Hallazgo:** *D. radiodurans* (a_w_sup_min=0) sobrevive dormida en Marte
+  sin refugios (no hay umbral de extinción); el umbral limpio sale con *E. coli* (muere
+  sin agua), que necesita refugios grandes (radio ≥ ~10-16) Y frecuentes (≥ ~0.27/tick).
+  Figura de muestra: `docs/toBePresented/barrido_microrefugios_marte_ecoli_radio_viva.png`.
+  Se hizo con **script (sin notebook)** para no tocar el de Esmeralda.
 - Decisiones tomadas: frontera muerta, LATENTE ocupa pero no reproduce, Δt = 1 h.
   ⚠️ Δt = 1 h se acopla con `SEGUNDOS_UV_POR_TICK` (hoy 8 h) — reconciliar con
   Esmeralda (deuda #7 de `docs/parametros.md`).

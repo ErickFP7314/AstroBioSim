@@ -93,16 +93,18 @@ _(vacío)_
 - [ ] Los resultados son reproducibles (semillas explicitas)
 - [ ] La lectura biologica de cada entorno queda documentada en el notebook
 
-### ⬜ 🟣 Barrido: umbral critico de microrefugios
+### ✅ 🟣 Barrido: umbral critico de microrefugios
 
-**Dueño:** Erick · **Criterios:** 0/4
+**Dueño:** Erick · **Criterios:** 4/4
 
 > ADR-0015. Es el entregable con mas peso academico del proyecto: responde la pregunta de investigacion.
 
-- [ ] Barrido frecuencia x magnitud del evento de salmuera sobre ensambles Montecarlo con semillas explicitas
-- [ ] La variable de respuesta es la persistencia (fraccion activa/latente/muerta al final de la corrida)
-- [ ] El resultado identifica un UMBRAL CRITICO: debajo la poblacion se extingue, encima persiste
-- [ ] El mapa de persistencia se regenera de forma reproducible desde el notebook
+- [x] Barrido frecuencia x magnitud del evento de salmuera sobre ensambles Montecarlo con semillas explicitas
+- [x] La variable de respuesta es la persistencia (fraccion activa/latente/muerta al final de la corrida)
+- [x] El resultado identifica un UMBRAL CRITICO: debajo la poblacion se extingue, encima persiste
+- [x] El mapa de persistencia se regenera de forma reproducible desde `scripts/barrido_microrefugios.py` (se optó por script en vez de notebook mientras Esmeralda arma el suyo; el script es 100% reproducible por semilla)
+
+> **IMPLEMENTADO** (rama `feat/barrido-microrefugios`): módulo `src/astrobiosim/analysis/barrido.py` + `scripts/barrido_microrefugios.py` (CLI paralelizada → PNG + CSV). Ejes de magnitud (`a_w`/`duracion`/`radio`) y métrica de persistencia (`viva`=activa+latente / `activa`) **ajustables**. **Hallazgo científico:** *D. radiodurans* (a_w_sup_min=0) sobrevive **dormida** en Marte sin refugios → no hay umbral de extinción para ella. El umbral limpio aparece con *E. coli* (mesófila, muere sin agua): necesita microrefugios **grandes** (radio ≥ ~10-16 celdas) **y frecuentes** (≥ ~0.27/tick) para persistir. Figura de muestra en `docs/toBePresented/`.
 
 ### ⬜ 🟣 Editor de reglas por bloques + panel de notacion
 
