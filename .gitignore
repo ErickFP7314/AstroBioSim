@@ -42,3 +42,5 @@ node_modules/
 frontend/dist/
 *.tsbuildinfo
 .vite/
+frontend/vite.config.js
+frontend/vite.config.d.ts
