@@ -6,7 +6,7 @@
 > ver qué está hecho, qué falta y con qué criterios de aceptación se da por
 > terminada cada tarea.
 >
-> **Última sincronización:** 2026-07-25 · regenerar con `python scripts/sync_tablero.py`
+> **Última sincronización:** 2026-07-26 · regenerar con `python scripts/sync_tablero.py`
 
 ## Cómo leerlo
 
@@ -17,112 +17,36 @@
 - Este documento dice **qué** falta; `docs/instrucciones/<nombre>.md` dice **cómo**
   hacerlo, y `docs/adr/` dice **por qué** se decidió así.
 
-**Progreso global:** 61/103 criterios (59%)
+**Progreso global:** 86/103 criterios (83%)
 
 | Integrante | Área | Criterios cumplidos |
 |---|---|---|
-| 🟢 **Esmeralda** | Motor biológico + notebook | 19/26 (73%) |
-| 🟡 **Fidel** | Datos análogos + validación | 8/15 (53%) |
+| 🟢 **Esmeralda** | Motor biológico + notebook | 23/26 (88%) |
+| 🟡 **Fidel** | Datos análogos + validación | 12/15 (80%) |
 | 🔵 **Jose** | Motor ambiental + eventos | 19/24 (79%) |
-| 🟣 **Erick** | Autómata Celular + UI | 15/38 (39%) |
+| 🟣 **Erick** | Autómata Celular + UI | 32/38 (84%) |
 
 ---
 
-## Hito 1 — Fundaciones
+## Sprint 1 — Fundaciones
 
 _(vacío)_
 
 ---
 
-## Hito 2 — Dominio — 0/4 criterios
+## Sprint 2 — Dominio
 
-### ⬜ 🟡 Radiacion a banda UV + a_w media de Atacama
-
-**Dueño:** Fidel · **Criterios:** 0/4
-
-> ADR-0014 y ADR-0015. Dos correcciones de datos: la columna de radiacion cambia de significado, y la de a_w esta sesgada por usar el minimo diario.
-
-- [ ] El adaptador convierte `radiation` a banda UV y el factor queda DOCUMENTADO en el codigo
-- [ ] Se re-extrae la `a_w` MEDIA de Atacama (hoy el dataset solo trae el minimo diario)
-- [ ] Queda documentado que la `a_w` del control terrestre es humedad del AIRE, no del suelo
-- [ ] `pytest` en verde
+_(vacío)_
 
 ---
 
-## Hito 3 — Superficies — 0/21 criterios
+## Sprint 3 — Superficies
 
-### ⬜ 🟣 Integracion Montecarlo en el bucle
-
-**Dueño:** Erick · **Criterios:** 0/4
-
-> *Como orquestador, quiero repetir la simulacion N veces con semillas explicitas para obtener una distribucion, no una sola corrida.*
->
-> Integracion final Montecarlo en `simulation.py`.
-> Rama: `feat/simulation-orquestador`.
-
-- [ ] N corridas con semillas distintas producen una distribucion de poblaciones
-- [ ] Reproducible: el mismo conjunto de semillas da el mismo resultado agregado
-- [ ] Devuelve media +- desviacion por iteracion de las TRES fracciones: activa / latente / muerta (ADR-0012)
-- [ ] `pytest` en verde
-
-### ⬜ 🟣 UI: backend FastAPI + dashboard React
-
-**Dueño:** Erick · **Criterios:** 0/4
-
-> *Como usuario, quiero un dashboard web para lanzar y visualizar la simulacion en tiempo real.*
->
-> `ui/api.py` expone la API del orquestador; `frontend/` (React) consume SOLO esa API (ADR-0009).
-> Rama: `feat/ui-dashboard`.
-
-- [ ] El endpoint devuelve la grilla con sus TRES estados y las tres curvas de poblacion en JSON
-- [ ] El dashboard React renderiza la grilla y el grafico consumiendo la API
-- [ ] Los sliders T / UV / A_w y el selector de entorno cambian la simulacion mostrada
-- [ ] La app corre localmente (uvicorn + npm) sin errores
-
-### ⬜ 🟢 Notebook de analisis
-
-**Dueño:** Esmeralda · **Criterios:** 0/4
-
-> *Como analista, quiero un notebook que compare las dinamicas de los 3 entornos con estadistica Montecarlo.*
->
-> Corridas Montecarlo, curvas de poblacion media ± σ, comparacion Tierra/Marte/Encelado.
-> Rama: `feat/notebook-analisis`.
-
-- [ ] El notebook corre de punta a punta sin errores usando `simulation.py`
-- [ ] Grafica las TRES fracciones (ACTIVA/LATENTE/MUERTA) media +- sigma vs. tiempo para Tierra/Marte/Encelado
-- [ ] Los resultados son reproducibles (semillas explicitas)
-- [ ] La lectura biologica de cada entorno queda documentada en el notebook
-
-### ✅ 🟣 Barrido: umbral critico de microrefugios
-
-**Dueño:** Erick · **Criterios:** 4/4
-
-> ADR-0015. Es el entregable con mas peso academico del proyecto: responde la pregunta de investigacion.
-
-- [x] Barrido frecuencia x magnitud del evento de salmuera sobre ensambles Montecarlo con semillas explicitas
-- [x] La variable de respuesta es la persistencia (fraccion activa/latente/muerta al final de la corrida)
-- [x] El resultado identifica un UMBRAL CRITICO: debajo la poblacion se extingue, encima persiste
-- [x] El mapa de persistencia se regenera de forma reproducible desde `scripts/barrido_microrefugios.py` **y** desde el notebook companion `notebooks/notebook_barrido.ipynb` (aparte del de Esmeralda, no lo toca; reproducible por semilla)
-
-> **IMPLEMENTADO** (rama `feat/barrido-microrefugios`): módulo `src/astrobiosim/analysis/barrido.py` + `scripts/barrido_microrefugios.py` (CLI paralelizada → PNG + CSV). Ejes de magnitud (`a_w`/`duracion`/`radio`) y métrica de persistencia (`viva`=activa+latente / `activa`) **ajustables**. **Hallazgo científico:** *D. radiodurans* (a_w_sup_min=0) sobrevive **dormida** en Marte sin refugios → no hay umbral de extinción para ella. El umbral limpio aparece con *E. coli* (mesófila, muere sin agua): necesita microrefugios **grandes** (radio ≥ ~10-16 celdas) **y frecuentes** (≥ ~0.27/tick) para persistir. Figura de muestra en `docs/toBePresented/`.
-
-### ✅ 🟣 Editor de reglas por bloques + panel de notacion
-
-**Dueño:** Erick · **Criterios:** 5/5
-
-> ADR-0016 + ADR-0018. La UI ofrece un menu con las reglas de fabrica (logistica/conway/hibrida) y una opcion 'personalizar' que arma reglas con bloques (filas "SI condicion -> estado"). El motor ya esta preparado: cada regla es una ReglaTransicion y el editor es una fabrica de reglas, no toca engine/.
-
-- [x] Menu desplegable con las 3 reglas de fabrica (REGLAS_DISPONIBLES) intercambiables en vivo
-- [x] Opcion 'personalizar': bloques de condiciones/procesos que producen una ReglaTransicion valida
-- [x] El editor NO toca engine/: solo construye reglas contra la interfaz ReglaTransicion
-- [x] Panel que renderiza notacion() de la regla activa (LaTeX) en notacion formal de AC — con **KaTeX** (panel en el dashboard + notacion en vivo dentro del editor)
-- [x] Una regla personalizada respeta los invariantes: sincrona, MUERTA absorbente, sin RNG global
-
-> **IMPLEMENTADO**: editor de bloques en `feat/editor-reglas-bloques` (ADR-0018, ya en main); **panel de notacion** en `feat/panel-notacion` (KaTeX renderiza el LaTeX de `notacion()` de la regla activa; live en el editor). Build limpio, 0 vulnerabilidades.
+_(vacío)_
 
 ---
 
-## Hito 4 — Validacion — 0/17 criterios
+## Sprint 4 — Validacion — 0/17 criterios
 
 ### ⬜ 🟢 Calibracion de umbrales con literatura
 
@@ -196,7 +120,7 @@ _(vacío)_
 
 ---
 
-## ✅ Hecho — 61/61 criterios
+## ✅ Hecho — 86/86 criterios
 
 ### ✅ 🔵 Motor ambiental: CampoAmbiental + 3 entornos
 
@@ -217,6 +141,20 @@ _(vacío)_
 - [x] El campo de Tierra usa a_w de SUELO, no humedad del aire
 - [x] El campo de Marte porta su dispersion con `rng` opcional, no el minimo colapsado (ADR-0015)
 - [x] Fix: el radio de las fumarolas es fraccion de la grilla; la fisica ya no depende de la resolucion
+
+### ✅ 🟢 Notebook de analisis
+
+**Dueño:** Esmeralda · **Criterios:** 4/4
+
+> *Como analista, quiero un notebook que compare las dinamicas de los 3 entornos con estadistica Montecarlo.*
+>
+> Corridas Montecarlo, curvas de poblacion media ± σ, comparacion Tierra/Marte/Encelado.
+> Rama: `feat/notebook-analisis`.
+
+- [x] El notebook corre de punta a punta sin errores usando `simulation.py`
+- [x] Grafica las TRES fracciones (ACTIVA/LATENTE/MUERTA) media +- sigma vs. tiempo para Tierra/Marte/Encelado
+- [x] Los resultados son reproducibles (semillas explicitas)
+- [x] La lectura biologica de cada entorno queda documentada en el notebook
 
 ### ✅ 🔵 Eventos estocasticos: micro-fisura + emision hidrotermal
 
@@ -265,6 +203,17 @@ _(vacío)_
 - [x] El fallback sintetico respeta la misma interfaz canonica
 - [x] `pytest tests/unit/test_data.py` pasa en verde
 
+### ✅ 🟣 Barrido: umbral critico de microrefugios
+
+**Dueño:** Erick · **Criterios:** 4/4
+
+> ADR-0015. Es el entregable con mas peso academico del proyecto: responde la pregunta de investigacion.
+
+- [x] Barrido frecuencia x magnitud del evento de salmuera sobre ensambles Montecarlo con semillas explicitas
+- [x] La variable de respuesta es la persistencia (fraccion activa/latente/muerta al final de la corrida)
+- [x] El resultado identifica un UMBRAL CRITICO: debajo la poblacion se extingue, encima persiste
+- [x] El mapa de persistencia se regenera de forma reproducible desde el notebook
+
 ### ✅ 🟣 Automata Celular: reglas de transicion + paso()
 
 **Dueño:** Erick · **Criterios:** 5/5
@@ -280,6 +229,18 @@ _(vacío)_
 - [x] Vectorizado (sin bucles Python); pytest tests/unit/test_transition.py en verde (19 tests)
 - [x] `paso()` recibe el `rng` inyectado; el conteo de vecinos de Moore cuenta SOLO celdas ACTIVA
 
+### ✅ 🟣 Editor de reglas por bloques + panel de notacion
+
+**Dueño:** Erick · **Criterios:** 5/5
+
+> ADR-0016. La UI ofrece un menu con las reglas de fabrica (logistica/conway/hibrida) y una opcion 'personalizar' que arma reglas con bloques tipo Scratch (condicionales y procesos estandarizados). El motor ya esta preparado: cada regla es una ReglaTransicion y el editor es una fabrica de reglas, no toca engine/.
+
+- [x] Menu desplegable con las 3 reglas de fabrica (REGLAS_DISPONIBLES) intercambiables en vivo
+- [x] Opcion 'personalizar': bloques de condiciones/procesos que producen una ReglaTransicion valida
+- [x] El editor NO toca engine/: solo construye reglas contra la interfaz ReglaTransicion
+- [x] Panel que renderiza notacion() de la regla activa (LaTeX) en notacion formal de AC
+- [x] Una regla personalizada respeta los invariantes: sincrona, MUERTA absorbente, sin RNG global
+
 ### ✅ 🟡 Remuestreo + Modo Analogico
 
 **Dueño:** Fidel · **Criterios:** 4/4
@@ -293,6 +254,20 @@ _(vacío)_
 - [x] Imputa/enmascara el hueco de 8 dias de ventilas SIN inventar valores fuera de rango
 - [x] `mapear_radiacion`: superficies convierten a banda UV con el factor DOCUMENTADO; Encelado mapea R=0 (ADR-0014)
 - [x] El Modo Analogico no duplica el bucle de Sandbox (DRY); `pytest` en verde
+
+### ✅ 🟢 Modo Sandbox
+
+**Dueño:** Esmeralda · **Criterios:** 4/4
+
+> *Como usuario, quiero fijar T, R y A_w manualmente para explorar escenarios sin depender de un dataset.*
+>
+> `modes/sandbox.py`: parametros ambientales estaticos/ajustables.
+> Rama: `feat/modes-sandbox`.
+
+- [x] Sandbox construye un CampoAmbiental a partir de parametros T / UV / A_w dados (R es irradiancia UV, ADR-0014)
+- [x] Cambiar un parametro cambia el resultado de la corrida de forma esperada
+- [x] Comparte el mismo bucle que el Modo Analogico (DRY)
+- [x] `pytest` en verde
 
 ### ✅ 🟣 Orquestador: simulation.py
 
@@ -308,20 +283,6 @@ _(vacío)_
 - [x] Devuelve la serie de estados/poblaciones esperada para un caso de prueba
 - [x] `pytest tests/integration/` pasa en verde
 - [x] El orquestador propaga los tres estados y aplica los eventos (incluida la salmuera) antes de `paso()`
-
-### ✅ 🟢 Modo Sandbox
-
-**Dueño:** Esmeralda · **Criterios:** 4/4
-
-> *Como usuario, quiero fijar T, R y A_w manualmente para explorar escenarios sin depender de un dataset.*
->
-> `modes/sandbox.py`: parametros ambientales estaticos/ajustables.
-> Rama: `feat/modes-sandbox`.
-
-- [x] Sandbox construye un CampoAmbiental a partir de parametros T / UV / A_w dados (R es irradiancia UV, ADR-0014)
-- [x] Cambiar un parametro cambia el resultado de la corrida de forma esperada
-- [x] Comparte el mismo bucle que el Modo Analogico (DRY)
-- [x] `pytest` en verde
 
 ### ✅ 🔵 Evento SalmueraDelicuescente (microrefugios)
 
@@ -361,6 +322,45 @@ _(vacío)_
 - [x] `pytest tests/unit/test_microorganism.py` en verde
 - [x] UV de M. burtonii cerrado por analogia [ANA]: metanogenas adaptadas al frio resisten 2.5-13.8x mas que M. barkeri (~E. coli). Se toma 2.5x -> 2175 J/m2. Ver docs/parametros.md §1.3
 - [x] Confirmar SEGUNDOS_UV_POR_TICK (28.800 s) con el dt que elija Erick: si divergen, los umbrales UV dejan de significar lo que dicen
+
+### ✅ 🟡 Radiacion a banda UV + a_w media de Atacama
+
+**Dueño:** Fidel · **Criterios:** 4/4
+
+> ADR-0014 y ADR-0015. Dos correcciones de datos: la columna de radiacion cambia de significado, y la de a_w esta sesgada por usar el minimo diario.
+
+- [x] El adaptador convierte `radiation` a banda UV y el factor queda DOCUMENTADO en el codigo
+- [x] Se re-extrae la `a_w` MEDIA de Atacama (hoy el dataset solo trae el minimo diario)
+- [x] Queda documentado que la `a_w` del control terrestre es humedad del AIRE, no del suelo
+- [x] `pytest` en verde
+
+### ✅ 🟣 Integracion Montecarlo en el bucle
+
+**Dueño:** Erick · **Criterios:** 4/4
+
+> *Como orquestador, quiero repetir la simulacion N veces con semillas explicitas para obtener una distribucion, no una sola corrida.*
+>
+> Integracion final Montecarlo en `simulation.py`.
+> Rama: `feat/simulation-orquestador`.
+
+- [x] N corridas con semillas distintas producen una distribucion de poblaciones
+- [x] Reproducible: el mismo conjunto de semillas da el mismo resultado agregado
+- [x] Devuelve media +- desviacion por iteracion de las TRES fracciones: activa / latente / muerta (ADR-0012)
+- [x] `pytest` en verde
+
+### ✅ 🟣 UI: backend FastAPI + dashboard React
+
+**Dueño:** Erick · **Criterios:** 4/4
+
+> *Como usuario, quiero un dashboard web para lanzar y visualizar la simulacion en tiempo real.*
+>
+> `ui/api.py` expone la API del orquestador; `frontend/` (React) consume SOLO esa API (ADR-0009).
+> Rama: `feat/ui-dashboard`.
+
+- [x] El endpoint devuelve la grilla con sus TRES estados y las tres curvas de poblacion en JSON
+- [x] El dashboard React renderiza la grilla y el grafico consumiendo la API
+- [x] Los sliders T / UV / A_w y el selector de entorno cambian la simulacion mostrada
+- [x] La app corre localmente (uvicorn + npm) sin errores
 
 ---
 
