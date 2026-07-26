@@ -11,6 +11,7 @@ import {
   type Vocabulario,
 } from "../api";
 import { ESTADO_COLOR } from "../theme";
+import { Notacion } from "./Notacion";
 
 // Editor visual de reglas por bloques (ADR-0018). Cada regla es una lista de
 // filas "SI <condiciones> → <estado>"; se evalúan en orden y la PRIMERA que
@@ -181,6 +182,13 @@ export function RuleEditor({ vocabulario, presets, specInicial, onUsar, onCerrar
           {val?.valida && "✓ regla válida"}
           {val && !val.valida && `✕ ${val.error}`}
         </div>
+
+        {val?.valida && val.notacion && (
+          <div className="editor-notacion">
+            <p className="editor-notacion-lbl">Notación formal (autómata celular)</p>
+            <Notacion tex={val.notacion} />
+          </div>
+        )}
 
         <footer className="modal-foot">
           <button className="ghost" onClick={onCerrar}>Cancelar</button>

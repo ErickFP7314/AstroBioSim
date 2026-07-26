@@ -106,17 +106,19 @@ _(vacío)_
 
 > **IMPLEMENTADO** (rama `feat/barrido-microrefugios`): módulo `src/astrobiosim/analysis/barrido.py` + `scripts/barrido_microrefugios.py` (CLI paralelizada → PNG + CSV). Ejes de magnitud (`a_w`/`duracion`/`radio`) y métrica de persistencia (`viva`=activa+latente / `activa`) **ajustables**. **Hallazgo científico:** *D. radiodurans* (a_w_sup_min=0) sobrevive **dormida** en Marte sin refugios → no hay umbral de extinción para ella. El umbral limpio aparece con *E. coli* (mesófila, muere sin agua): necesita microrefugios **grandes** (radio ≥ ~10-16 celdas) **y frecuentes** (≥ ~0.27/tick) para persistir. Figura de muestra en `docs/toBePresented/`.
 
-### ⬜ 🟣 Editor de reglas por bloques + panel de notacion
+### ✅ 🟣 Editor de reglas por bloques + panel de notacion
 
-**Dueño:** Erick · **Criterios:** 0/5
+**Dueño:** Erick · **Criterios:** 5/5
 
-> ADR-0016. La UI ofrece un menu con las reglas de fabrica (logistica/conway/hibrida) y una opcion 'personalizar' que arma reglas con bloques tipo Scratch (condicionales y procesos estandarizados). El motor ya esta preparado: cada regla es una ReglaTransicion y el editor es una fabrica de reglas, no toca engine/.
+> ADR-0016 + ADR-0018. La UI ofrece un menu con las reglas de fabrica (logistica/conway/hibrida) y una opcion 'personalizar' que arma reglas con bloques (filas "SI condicion -> estado"). El motor ya esta preparado: cada regla es una ReglaTransicion y el editor es una fabrica de reglas, no toca engine/.
 
-- [ ] Menu desplegable con las 3 reglas de fabrica (REGLAS_DISPONIBLES) intercambiables en vivo
-- [ ] Opcion 'personalizar': bloques de condiciones/procesos que producen una ReglaTransicion valida
-- [ ] El editor NO toca engine/: solo construye reglas contra la interfaz ReglaTransicion
-- [ ] Panel que renderiza notacion() de la regla activa (LaTeX) en notacion formal de AC
-- [ ] Una regla personalizada respeta los invariantes: sincrona, MUERTA absorbente, sin RNG global
+- [x] Menu desplegable con las 3 reglas de fabrica (REGLAS_DISPONIBLES) intercambiables en vivo
+- [x] Opcion 'personalizar': bloques de condiciones/procesos que producen una ReglaTransicion valida
+- [x] El editor NO toca engine/: solo construye reglas contra la interfaz ReglaTransicion
+- [x] Panel que renderiza notacion() de la regla activa (LaTeX) en notacion formal de AC — con **KaTeX** (panel en el dashboard + notacion en vivo dentro del editor)
+- [x] Una regla personalizada respeta los invariantes: sincrona, MUERTA absorbente, sin RNG global
+
+> **IMPLEMENTADO**: editor de bloques en `feat/editor-reglas-bloques` (ADR-0018, ya en main); **panel de notacion** en `feat/panel-notacion` (KaTeX renderiza el LaTeX de `notacion()` de la regla activa; live en el editor). Build limpio, 0 vulnerabilidades.
 
 ---
 
