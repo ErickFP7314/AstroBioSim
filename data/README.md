@@ -31,14 +31,21 @@ Todos: series diarias de 2025 (365 filas). Ver **ADR-0010** para el esquema can�
   psicrotolerante `MBurtonii` (ADR-0011), no con la termófila previa.
 - `tierra`, `atacama`: sin NaN. Rangos físicos correctos.
 - **Radiación en W/m²**: la columna trae **irradiancia global**, y `R` es
-  **irradiancia UV** (ADR-0014, reemplaza el proxy de flujo de ADR-0010). El
-  adaptador convierte multiplicando por la fracción UV, con el factor documentado.
-  No se usa dosis en Gy: a 0.077 Gy/año en Marte, la dosis ionizante no
-  discrimina en la escala de la simulación. Encelado mapea `R = 0` (su IR es
-  calor, no UV).
+  **irradiancia UV** (ADR-0014, reemplaza el proxy de flujo de ADR-0010). Solo
+  **Marte** convierte multiplicando por la fracción UV (`resampling.mapear_radiacion`,
+  factor documentado): es el único subsuelo parcialmente transparente al UV. No se
+  usa dosis en Gy: a 0.077 Gy/año en Marte, la dosis ionizante no discrimina en la
+  escala de la simulación. **Tierra y Encelado mapean `R = 0`**: el subsuelo
+  terrestre bloquea el UV por completo (`TierraSubsuelo.UV_SUBSUELO`), y en
+  Encelado el IR de la ventila es calor, no UV.
 - **`Actividad_Agua_Minima_aw` (Atacama) es el MÍNIMO diario**, una cota inferior
-  pesimista — no el valor típico. Usarla como constante del campo garantiza la
-  extinción (ADR-0015). Falta re-extraer la media.
+  pesimista — no el valor típico. Se sigue usando tal cual fila a fila en el Modo
+  Analógico (es el dato real disponible). **`MarteSubsuelo.A_W_MEDIA`/`A_W_SIGMA`
+  (constante de Modo Sandbox) — CORREGIDA (2026-07-26).** Se re-derivó de la
+  humedad relativa cruda (10 min) de la estación CRC1211DB 13 "Cerros de Calate":
+  la media diaria real es **0.382** (antes 0.187, la media de los mínimos
+  diarios) — el doble, como se esperaba. Metodología reproducible en
+  `scripts/derivar_a_w_media_atacama.py`; detalle en `docs/parametros.md` §2/§4.
 - **`Actividad_Agua_aw` (Tierra) — CORREGIDA (2026-07-24).** La columna original
   se había calculado con la humedad relativa del **aire** (`A_w = HR / 100`), no
   del suelo, y por eso oscilaba 0.16–0.93 (media 0.55, sd 0.23) — un suelo no hace

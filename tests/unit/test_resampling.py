@@ -30,10 +30,9 @@ def _df_canonico(n=12, con_hueco=False):
 # --------------------------------------------------------------------------
 # mapear_radiacion (ADR-0014)
 # --------------------------------------------------------------------------
-def test_superficies_convierten_la_irradiancia_global_a_banda_uv() -> None:
+def test_marte_convierte_la_irradiancia_global_a_banda_uv() -> None:
     rad = np.array([320.0, 850.0, 1150.0])
-    for entorno in (Entorno.TIERRA, Entorno.MARTE):
-        np.testing.assert_allclose(mapear_radiacion(rad, entorno), rad * FRACCION_UV)
+    np.testing.assert_allclose(mapear_radiacion(rad, Entorno.MARTE), rad * FRACCION_UV)
 
 
 def test_el_uv_es_una_fraccion_pequena_de_la_irradiancia_global() -> None:
@@ -43,11 +42,15 @@ def test_el_uv_es_una_fraccion_pequena_de_la_irradiancia_global() -> None:
     assert np.all(uv > 0.0)
 
 
-def test_encelado_mapea_radiacion_a_cero() -> None:
+def test_tierra_y_encelado_mapean_radiacion_a_cero() -> None:
+    # Tierra: el subsuelo bloquea el UV por completo (TierraSubsuelo.UV_SUBSUELO).
+    # Encelado: su columna es IR (calor de la ventila), no UV. Ninguno de los dos
+    # deja pasar radiación al campo, sea cual sea el valor de superficie.
     rad = np.array([320.0, 320.5, 319.8])
-    resultado = mapear_radiacion(rad, Entorno.ENCELADO)
-    np.testing.assert_array_equal(resultado, np.zeros_like(rad))
-    assert resultado.shape == rad.shape
+    for entorno in (Entorno.TIERRA, Entorno.ENCELADO):
+        resultado = mapear_radiacion(rad, entorno)
+        np.testing.assert_array_equal(resultado, np.zeros_like(rad))
+        assert resultado.shape == rad.shape
 
 
 # --------------------------------------------------------------------------
@@ -95,6 +98,13 @@ def test_marte_conserva_la_banda_de_profundidad_en_cada_tick() -> None:
     campo = next(secuencia_campos(df, Entorno.MARTE, shape=(20, 5)))
     assert campo.R[0, 0] > campo.R[-1, 0]  # más UV en superficie que en profundidad
     assert np.all(np.diff(campo.R, axis=0) <= 1e-9)  # monótono no creciente
+
+
+def test_tierra_secuencia_mantiene_R_cero_pese_a_la_radiacion() -> None:
+    """El subsuelo terrestre bloquea el UV por completo, sea cual sea `radiation`."""
+    df = _df_canonico(3)
+    campo = next(secuencia_campos(df, Entorno.TIERRA, shape=(10, 10)))
+    assert np.all(campo.R == 0.0)
 
 
 def test_encelado_secuencia_mantiene_R_cero_y_fumarolas() -> None:

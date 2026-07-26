@@ -143,8 +143,8 @@ importa para comparar dinámicas.
 | **Marte** `T_PROFUNDO_C` | 7.8 | **[EST]** | media de **mínimos** diarios — **probablemente incorrecto**, ver §4 |
 | **Marte** `RADIACION_GLOBAL_W_M2` | 844.2 | **[LIT]** | media de radiación solar máxima de Atacama |
 | **Marte** `UV_SUPERFICIE` | 42.2 | **[DER]** | `844.2 × 0.05`. **Validación fuerte:** cae dentro del rango publicado de UV marciano (**42–55 W/m²**) |
-| **Marte** `A_W_MEDIA` | 0.187 | **[EST]** | media del **mínimo diario** — cota pesimista, ver §4 |
-| **Marte** `A_W_SIGMA` | 0.080 | **[LIT]** | dispersión real de esa serie |
+| **Marte** `A_W_MEDIA` | 0.382 | **[DER]** | media de la media diaria real de `a_w = RH/100` (estación CRC1211DB 13, 2025-03-27..12-06, 146 días) — **[EST] hasta 2026-07-26**, cuando se re-derivó de la humedad relativa cruda (§4, deuda #1 resuelta) |
+| **Marte** `A_W_SIGMA` | 0.256 | **[DER]** | sd de esa misma serie de medias diarias |
 | **Marte** `RAZON_ATENUACION_UV` | 10 | **[CONV]** | el UV se extingue en mm–cm, mucho más rápido que el calor |
 | **Encelado** `T_OCEANO_C` | 2.4 | **[LIT]** | media de temperatura de ventila |
 | **Encelado** `A_W_OCEANO` | 0.98 | **[LIT]** | media del dataset de ventilas |
@@ -212,7 +212,7 @@ Ordenado por impacto sobre la credibilidad del resultado.
 
 | # | Qué | Dueño | Por qué importa |
 |---|---|---|---|
-| 1 | **`a_w` media de Atacama.** Hoy usamos el **mínimo diario** (0.187) como valor del campo. Es una cota pesimista, no el valor típico. | Fidel | Sesga toda corrida hacia la extinción. Es el parámetro que más mueve el resultado. |
+| ~~1~~ | ~~**`a_w` media de Atacama.**~~ ✅ **RESUELTO (2026-07-26):** re-derivada de la humedad relativa cruda de la estación CRC1211DB 13 (`a_w = RH/100`, ADR-0005). `A_W_MEDIA` pasa de 0.187 (media de los **mínimos** diarios) a **0.382** (media de las **medias** diarias reales) — el doble, como se esperaba. Metodología reproducible en `scripts/derivar_a_w_media_atacama.py`. **Caveat:** la estación solo tiene datos 2025-03-27..12-06 (146 días; falta verano austral, ene-feb); no cambia la tabla de §3 porque 0.382 sigue muy por debajo de `a_w_min = 0.90` de *D. radiodurans* (verificado corriendo `campo_inicial()` con ambos valores). | Fidel | — |
 | 2 | **`T_PROFUNDO_C` de Marte.** Es la media de los mínimos diarios, pero una onda térmica amortigua hacia la **media anual** (≈ 22.4 °C), no hacia el mínimo. | Jose | Cambia dónde queda la banda habitable. Creemos que está mal. |
 | ~~3~~ | ~~**`a_w` del control terrestre.**~~ ✅ **RESUELTO (2026-07-24):** Esmeralda confirmó que la columna era humedad del aire; el dataset se corrigió a `a_w = 0.99` constante (suelo a capacidad de campo, [CONV] documentada). | Fidel | — |
 | 4 | **`t_sup_min`/`t_sup_max` de las 3 especies y `a_w_sup_min` de *E. coli* y *M. burtonii*.** **[EST]** (§1.1bis, §1.2). | Esmeralda | Definen cuánto aguantan antes de morir, no cuándo crecen. Son los únicos umbrales de supervivencia sin cita directa. |
@@ -249,3 +249,8 @@ Ordenado por impacto sobre la credibilidad del resultado.
   viabilidad (D37 ≈ 6000–7000 Gy); *E. coli* D10 ≈ 300 Gy; superficie marciana
   0.21 mGy/día ≈ 0.077 Gy/año (RAD, Curiosity) — de ahí que la dosis ionizante
   **no discrimine** en la escala de la simulación (ADR-0014).
+- **`A_W_MEDIA`/`A_W_SIGMA` de Marte (re-derivación 2026-07-26):** Hoffmeister, D.
+  (2018), *Meteorological and soil measurements of the permanent weather stations
+  in the Atacama desert, Chile*, CRC1211 Database (CRC1211DB), DOI
+  10.5880/CRC1211DB.1; estación 13 "Cerros de Calate" (transecto centro), DOI de
+  estación 10.5880/CRC1211DB.4, humedad relativa cruda 2025-03-27..2025-12-06.

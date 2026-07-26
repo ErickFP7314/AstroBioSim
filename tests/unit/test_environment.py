@@ -40,15 +40,17 @@ def test_tierra_es_estable_humeda_sin_uv() -> None:
 
 
 def test_marte_tiene_gradiente_termico_y_uv_con_la_profundidad() -> None:
-    campo = MarteSubsuelo(shape=(20, 5)).campo_inicial()
+    entorno = MarteSubsuelo(shape=(20, 5))
+    campo = entorno.campo_inicial()
     # más cálido y más irradiado en la superficie (fila 0) que en profundidad
     assert np.all(campo.T[0, :] > campo.T[-1, :])
     assert np.all(campo.R[0, :] > campo.R[-1, :])
     # monótono no creciente con la profundidad, en cada columna
     assert np.all(np.diff(campo.T, axis=0) <= 0)
     assert np.all(np.diff(campo.R, axis=0) <= 0)
-    # A_w baja (real de Atacama), consistente en toda la grilla
-    assert np.all(campo.A_w < 0.3)
+    # A_w real de Atacama (media diaria, no el mínimo), uniforme en toda la
+    # grilla: sin `rng` no hay heterogeneidad espacial (docs/parametros.md §2).
+    assert np.allclose(campo.A_w, entorno.A_W_MEDIA)
 
 
 def test_marte_uv_decae_mucho_mas_rapido_que_temperatura() -> None:

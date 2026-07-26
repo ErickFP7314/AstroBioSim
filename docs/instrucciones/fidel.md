@@ -22,8 +22,9 @@
 2. `resampling.py`: limpieza y remuestreo a un paso común. **Imputá/enmascará el hueco
    de 8 días (17–24 ago) de ventilas** sin inventar valores. Producí la secuencia de
    `CampoAmbiental`: `A_w` tal cual; `R` = **irradiancia UV** desde `radiation` con
-   **mapeo por entorno** (superficies: `radiation × FRACCION_UV`; **Encelado `R=0`**,
-   su IR es calor, no UV — ADR-0014). Coordiná el gradiente térmico con Jose.
+   **mapeo por entorno** (Marte: `radiation × FRACCION_UV`; **Tierra y Encelado
+   `R=0`**, el subsuelo terrestre bloquea el UV por completo y el IR de Encelado es
+   calor, no UV — ADR-0014). Coordiná el gradiente térmico con Jose.
 3. `modes/analog.py`: estrategia que entrega el `CampoAmbiental` de cada iteración
    al orquestador. Debe compartir el mismo bucle que Sandbox (DRY).
 4. Tests: el mapeo a banda UV aplica el factor (no pasa el flujo global tal cual);
@@ -88,17 +89,36 @@ Respondé esto antes de que tu Claude implemente; si no, asumirá defaults que q
 
 ## Tus tareas nuevas
 
-1. **[Hito 1 — prioritaria] Convertir `radiation` a banda UV.** Los datasets dan
-   irradiancia **global**, que es mayormente visible e infrarroja y no esteriliza.
-   Multiplicá por la fracción UV y **dejá el factor documentado en el adaptador**,
-   no escondido en una constante. Hoy hay un `FRACCION_UV = 0.05` en
-   `core/environment.py` como valor de trabajo; si conseguís el dato real de la banda
-   por fuente, mejor. Coordiná la **banda exacta** con Esmeralda: tiene que ser la
-   misma con la que ella derive `uv_max` / `uv_letal`.
-2. **[Hito 1] Re-extraer la `a_w` media de Atacama.** La columna disponible es
-   `Actividad_Agua_Minima_aw`, o sea el **mínimo diario**: una cota inferior
-   pesimista, no el valor típico. Usarla como valor del campo garantizaba la
-   extinción. Necesitamos la media (y ojalá la dispersión) de la serie real.
+1. ~~**[Hito 1 — prioritaria] Convertir `radiation` a banda UV.**~~ ✅ **REVISADO
+   (2026-07-25).** El factor `FRACCION_UV = 0.05` ya estaba documentado y
+   coordinado con Esmeralda (ver `docs/parametros.md` §1.3 y §2: `uv_max`/`uv_letal`
+   y `UV_SUPERFICIE ≈ 42.2 W/m²` se derivan de la misma constante, y ese valor cae
+   dentro del rango publicado de UV marciano, 42–55 W/m²). No hay dato real de banda
+   por fuente disponible, así que `FRACCION_UV` sigue como **[CONV]** documentada.
+   Se corrigió un bug real en `resampling.mapear_radiacion`: mapeaba **Tierra**
+   como si convirtiera `radiation × FRACCION_UV` (UV no nulo), pero el modelo real
+   (`TierraSubsuelo.campo_modulado`, `UV_SUBSUELO = 0.0`) siempre da `R = 0` ahí —
+   el subsuelo terrestre bloquea el UV por completo, igual que Encelado lo bloquea
+   por hielo. Ahora `mapear_radiacion` solo convierte para **Marte** (el único
+   subsuelo parcialmente transparente al UV); Tierra y Encelado mapean a `0`. Tests
+   actualizados en `tests/unit/test_resampling.py`.
+2. ~~**[Hito 1] Re-extraer la `a_w` media de Atacama.**~~ ✅ **RESUELTO
+   (2026-07-26).** La columna procesada (`Actividad_Agua_Minima_aw`) solo trae el
+   **mínimo diario**; para la media real había que ir a la fuente. Se descargó la
+   humedad relativa cruda (10 min) de la estación CRC1211DB 13 ("Cerros de
+   Calate", `https://www.crc1211db.uni-koeln.de/wd/index.php?station=13`, sin
+   necesidad de solicitud formal pese a lo que decía ADR-0010) y se recalculó
+   `a_w = RH/100` por lectura, promedio diario, media/sd de esos promedios.
+   Resultado: `MarteSubsuelo.A_W_MEDIA` pasa de 0.187 a **0.382** (el doble) y
+   `A_W_SIGMA` de 0.080 a **0.256**. Validación: la media de los MÍNIMOS diarios
+   de esta misma serie cruda (0.185) coincide con el 0.187 ya documentado, lo que
+   confirma que es la estación correcta. Caveat honesto: la estación solo tiene
+   datos 2025-03-27..12-06 (146 días, falta el verano austral); no cambia la
+   tabla de resultados de §3 en `parametros.md` porque 0.382 sigue muy por debajo
+   del `a_w_min = 0.90` de *D. radiodurans* (verificado corriendo `campo_inicial()`
+   con ambos valores). Metodología reproducible en
+   `scripts/derivar_a_w_media_atacama.py` (el .txt crudo no se versiona, como el
+   resto de `data/raw/`).
 3. ~~**[Hito 1] Documentar el problema del control terrestre.**~~ ✅ **RESUELTO
    (2026-07-24).** Esmeralda confirmó que la `a_w` de Fresno se calculó con humedad
    del **aire** (por eso oscilaba 0.16–0.93). Como no hay medición de `a_w` de
@@ -111,8 +131,9 @@ Respondé esto antes de que tu Claude implemente; si no, asumirá defaults que q
    `modes/analog.py` (`ModoAnalogico`, cumple la interfaz `ModoSimulacion` de
    `modes/base.py`). **Decisión clave (ADR-0017):** el escalar diario se propaga
    con el modelo espacial de Jose (`campo_modulado`), no aplanando el campo —así
-   Marte conserva su banda de profundidad. Falta tu revisión de la banda UV
-   (tarea 1) y la `a_w` media de Atacama (deuda #1).
+   Marte conserva su banda de profundidad. Revisión de la banda UV completada
+   (tarea 1, ✅ 2026-07-25); queda pendiente la `a_w` media de Atacama (tarea 2 /
+   deuda #1).
 
 ## Preguntas nuevas para tu agente
 

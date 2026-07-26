@@ -186,21 +186,26 @@ class MarteSubsuelo(PlanetaSubsuelo):
     limitante. Ese es el borde superior de la ventana habitable marciana de
     ADR-0015; el inferior lo pone la disponibilidad de agua.
 
-    **Sesgo de muestreo corregido (ADR-0015):** la única columna disponible es
-    `Actividad_Agua_Minima_aw`, es decir el **mínimo diario** — una cota
-    inferior pesimista, no el valor típico. Colapsarlo a una constante
-    garantizaba la extinción. Acá se conserva como media con su dispersión real
-    (sd = 0.080; el máximo observado de la serie llega a 0.518) y la
+    **Sesgo de muestreo corregido (ADR-0015):** la columna procesada
+    `Actividad_Agua_Minima_aw` es el **mínimo diario** — una cota inferior
+    pesimista, no el valor típico. Colapsarla a una constante garantizaba la
+    extinción. `A_W_MEDIA`/`A_W_SIGMA` se re-derivaron (2026-07-26) de la
+    humedad relativa cruda (10 min) de la estación 13 (Cerros de Calate,
+    CRC1211DB, DOI 10.5880/CRC1211DB.4, 2025-03-27..2025-12-06):
+    `a_w = RH/100` por lectura (ADR-0005), promedio diario, y luego media/sd
+    de esos 146 promedios diarios. La media diaria real (≈0.382) resultó **el
+    doble** de la media de los mínimos diarios (≈0.185, que coincide con el
+    0.187 de la columna procesada — confirma que es la misma estación). La
     heterogeneidad espacial la genera el modelo cuando se le inyecta un `rng`.
-    Queda pendiente que Fidel re-extraiga la `a_w` **media**, no la mínima.
+    Metodología reproducible en `scripts/derivar_a_w_media_atacama.py`.
     """
 
     T_SUPERFICIE_C: float = 36.9  # media de Temp_Maxima_Superficie_C (Atacama 2025)
     T_PROFUNDO_C: float = 7.8  # media de Temp_Minima_Superficie_C (asíntota fría)
     RADIACION_GLOBAL_W_M2: float = 844.2  # media de Radiacion_Solar_Maxima_W_m2
     UV_SUPERFICIE: float = RADIACION_GLOBAL_W_M2 * FRACCION_UV  # ≈ 42.2 W/m²
-    A_W_MEDIA: float = 0.187  # media del MÍNIMO diario (cota inferior, ver docstring)
-    A_W_SIGMA: float = 0.080  # dispersión real de esa serie (ADR-0015)
+    A_W_MEDIA: float = 0.382  # media de la MEDIA diaria real (CRC1211DB estación 13)
+    A_W_SIGMA: float = 0.256  # sd real de esa serie de medias diarias
 
     #: El UV se atenúa esta cantidad de veces más rápido que el calor.
     RAZON_ATENUACION_UV: float = 10.0
