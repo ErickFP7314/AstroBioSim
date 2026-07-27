@@ -38,7 +38,7 @@ export interface ReglaSpec {
 export interface PresetRegla {
   id: string;
   nombre: string;
-  spec: ReglaSpec;
+  spec: ReglaSpec | null;   // null = regla fija no editable por bloques (p. ej. las de latencia)
   notacion: string;
 }
 export interface OpcionVoc {

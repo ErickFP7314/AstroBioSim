@@ -1,16 +1,19 @@
 import { useEffect, useRef } from "react";
 import { decodeGrid, type Frame } from "../api";
-import { ESTADO_COLOR, ESTADOS, GRID_BG } from "../theme";
+import { ESTADOS, GRID_BG } from "../theme";
 
 /** La grilla del autómata en un <canvas>: protagonista de la vista. Debajo, la
- *  línea de tiempo (scrubber) para ver y mover el tick actual. */
+ *  línea de tiempo (scrubber) para ver y mover el tick actual. Los colores de los
+ *  tres estados llegan por prop (`colores`), así el usuario puede recolorearlos y
+ *  se reflejan en vivo tanto en la grilla como en la leyenda. */
 export function AutomatonGrid({
-  frame, indice, total, irA,
+  frame, indice, total, irA, colores,
 }: {
   frame: Frame | null;
   indice: number;
   total: number;
   irA: (i: number) => void;
+  colores: Record<number, string>;
 }) {
   const ref = useRef<HTMLCanvasElement | null>(null);
   const ultimo = total > 0 ? total - 1 : 0;
@@ -39,12 +42,13 @@ export function AutomatonGrid({
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
         const v = grid[r * cols + c];
-        if (v === 0 && gap === 0) continue; // fondo hace de MUERTA en grillas densas
-        ctx.fillStyle = ESTADO_COLOR[v] ?? GRID_BG;
+        // Se dibujan TODAS las celdas (incluida MUERTA) con su color elegido, para
+        // que el color picker de cada estado se refleje siempre en la grilla.
+        ctx.fillStyle = colores[v] ?? GRID_BG;
         ctx.fillRect(c * cw, r * ch, Math.ceil(cw) - gap, Math.ceil(ch) - gap);
       }
     }
-  }, [frame]);
+  }, [frame, colores]);
 
   return (
     <div className="stage">
@@ -75,7 +79,7 @@ export function AutomatonGrid({
       <div className="legend">
         {ESTADOS.map((e) => (
           <span key={e.valor}>
-            <b style={{ background: e.color }} />
+            <b style={{ background: colores[e.valor] }} />
             {e.nombre}
           </span>
         ))}

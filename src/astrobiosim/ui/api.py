@@ -217,6 +217,12 @@ def config() -> dict:
     for clave, spec in PRESETS.items():
         r = regla_desde_spec(spec)
         reglas.append({"id": clave, "nombre": r.nombre, "spec": spec, "notacion": r.notacion()})
+    # Reglas que dependen de una propiedad de la especie (anhidrobiótica) y por eso
+    # NO se expresan en bloques: se ofrecen en el menú pero con `spec: null` (no
+    # editables por bloques). Ver `docs/parametros.md` (mortalidad_latente).
+    for clave in ("latencia_anhidro", "latencia_mortalidad"):
+        r = REGLAS_DISPONIBLES[clave]
+        reglas.append({"id": clave, "nombre": r.nombre, "spec": None, "notacion": r.notacion()})
     return {
         "especies": especies,
         "entornos": [

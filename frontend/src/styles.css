@@ -32,7 +32,7 @@ input[type="range"], input[type="checkbox"] { accent-color: var(--accent); }
 /* ---------- layout ---------- */
 .app { display: flex; flex-direction: column; height: 100%; }
 .body { flex: 1; display: grid; grid-template-columns: 264px 1fr 336px; min-height: 0; }
-.body > * { min-height: 0; overflow: auto; }
+.body > * { min-height: 0; min-width: 0; overflow: auto; }
 
 /* ---------- top bar ---------- */
 .topbar { display: flex; align-items: center; gap: 18px; padding: 12px 18px;
@@ -97,9 +97,10 @@ input[type="range"], input[type="checkbox"] { accent-color: var(--accent); }
 .play svg { width: 15px; height: 15px; }
 
 /* ---------- stage (grilla) ---------- */
-.stage { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 20px; }
-.gridwrap { padding: 10px; border: 1px solid var(--border); border-radius: 10px; background: var(--grid-bg); }
-.grid-canvas { display: block; width: min(60vh, 512px); height: min(60vh, 512px);
+.stage { display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 14px; padding: 20px; min-width: 0; }
+.gridwrap { padding: 10px; border: 1px solid var(--border); border-radius: 10px; background: var(--grid-bg); max-width: 100%; }
+.grid-canvas { display: block; width: min(60vh, 512px); height: auto; aspect-ratio: 1 / 1; max-width: 100%;
   image-rendering: pixelated; border-radius: 4px; }
 .legend { display: flex; gap: 18px; font-family: var(--mono); font-size: 11px; color: var(--muted); }
 .legend span { display: flex; align-items: center; gap: 7px; }
@@ -121,6 +122,13 @@ input[type="range"], input[type="checkbox"] { accent-color: var(--accent); }
 .readout .r { display: flex; justify-content: space-between; align-items: center; }
 .readout .r .k { display: flex; align-items: center; gap: 8px; color: var(--text-2); }
 .readout .r .k b { width: 9px; height: 9px; border-radius: 2px; display: inline-block; }
+/* color picker de estado: input[type=color] disfrazado de swatch clicable */
+.sw-pick { -webkit-appearance: none; appearance: none; width: 14px; height: 14px; padding: 0;
+  border: 1px solid var(--border-2); border-radius: 3px; background: none; cursor: pointer; flex: none; }
+.sw-pick:hover { border-color: var(--accent); }
+.sw-pick::-webkit-color-swatch-wrapper { padding: 0; }
+.sw-pick::-webkit-color-swatch { border: none; border-radius: 2px; }
+.sw-pick::-moz-color-swatch { border: none; border-radius: 2px; }
 .readout .r .v { color: var(--text); font-variant-numeric: tabular-nums; }
 .card.err { border-color: var(--err); color: var(--err); font-size: 12px; }
 
@@ -204,7 +212,7 @@ input[type="range"], input[type="checkbox"] { accent-color: var(--accent); }
 .modal-foot .run { padding: 10px 18px; }
 
 /* ---------- scrubber / línea de tiempo (ticks) ---------- */
-.scrubber { width: min(60vh, 512px); display: flex; align-items: center; gap: 13px;
+.scrubber { width: min(60vh, 512px); max-width: 100%; display: flex; align-items: center; gap: 13px;
   padding: 10px 15px; border: 1px solid var(--border-2); border-radius: 10px; background: var(--panel-2); }
 .scrubber .tk-lbl { font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em;
   text-transform: uppercase; color: var(--muted); }
@@ -229,3 +237,40 @@ input[type="range"], input[type="checkbox"] { accent-color: var(--accent); }
   text-transform: uppercase; color: var(--muted); margin: 0 0 6px; }
 
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+/* ---------- responsive ---------- */
+/* Tablet apaisada: mismos 3 paneles, rieles más finos. */
+@media (max-width: 1024px) {
+  .body { grid-template-columns: 216px 1fr 280px; }
+  .ctrl, .panel { padding: 16px; gap: 14px; }
+}
+
+/* Tablet vertical / móvil: una sola columna, apilada en orden del DOM
+   (controles → grilla → gráficos). Se usa `display: block` en vez de grid a
+   propósito: el grid estira las filas (`align-content: stretch`) y eso, sumado al
+   `margin-top: auto` del botón "Correr", descolocaba los controles. Con block cada
+   panel toma su alto natural y el cuerpo hace scroll vertical. */
+@media (max-width: 820px) {
+  .body { display: block; overflow-y: auto; }
+  .body > * { overflow: visible; }
+  .ctrl { border-right: 0; border-bottom: 1px solid var(--border); }
+  .stage { border-bottom: 1px solid var(--border); padding: 22px 16px; }
+  .panel { border-left: 0; }
+  .grid-canvas, .scrubber { width: min(76vw, 512px); }
+  .run-block { margin-top: 0; }   /* sin auto: el botón "Correr" queda tras la regla, no empujado */
+}
+
+/* Móvil: la barra superior y el estado envuelven; densidad ajustada. */
+@media (max-width: 520px) {
+  .topbar { flex-wrap: wrap; gap: 10px 14px; padding: 10px 12px; }
+  .status { margin-left: 0; width: 100%; gap: 10px 14px; flex-wrap: wrap; }
+  .ctrl, .panel { padding: 14px; }
+  .stage { padding: 16px 10px; }
+  .grid-canvas, .scrubber { width: min(90vw, 512px); }
+  .legend { flex-wrap: wrap; gap: 8px 16px; justify-content: center; }
+  .modal { padding: 16px; }
+  .modal-tools { flex-wrap: wrap; gap: 10px; }
+  .fld.grow { flex-basis: 100%; }
+  .clausula .prob { max-width: 100%; }
+  .mini-txt { max-width: 100%; }
+}
