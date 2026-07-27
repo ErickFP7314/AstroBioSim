@@ -185,6 +185,19 @@ Respondé esto antes de que tu Claude implemente; si no, asumirá defaults que q
   (1) N suficiente = **180 réplicas** para SE ≤ 3% cerca del umbral (E. coli/Marte),
   (2) reporta **media ± σ** muestral, (3) reproducible con semilla fija. Figura:
   `docs/toBePresented/validacion_montecarlo_marte_ecoli_persistencia.png`.
+- ✅ **Análisis de sensibilidad de umbrales IMPLEMENTADO** en la rama
+  `feat/sensibilidad-umbrales` (ADR-0013). Módulo `analysis/sensibilidad.py`
+  (`especie_perturbada` copia la especie sin mutar la clase; `parametros_inciertos`
+  asigna a cada umbral su rango según **procedencia** de `docs/parametros.md`;
+  `analisis_sensibilidad` corre OAT reutilizando `barrido.evaluar_punto`, con
+  paralelismo `fork` → `ResultadoSensibilidad.ranking`/`dominante`/`conclusiones_robustas`)
+  y `scripts/sensibilidad_umbrales.py` (**diagrama de tornado**). 15 tests. Los 3
+  criterios: (1) cada umbral se barre sobre su incertidumbre —`[LIT]` estrecho,
+  `[ANA]` el rango documentado 2.5–13.8× de *M. burtonii*, `[EST]` ancho; (2)
+  **domina `a_w_sup_min` [EST]** (Δprob = 0.83) y el resto es plano; (3) la conclusión
+  **NO es robusta**: la persistencia de *E. coli*/Marte depende por completo del único
+  umbral `[EST]` sin cita → **evidencia dura para cerrar la deuda §4.4** de `parametros.md`.
+  Figura: `docs/toBePresented/sensibilidad_marte_ecoli_viva.png`.
 - Decisiones tomadas: frontera muerta, LATENTE ocupa pero no reproduce, Δt = 1 h.
   ⚠️ Δt = 1 h se acopla con `SEGUNDOS_UV_POR_TICK` (hoy 8 h) — reconciliar con
   Esmeralda (deuda #7 de `docs/parametros.md`).
