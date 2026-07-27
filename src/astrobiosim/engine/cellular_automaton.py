@@ -81,5 +81,6 @@ def paso(
         n_activa=n_activa,
         n_ocupada=n_ocupada,
         rng=rng,
+        anhidrobiotico=especie.anhidrobiotico,
     )
     return regla.aplicar(ctx).astype(np.int8)

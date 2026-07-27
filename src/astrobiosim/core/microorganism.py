@@ -100,6 +100,16 @@ class Microorganismo(ABC):
     # --- Cinética (ADR-0013) ---
     mu_opt: float
 
+    # --- Rasgo de dormancia (biología) ---
+    #: ¿La especie tiene un estado LATENTE biológicamente real? Solo las
+    #: **anhidrobióticas** —que sobreviven la desecación extrema en dormancia
+    #: reversible (anhidrobiosis)— lo tienen. Una especie que NO es anhidrobiótica,
+    #: al dejar de crecer, muere o decae: no se preserva indefinidamente latente.
+    #: Las reglas de transición que modelan la latencia como un privilegio de las
+    #: anhidrobióticas (ADR-0016) leen este flag; las reglas clásicas lo ignoran.
+    #: Default `False`: la latencia biológica es la excepción, no la regla.
+    anhidrobiotico: bool = False
+
     def condiciones_crecimiento(self, campo: CampoAmbiental) -> np.ndarray:
         """Máscara bool (M, N): True donde la especie **se reproduce**.
 
@@ -164,6 +174,7 @@ class EColi(Microorganismo):
     uv_letal: float = FLUENCIA_LETAL_J_M2 / SEGUNDOS_UV_POR_TICK
 
     mu_opt: float = 2.1  # h⁻¹ — la más rápida de las tres
+    anhidrobiotico: bool = False  # mesófila: NO tolera la desecación; muere seca, no duerme
 
 
 class DRadiodurans(Microorganismo):
@@ -194,6 +205,7 @@ class DRadiodurans(Microorganismo):
     uv_letal: float = FLUENCIA_LETAL_J_M2 / SEGUNDOS_UV_POR_TICK
 
     mu_opt: float = 0.26  # h⁻¹ — costo metabólico de la extremofilia
+    anhidrobiotico: bool = True  # anhidrobiosis: sobrevive la desecación total en dormancia reversible
 
 
 class MBurtonii(Microorganismo):
@@ -244,3 +256,4 @@ class MBurtonii(Microorganismo):
     uv_letal: float = FLUENCIA_LETAL_J_M2 / SEGUNDOS_UV_POR_TICK
 
     mu_opt: float = 0.069  # h⁻¹ — la más lenta: metanógena psicrotolerante
+    anhidrobiotico: bool = False  # necesita agua líquida: no es anhidrobiótica (muere seca)

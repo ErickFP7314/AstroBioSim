@@ -90,12 +90,12 @@ export function RuleEditor({ vocabulario, presets, specInicial, onUsar, onCerrar
             <select
               onChange={(e) => {
                 const p = presets.find((x) => x.id === e.target.value);
-                if (p) setSpec(clonar(p.spec));
+                if (p && p.spec) setSpec(clonar(p.spec));
               }}
               value=""
             >
               <option value="" disabled>cargar preset…</option>
-              {presets.map((p) => (
+              {presets.filter((p) => p.spec).map((p) => (
                 <option key={p.id} value={p.id}>{p.nombre}</option>
               ))}
             </select>

@@ -129,6 +129,29 @@ error que un revisor perdona.
 El orden relativo (mesófilo rápido › extremófilo › psicrótolerante) es lo que
 importa para comparar dinámicas.
 
+### 1.5 Rasgo de dormancia — `anhidrobiotico` (bool)
+
+| Especie | `anhidrobiotico` | Proc. | Nota |
+|---|---|---|---|
+| *E. coli* | `False` | **[LIT]** | mesófila: no tolera la desecación, muere seca |
+| *D. radiodurans* | `True` | **[LIT]** | anhidrobiosis: sobrevive la desecación total en dormancia reversible |
+| *M. burtonii* | `False` | **[LIT]** | metanógena marina: necesita agua líquida, no es anhidrobiótica |
+
+Marca si la especie tiene un estado **LATENTE biológicamente real** (dormancia
+reversible). Las reglas de transición clásicas lo **ignoran** (toda especie que
+sobrevive sin crecer queda latente); las reglas **opt-in** de latencia (ADR-0016,
+`engine/transition_rules.py`) lo usan para que la dormancia sea un privilegio de
+las anhidrobióticas:
+
+| Regla del menú | `mortalidad_latente` | Proc. | Qué hace con las **no** anhidrobióticas |
+|---|---|---|---|
+| `latencia_anhidro` | — | **[CONV]** | al dejar de crecer **mueren** (sin latencia): dinámica binaria ACTIVA/MUERTA |
+| `latencia_mortalidad` | `0.05` /tick | **[EST]** | quedan latentes pero **decaen**: mueren con esa prob. por tick (placeholder, ver §4) |
+
+> `mortalidad_latente = 0.05` es un **[EST]** provisorio de Erick para que la
+> regla funcione; el valor biológico (tasa de pérdida de viabilidad en dormancia
+> de *E. coli*/*M. burtonii*) lo debe fijar Esmeralda con literatura. Es deuda §4.
+
 ---
 
 ## 2. Entornos (`core/environment.py` — dueño: Jose)
@@ -218,6 +241,7 @@ Ordenado por impacto sobre la credibilidad del resultado.
 | 4 | **`t_sup_min`/`t_sup_max` de las 3 especies y `a_w_sup_min` de *E. coli* y *M. burtonii*.** **[EST]** (§1.1bis, §1.2). | Esmeralda | Definen cuánto aguantan antes de morir, no cuándo crecen. Son los únicos umbrales de supervivencia sin cita directa. |
 | 6 | **`ΔT = 25` del evento hidrotermal.** Apilado sobre una fumarola existente lleva T a 59 °C y mata a *M. burtonii* en el 29 % de los disparos. Puede ser correcto (el núcleo de una ventila **es** letal), pero hay que decidirlo. | Jose | Afecta la dinámica de Encelado. |
 | ~~7~~ | ~~**`SEGUNDOS_UV_POR_TICK` y el Δt del autómata.**~~ ✅ **RESUELTO (2026-07-25):** `SEGUNDOS_UV_POR_TICK` pasó de 8 h a 1 h para coincidir con `DT_HORAS_DEFECTO`; verificado por `test_segundos_uv_por_tick_coincide_con_dt_automata`, y la tabla de §3 recalculada. | Erick + Esmeralda | — |
+| 8 | **`mortalidad_latente` de la regla `latencia_mortalidad`.** Placeholder **[EST]** = 0.05/tick (§1.5). Es la tasa a la que una célula LATENTE **no anhidrobiótica** (*E. coli*, *M. burtonii*) pierde viabilidad en dormancia. | Esmeralda | Fija cuán rápido decae la población dormida; sin cita todavía. La regla es opt-in, así que no afecta los resultados por defecto. |
 
 ---
 

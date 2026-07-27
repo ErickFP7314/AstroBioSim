@@ -135,6 +135,11 @@ class _Contexto:
     n_activa: np.ndarray  # int: vecinos ACTIVA
     n_ocupada: np.ndarray  # int: vecinos ocupados (ACTIVA o LATENTE)
     rng: np.random.Generator
+    #: ¿La especie tiene dormancia biológica real (anhidrobiótica)? Escalar por
+    #: corrida. Lo usan las reglas que restringen la latencia a las anhidrobióticas;
+    #: las clásicas lo ignoran. Default `False` para que construir un `_Contexto`
+    #: sin especie (tests directos) siga funcionando.
+    anhidrobiotico: bool = False
 
 
 class ReglaTransicion(ABC):
@@ -272,11 +277,108 @@ class ReglaHibrida(ReglaTransicion):
         )
 
 
+class ReglaLatenciaAnhidrobiotica(ReglaTransicion):
+    """Latencia SOLO para especies anhidrobióticas (modelo biológico de Esmeralda).
+
+    Idéntica a la logística, pero la latencia deja de ser universal: solo las
+    especies con dormancia real (``anhidrobiotico=True``, p. ej. *D. radiodurans*)
+    pueden quedar LATENTE al salir de sus condiciones de crecimiento. Una especie
+    **no** anhidrobiótica (*E. coli*, *M. burtonii*) que deja de crecer **muere** —no
+    se preserva dormida—, así que su dinámica es efectivamente binaria
+    ACTIVA/MUERTA y su población **disminuye** en condiciones desfavorables, que es
+    lo biológicamente correcto para un organismo sin anhidrobiosis.
+
+    Consecuencia de diseño: para las no anhidrobióticas esta regla **ignora los
+    umbrales de supervivencia** (la célula muere en cuanto no crece), a diferencia
+    de la logística, que las dejaba latentes dentro de la ventana de supervivencia.
+    Sigue siendo una regla **opt-in** del menú: no cambia el default.
+    """
+
+    nombre = "Latencia solo anhidrobióticos (D. radiodurans)"
+
+    def aplicar(self, ctx: _Contexto) -> np.ndarray:
+        nuevo, ocupada = self._base(ctx)
+        viva = ocupada & ctx.sobrevive
+        nuevo[viva & ctx.crece] = ACTIVA  # incluye LATENTE→ACTIVA si vuelve a crecer
+        if ctx.anhidrobiotico:
+            nuevo[viva & ~ctx.crece] = LATENTE  # solo las anhidrobióticas duermen
+        # Si NO es anhidrobiótica, las celdas que no crecen quedan MUERTA (por _base).
+        vacia = ctx.estado == MUERTA
+        puede_nacer = vacia & ctx.crece & (ctx.n_activa > 0)
+        prob = ctx.p_repro * (ctx.n_activa / 8.0)
+        nace = puede_nacer & (ctx.rng.random(ctx.estado.shape) < prob)
+        nuevo[nace] = ACTIVA
+        return nuevo
+
+    def notacion(self) -> str:
+        return (
+            r"S_{i,j}^{t+1}=\begin{cases}"
+            r"\text{MUERTA} & \neg\,\mathrm{sup}(E_{i,j})\\"
+            r"\text{ACTIVA} & \mathrm{ocup}\wedge \mathrm{cre}(E_{i,j})\\"
+            r"\text{LATENTE} & \mathrm{ocup}\wedge \mathrm{sup}\wedge\neg\,\mathrm{cre}"
+            r"\wedge \mathrm{anh}\\"
+            r"\text{ACTIVA} & \text{vac}\wedge \mathrm{cre}\wedge "
+            r"U<p_{\mathrm{rep}}\,\tfrac{n_A}{8}\\"
+            r"\text{MUERTA} & \text{en otro caso}\end{cases}"
+        )
+
+
+@dataclass
+class ReglaLatenciaConMortalidad(ReglaTransicion):
+    """Latencia con costo: la dormancia de las NO anhidrobióticas es mortal.
+
+    Todas las especies pueden quedar LATENTE al salir del crecimiento, pero la
+    dormancia tiene un **costo de mortalidad** para las que no son anhidrobióticas:
+    cada tick, una célula LATENTE de una especie con ``anhidrobiotico=False`` muere
+    con probabilidad ``mortalidad_latente``. Las anhidrobióticas (*D. radiodurans*)
+    persisten sin costo. Así la población de *E. coli*/*M. burtonii* **decae
+    gradualmente** durante una dormancia prolongada (en vez de preservarse intacta),
+    mientras la extremófila aguanta — el contraste que motiva ADR-0015. Opt-in: no
+    cambia el default.
+    """
+
+    #: Probabilidad de que una célula LATENTE **no anhidrobiótica** muera por tick.
+    #: **[EST]** — placeholder a calibrar con Esmeralda (ver `docs/parametros.md`).
+    mortalidad_latente: float = 0.05
+    nombre: str = "Latencia con mortalidad (dormancia con costo)"
+
+    def aplicar(self, ctx: _Contexto) -> np.ndarray:
+        nuevo, ocupada = self._base(ctx)
+        viva = ocupada & ctx.sobrevive
+        nuevo[viva & ctx.crece] = ACTIVA
+        latente = viva & ~ctx.crece
+        nuevo[latente] = LATENTE
+        if not ctx.anhidrobiotico and self.mortalidad_latente > 0.0:
+            muere = latente & (ctx.rng.random(ctx.estado.shape) < self.mortalidad_latente)
+            nuevo[muere] = MUERTA  # la latencia no anhidrobiótica decae con el tiempo
+        vacia = ctx.estado == MUERTA
+        puede_nacer = vacia & ctx.crece & (ctx.n_activa > 0)
+        prob = ctx.p_repro * (ctx.n_activa / 8.0)
+        nace = puede_nacer & (ctx.rng.random(ctx.estado.shape) < prob)
+        nuevo[nace] = ACTIVA
+        return nuevo
+
+    def notacion(self) -> str:
+        return (
+            r"S_{i,j}^{t+1}=\begin{cases}"
+            r"\text{MUERTA} & \neg\,\mathrm{sup}(E_{i,j})\\"
+            r"\text{ACTIVA} & \mathrm{ocup}\wedge \mathrm{cre}(E_{i,j})\\"
+            r"\text{MUERTA} & \mathrm{ocup}\wedge \mathrm{sup}\wedge\neg\,\mathrm{cre}"
+            r"\wedge\neg\,\mathrm{anh}\wedge U<q_{\mathrm{lat}}\\"
+            r"\text{LATENTE} & \mathrm{ocup}\wedge \mathrm{sup}\wedge\neg\,\mathrm{cre}\\"
+            r"\text{ACTIVA} & \text{vac}\wedge \mathrm{cre}\wedge "
+            r"U<p_{\mathrm{rep}}\,\tfrac{n_A}{8}\\"
+            r"\text{MUERTA} & \text{en otro caso}\end{cases}"
+        )
+
+
 #: Reglas listas para el menú desplegable de la UI (clave estable → instancia).
 REGLAS_DISPONIBLES: dict[str, ReglaTransicion] = {
     "logistica": ReglaLogistica(),
     "conway": ReglaConway(),
     "hibrida": ReglaHibrida(),
+    "latencia_anhidro": ReglaLatenciaAnhidrobiotica(),
+    "latencia_mortalidad": ReglaLatenciaConMortalidad(),
 }
 
 
