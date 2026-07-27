@@ -41,12 +41,18 @@ DT_HORAS_DEFECTO: float = 1.0
 # 1. Cinética continua (ADR-0013)
 # ==========================================================================
 def gamma_temperatura(
-    T: np.ndarray, t_min: float, t_opt: float, t_max: float
+    T: np.ndarray,
+    t_min: float,
+    t_opt: float,
+    t_max: float,
+    *,
+    sensibilidad: float = 1.0,
 ) -> np.ndarray:
     """Factor térmico CTMI (Rosso et al. 1993) ∈ [0, 1]; 1 en `t_opt`, 0 fuera.
 
     Usa los tres puntos cardinales sin parámetros libres. Es numéricamente
     delicado cerca de los extremos: fuera de ``(t_min, t_max)`` se fuerza a 0.
+    El parámetro `sensibilidad` permite ponderar la respuesta a desviaciones térmicas.
     """
     T = np.asarray(T, dtype=float)
     num = (T - t_max) * (T - t_min) ** 2
@@ -56,7 +62,10 @@ def gamma_temperatura(
     with np.errstate(divide="ignore", invalid="ignore"):
         g = np.where(den != 0.0, num / den, 0.0)
     g = np.where((T > t_min) & (T < t_max), g, 0.0)
-    return np.clip(g, 0.0, 1.0)
+    g = np.clip(g, 0.0, 1.0)
+    if sensibilidad != 1.0:
+        g = g ** sensibilidad
+    return g
 
 
 def gamma_actividad_agua(a_w: np.ndarray, a_w_min: float) -> np.ndarray:
@@ -74,11 +83,23 @@ def gamma_uv(uv: np.ndarray, uv_max: float) -> np.ndarray:
     return np.clip(1.0 - uv / uv_max, 0.0, 1.0)
 
 
-def cinetica_mu(especie: Microorganismo, campo: CampoAmbiental) -> np.ndarray:
+def cinetica_mu(
+    especie: Microorganismo,
+    campo: CampoAmbiental,
+    *,
+    sensibilidad: float | None = None,
+) -> np.ndarray:
     """Tasa de crecimiento por celda (h⁻¹): μ_opt · γ_T · γ_aw · γ_UV (ADR-0013)."""
+    sens_t = (
+        sensibilidad
+        if sensibilidad is not None
+        else getattr(especie, "sensibilidad_t", 1.0)
+    )
     return (
         especie.mu_opt
-        * gamma_temperatura(campo.T, especie.t_min, especie.t_opt, especie.t_max)
+        * gamma_temperatura(
+            campo.T, especie.t_min, especie.t_opt, especie.t_max, sensibilidad=sens_t
+        )
         * gamma_actividad_agua(campo.A_w, especie.a_w_min)
         * gamma_uv(campo.R, especie.uv_max)
     )

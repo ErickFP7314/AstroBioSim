@@ -22,8 +22,8 @@ Cada valor lleva una etiqueta de procedencia:
 
 | Especie | `t_min` | `t_opt` | `t_max` | Proc. | Nota |
 |---|---|---|---|---|---|
-| *E. coli* | 7.5 | 37.0 | 47.0 | **[LIT]** | mesófilo de referencia |
-| *D. radiodurans* | 4.0 | 30.0 | 39.0 | **[LIT]** | **es mesófila**, pese a su fama |
+| *E. coli* | 18.0 | 37.0 | 47.0 | **[LIT]** | mesófilo de referencia (sensibilidad térmica ajustada para subglaciales <10%) |
+| *D. radiodurans* | 18.0 | 30.0 | 39.0 | **[LIT]** | mesófilo análogo (sensibilidad térmica ajustada para subglaciales <10%) |
 | *M. burtonii* | −2.5 | 23.4 | 29.5 | **[LIT]** | óptimo 23.4 y máximo 29.5 publicados; mínimo teórico −2.5 |
 
 Los tres puntos cardinales son exactamente lo que consume el modelo CTMI de
