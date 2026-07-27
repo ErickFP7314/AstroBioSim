@@ -1,6 +1,5 @@
 import { useMemo } from "react";
 import type { Frame, Montecarlo } from "../api";
-import { ESTADO_COLOR } from "../theme";
 
 const W = 300;
 const H = 168;
@@ -21,10 +20,12 @@ export function PopulationChart({
   frames,
   indice,
   montecarlo,
+  colores,
 }: {
   frames: Frame[];
   indice: number;
   montecarlo: Montecarlo | null;
+  colores: Record<number, string>;
 }) {
   const series = useMemo(() => {
     const a: number[] = [], l: number[] = [], m: number[] = [];
@@ -65,22 +66,22 @@ export function PopulationChart({
       </g>
       {banda && (
         <>
-          <polygon points={banda.poly} fill={ESTADO_COLOR[2]} opacity="0.14" />
-          <polyline points={linea(banda.media)} fill="none" stroke={ESTADO_COLOR[2]}
+          <polygon points={banda.poly} fill={colores[2]} opacity="0.14" />
+          <polyline points={linea(banda.media)} fill="none" stroke={colores[2]}
             strokeWidth="1" strokeDasharray="3 3" opacity="0.5" />
         </>
       )}
       {series.m.length > 1 && (
         <>
-          <polyline points={linea(series.l)} fill="none" stroke={ESTADO_COLOR[1]} strokeWidth="1.8" />
-          <polyline points={linea(series.m)} fill="none" stroke={ESTADO_COLOR[0]} strokeWidth="1.8" />
-          <polyline points={linea(series.a)} fill="none" stroke={ESTADO_COLOR[2]} strokeWidth="2.2" />
+          <polyline points={linea(series.l)} fill="none" stroke={colores[1]} strokeWidth="1.8" />
+          <polyline points={linea(series.m)} fill="none" stroke={colores[0]} strokeWidth="1.8" />
+          <polyline points={linea(series.a)} fill="none" stroke={colores[2]} strokeWidth="2.2" />
         </>
       )}
       {series.a.length > 0 && indice < series.a.length && (
         <>
           <line className="cursor" x1={cursorX} y1="0" x2={cursorX} y2={H} />
-          <circle cx={cursorX} cy={yAt(series.a[indice])} r="3" fill={ESTADO_COLOR[2]} />
+          <circle cx={cursorX} cy={yAt(series.a[indice])} r="3" fill={colores[2]} />
         </>
       )}
     </svg>

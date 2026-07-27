@@ -45,8 +45,14 @@ export default function App() {
   const [editorRegla, setEditorRegla] = useState(false);
   const [notacion, setNotacion] = useState<string | null>(null);
   // Colores de los tres estados, editables por el usuario (color picker). Se
-  // reflejan en vivo en la grilla y la leyenda.
+  // reflejan en vivo en la grilla, la leyenda y el gráfico.
   const [colores, setColores] = useState<Record<number, string>>(() => ({ ...ESTADO_COLOR }));
+  const [mostrarBanda, setMostrarBanda] = useState(true);
+  // Paneles redimensionables/colapsables (bug 4/5). Ancho en px + estado abierto.
+  const [wCtrl, setWCtrl] = useState(264);
+  const [wPanel, setWPanel] = useState(336);
+  const [ctrlOpen, setCtrlOpen] = useState(true);
+  const [panelOpen, setPanelOpen] = useState(true);
   const sim = useSimulation();
 
   useEffect(() => {
@@ -75,8 +81,37 @@ export default function App() {
   const correr = useCallback(() => sim.correr(cfg), [sim, cfg]);
   const calcularMc = useCallback(() => {
     setMcCargando(true);
+    setMostrarBanda(true);
     fetchMontecarlo(cfg).then(setMc).catch(() => setMc(null)).finally(() => setMcCargando(false));
   }, [cfg]);
+
+  // Redimensionar un panel arrastrando su borde. Al cruzar el umbral de colapso
+  // (como un imán) el panel se oculta y aparece una flecha para volver a abrirlo.
+  const iniciarResize = (lado: "ctrl" | "panel") => (e: React.PointerEvent) => {
+    e.preventDefault();
+    const x0 = e.clientX;
+    const w0 = lado === "ctrl" ? wCtrl : wPanel;
+    const MIN = 210, MAX = 480, COLAPSO = 150;
+    function fin() {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", fin);
+      document.body.classList.remove("resizing");
+    }
+    function onMove(ev: PointerEvent) {
+      const dx = ev.clientX - x0;
+      let w = lado === "ctrl" ? w0 + dx : w0 - dx;
+      if (w < COLAPSO) {                         // cruzó el umbral → colapsa
+        if (lado === "ctrl") setCtrlOpen(false); else setPanelOpen(false);
+        fin();
+        return;
+      }
+      w = Math.max(MIN, Math.min(MAX, w));
+      if (lado === "ctrl") setWCtrl(w); else setWPanel(w);
+    }
+    document.body.classList.add("resizing");
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", fin);
+  };
 
   if (errCat) return <div className="fatal">No se pudo cargar la config: {errCat}<br /><small>¿Está corriendo <code>uvicorn astrobiosim.ui.api:app</code>?</small></div>;
   if (!catalogo) return <div className="fatal">Cargando…</div>;
@@ -101,68 +136,97 @@ export default function App() {
         total={sim.total}
         semilla={cfg.semilla}
       />
-      <div className="body">
-        <ControlPanel
-          catalogo={catalogo}
-          cfg={cfg}
-          update={update}
-          onCorrer={correr}
-          cargando={sim.estado === "cargando"}
-          reproduciendo={sim.reproduciendo}
-          hayFrames={sim.total > 0}
-          alternar={sim.alternar}
-          paso={sim.paso}
-          reset={sim.reset}
-          fps={sim.fps}
-          setFps={sim.setFps}
-          onEditarRegla={() => setEditorRegla(true)}
-        />
+      <div
+        className="body"
+        style={{ "--w-ctrl": `${wCtrl}px`, "--w-panel": `${wPanel}px` } as React.CSSProperties}
+      >
+        {ctrlOpen ? (
+          <>
+            <ControlPanel
+              catalogo={catalogo}
+              cfg={cfg}
+              update={update}
+              onCorrer={correr}
+              cargando={sim.estado === "cargando"}
+              reproduciendo={sim.reproduciendo}
+              hayFrames={sim.total > 0}
+              alternar={sim.alternar}
+              paso={sim.paso}
+              reset={sim.reset}
+              fps={sim.fps}
+              setFps={sim.setFps}
+              onEditarRegla={() => setEditorRegla(true)}
+            />
+            <div className="rz" onPointerDown={iniciarResize("ctrl")}
+              title="Arrastrá para redimensionar · soltá al mínimo para ocultar" />
+          </>
+        ) : (
+          <button className="rz-tab rz-tab-l" onClick={() => setCtrlOpen(true)}
+            title="Mostrar controles" aria-label="Mostrar panel de controles">▸</button>
+        )}
 
         <AutomatonGrid frame={sim.frameActual} indice={sim.indice} total={sim.total} irA={sim.irA} colores={colores} />
 
-        <aside className="panel">
-          <div className="card">
-            <div className="card-head">
-              <p className="ttl">Dinámica poblacional</p>
-              <button className="mini" onClick={calcularMc} disabled={mcCargando}>
-                {mcCargando ? "…" : mc ? `± σ · N=${mc.n_corridas}` : "Banda Montecarlo"}
-              </button>
-            </div>
-            <PopulationChart frames={sim.frames} indice={sim.indice} montecarlo={mc} />
-          </div>
-          <div className="card">
-            <div className="card-head">
-              <p className="ttl">Estado actual</p>
-              <span className="mini-txt">clic en el color para cambiarlo</span>
-            </div>
-            <div className="readout">
-              {ESTADOS.map((e) => (
-                <div className="r" key={e.valor}>
-                  <span className="k">
-                    <input
-                      type="color"
-                      className="sw-pick"
-                      value={colores[e.valor]}
-                      onChange={(ev) => setColores((c) => ({ ...c, [e.valor]: ev.target.value }))}
-                      aria-label={`Color del estado ${e.nombre}`}
-                      title={`Color del estado ${e.nombre}`}
-                    />
-                    {e.nombre}
-                  </span>
-                  <span className="v">{frac(e.valor === 2 ? n?.a ?? 0 : e.valor === 1 ? n?.l ?? 0 : n?.m ?? 0)}</span>
+        {panelOpen ? (
+          <>
+            <div className="rz" onPointerDown={iniciarResize("panel")}
+              title="Arrastrá para redimensionar · soltá al mínimo para ocultar" />
+            <aside className="panel">
+              <div className="card">
+                <div className="card-head">
+                  <p className="ttl">Dinámica poblacional</p>
+                  <button
+                    className={"mini" + (mc && mostrarBanda ? " on" : "")}
+                    onClick={mc ? () => setMostrarBanda((b) => !b) : calcularMc}
+                    disabled={mcCargando}
+                    title="Banda de incertidumbre Montecarlo: media ± σ de N réplicas, superpuesta al gráfico"
+                  >
+                    {mcCargando ? "calculando…"
+                      : mc ? (mostrarBanda ? `ocultar ±σ · N=${mc.n_corridas}` : `ver ±σ · N=${mc.n_corridas}`)
+                        : "Banda Montecarlo"}
+                  </button>
                 </div>
-              ))}
-            </div>
-          </div>
-          <div className="card">
-            <div className="card-head">
-              <p className="ttl">Notación de la regla</p>
-              <span className="mini-txt">{nombreReglaActiva}</span>
-            </div>
-            <Notacion tex={notacion} />
-          </div>
-          {sim.error && <div className="card err">{sim.error}</div>}
-        </aside>
+                <PopulationChart frames={sim.frames} indice={sim.indice}
+                  montecarlo={mostrarBanda ? mc : null} colores={colores} />
+              </div>
+              <div className="card">
+                <div className="card-head">
+                  <p className="ttl">Estado actual</p>
+                  <span className="mini-txt">clic en el color para cambiarlo</span>
+                </div>
+                <div className="readout">
+                  {ESTADOS.map((e) => (
+                    <div className="r" key={e.valor}>
+                      <span className="k">
+                        <input
+                          type="color"
+                          className="sw-pick"
+                          value={colores[e.valor]}
+                          onChange={(ev) => setColores((c) => ({ ...c, [e.valor]: ev.target.value }))}
+                          aria-label={`Color del estado ${e.nombre}`}
+                          title={`Color del estado ${e.nombre}`}
+                        />
+                        {e.nombre}
+                      </span>
+                      <span className="v">{frac(e.valor === 2 ? n?.a ?? 0 : e.valor === 1 ? n?.l ?? 0 : n?.m ?? 0)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="card">
+                <div className="card-head">
+                  <p className="ttl">Notación de la regla</p>
+                  <span className="mini-txt">{nombreReglaActiva}</span>
+                </div>
+                <Notacion tex={notacion} />
+              </div>
+              {sim.error && <div className="card err">{sim.error}</div>}
+            </aside>
+          </>
+        ) : (
+          <button className="rz-tab rz-tab-r" onClick={() => setPanelOpen(true)}
+            title="Mostrar datos" aria-label="Mostrar panel de datos">◂</button>
+        )}
       </div>
 
       {editorRegla && (

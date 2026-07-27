@@ -141,7 +141,10 @@ def _construir_modo(cfg: ConfigCorrida, rng: np.random.Generator) -> ModoSimulac
         return ModoSandbox(_shape(cfg), T=cfg.T, R=cfg.R, A_w=cfg.A_w)
     loader, archivo = _LOADER[cfg.entorno]
     df = loader(str(_DATA / archivo))
-    return ModoAnalogico(df, _ENTORNOS[cfg.entorno], _shape(cfg), rng=rng)
+    # ciclico=True: si se piden más ticks que días tiene el dataset (~365), la
+    # serie 2025 se recicla en vez de cortarse. Así el nº de ticks pedido se
+    # respeta y la grilla y el gráfico llegan al mismo límite (p. ej. 800).
+    return ModoAnalogico(df, _ENTORNOS[cfg.entorno], _shape(cfg), rng=rng, ciclico=True)
 
 
 def _construir_eventos(cfg: ConfigCorrida) -> list:

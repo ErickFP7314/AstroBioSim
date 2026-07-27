@@ -106,7 +106,7 @@ export function ControlPanel(p: Props) {
           min={20} max={catalogo.limites.iter_max} step={10}
           onChange={(v) => update({ n_iteraciones: v })} fmt={(v) => String(v)} />
         {esAnalogico && (
-          <p className="nota-ticks">En Analógico se recorta al largo del dataset (~365 días 2025).</p>
+          <p className="nota-ticks">En Analógico la serie 2025 (~365 días) se recicla si pedís más ticks.</p>
         )}
       </div>
 
