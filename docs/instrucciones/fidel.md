@@ -143,3 +143,34 @@ Respondé esto antes de que tu Claude implemente; si no, asumirá defaults que q
    tenemos el mínimo diario ya agregado?
 9. **`a_w` de suelo vs. aire:** ¿hay alguna fuente de `a_w` de suelo para Fresno, o
    documentamos el valor teórico como limitación conocida del modelo?
+
+## Estado (2026-07-27)
+
+- ✅ **Validación biológica de las salidas IMPLEMENTADA** en la rama
+  `chore/validacion-datos`. Los 3 criterios de la tarjeta, cubiertos por
+  `tests/integration/test_validacion_biologica.py` (10 tests, integración con los
+  datasets reales):
+  1. **Sin artefactos** — ninguna de las 3 corridas análogas se extingue de golpe
+     (`viva > 0` en todo tick) ni satura de forma irreal (`max|Δactiva|` por tick
+     < 0.5); Marte da **supervivencia latente sin crecimiento** (ADR-0015), no
+     extinción total.
+  2. **Banda UV en el adaptador** — `mapear_radiacion` aplica `FRACCION_UV` en Marte
+     (UV ∈ 42–55 W/m², rango publicado) y la anula en Tierra/Encelado; el factor es
+     una constante nombrada y documentada, no un número mágico (ADR-0014 reemplaza
+     el proxy W/m² vs Gy).
+  3. **Hostil < control** — aislando el entorno con la MISMA especie (*E. coli*):
+     prospera en Tierra y se extingue en Marte (regolito seco).
+  Figura para la defensa: `docs/toBePresented/validacion_biologica_3entornos.png`
+  (composición \MUERTA/\LATENTE/\ACTIVA en el tiempo, media ± σ, las 3 corridas),
+  reproducible con `scripts/validacion_biologica.py`.
+- ⚠️ **Límite del mapeo de datos documentado (criterio 3 de tu revisión):** el modo
+  Analógico alimenta la **temperatura diaria de superficie** tal cual (Tierra oscila
+  4.9–36.5 °C, media 19.85), **sin amortiguarla al subsuelo tick a tick**. El
+  amortiguamiento a la media anual estable (19.8 °C de `fisica.tex`) vive en el campo
+  medio/estático, no en cada tick del análogo. Por eso *E. coli* en Tierra cae a
+  `LATENTE` en los días fríos (T < `t_min` = 7.5 °C) antes de colonizar la grilla —
+  **no es un artefacto numérico, es la respuesta correcta al dato real**, pero
+  conviene declararlo como límite del análogo (mismo espíritu que la corrección de
+  `a_w` de aire → suelo). Ver deuda §4 candidata: amortiguar la serie diaria al
+  subsuelo en el modo Analógico, o documentar que el control análogo es "superficie",
+  no "subsuelo estable".
