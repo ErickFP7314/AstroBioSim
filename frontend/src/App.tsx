@@ -10,7 +10,7 @@ import {
   type PresetRegla,
   type ReglaSpec,
 } from "./api";
-import { ESTADOS } from "./theme";
+import { ESTADO_COLOR, ESTADOS } from "./theme";
 import { useSimulation } from "./hooks/useSimulation";
 import { TopBar } from "./components/TopBar";
 import { ControlPanel } from "./components/ControlPanel";
@@ -44,6 +44,9 @@ export default function App() {
   const [mcCargando, setMcCargando] = useState(false);
   const [editorRegla, setEditorRegla] = useState(false);
   const [notacion, setNotacion] = useState<string | null>(null);
+  // Colores de los tres estados, editables por el usuario (color picker). Se
+  // reflejan en vivo en la grilla y la leyenda.
+  const [colores, setColores] = useState<Record<number, string>>(() => ({ ...ESTADO_COLOR }));
   const sim = useSimulation();
 
   useEffect(() => {
@@ -115,7 +118,7 @@ export default function App() {
           onEditarRegla={() => setEditorRegla(true)}
         />
 
-        <AutomatonGrid frame={sim.frameActual} indice={sim.indice} total={sim.total} irA={sim.irA} />
+        <AutomatonGrid frame={sim.frameActual} indice={sim.indice} total={sim.total} irA={sim.irA} colores={colores} />
 
         <aside className="panel">
           <div className="card">
@@ -128,11 +131,24 @@ export default function App() {
             <PopulationChart frames={sim.frames} indice={sim.indice} montecarlo={mc} />
           </div>
           <div className="card">
-            <p className="ttl">Estado actual</p>
+            <div className="card-head">
+              <p className="ttl">Estado actual</p>
+              <span className="mini-txt">clic en el color para cambiarlo</span>
+            </div>
             <div className="readout">
               {ESTADOS.map((e) => (
                 <div className="r" key={e.valor}>
-                  <span className="k"><b style={{ background: e.color }} />{e.nombre}</span>
+                  <span className="k">
+                    <input
+                      type="color"
+                      className="sw-pick"
+                      value={colores[e.valor]}
+                      onChange={(ev) => setColores((c) => ({ ...c, [e.valor]: ev.target.value }))}
+                      aria-label={`Color del estado ${e.nombre}`}
+                      title={`Color del estado ${e.nombre}`}
+                    />
+                    {e.nombre}
+                  </span>
                   <span className="v">{frac(e.valor === 2 ? n?.a ?? 0 : e.valor === 1 ? n?.l ?? 0 : n?.m ?? 0)}</span>
                 </div>
               ))}

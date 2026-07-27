@@ -122,6 +122,13 @@ input[type="range"], input[type="checkbox"] { accent-color: var(--accent); }
 .readout .r { display: flex; justify-content: space-between; align-items: center; }
 .readout .r .k { display: flex; align-items: center; gap: 8px; color: var(--text-2); }
 .readout .r .k b { width: 9px; height: 9px; border-radius: 2px; display: inline-block; }
+/* color picker de estado: input[type=color] disfrazado de swatch clicable */
+.sw-pick { -webkit-appearance: none; appearance: none; width: 14px; height: 14px; padding: 0;
+  border: 1px solid var(--border-2); border-radius: 3px; background: none; cursor: pointer; flex: none; }
+.sw-pick:hover { border-color: var(--accent); }
+.sw-pick::-webkit-color-swatch-wrapper { padding: 0; }
+.sw-pick::-webkit-color-swatch { border: none; border-radius: 2px; }
+.sw-pick::-moz-color-swatch { border: none; border-radius: 2px; }
 .readout .r .v { color: var(--text); font-variant-numeric: tabular-nums; }
 .card.err { border-color: var(--err); color: var(--err); font-size: 12px; }
 
