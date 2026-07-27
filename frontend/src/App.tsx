@@ -26,11 +26,14 @@ const CFG_INICIAL: ConfigCorrida = {
   n_iteraciones: 200, salmuera: true, n_corridas: 30, regla: "logistica",
 };
 
-/** Devuelve el spec editable de la regla actual (resuelve preset id → spec). */
+/** Spec editable con el que arrancar el editor de bloques. Si la regla actual es
+ *  una fija no editable (spec null, p. ej. las de latencia), cae en la primera
+ *  regla que sí tiene bloques (logística) como punto de partida. */
 function specDeRegla(regla: ConfigCorrida["regla"], reglas: PresetRegla[]): ReglaSpec {
   if (regla && typeof regla === "object") return regla;
+  const editables = reglas.filter((r): r is PresetRegla & { spec: ReglaSpec } => r.spec != null);
   const id = typeof regla === "string" ? regla : "logistica";
-  return (reglas.find((r) => r.id === id) ?? reglas[0]).spec;
+  return (editables.find((r) => r.id === id) ?? editables[0]).spec;
 }
 
 export default function App() {
