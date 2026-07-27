@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { ConfigCorrida, Frame, Mensaje } from "../api";
+import { correrSim } from "../api";
+import type { ConfigCorrida, Frame } from "../api";
 
 export type EstadoCorrida = "idle" | "cargando" | "listo" | "error";
 
 /**
- * Abre el WebSocket `/api/stream`, bufferea los frames que llegan y reproduce
- * la corrida (play / pausa / paso / velocidad) sobre ese buffer. La UI solo
- * renderiza el frame en `indice`; toda la simulación la hace el backend.
+ * Corre la simulación en el motor (Pyodide, en el navegador del visitante),
+ * bufferea todos los frames del run y después reproduce (play / pausa / paso /
+ * velocidad) sobre ese buffer. La UI solo renderiza el frame en `indice`.
  */
 export function useSimulation() {
   const [frames, setFrames] = useState<Frame[]>([]);
@@ -16,41 +17,30 @@ export function useSimulation() {
   const [error, setError] = useState<string | null>(null);
   const [fps, setFps] = useState(12);
 
-  const wsRef = useRef<WebSocket | null>(null);
   const framesRef = useRef<Frame[]>([]);
   const estadoRef = useRef<EstadoCorrida>("idle");
   useEffect(() => void (framesRef.current = frames), [frames]);
   useEffect(() => void (estadoRef.current = estado), [estado]);
 
   const correr = useCallback((cfg: ConfigCorrida) => {
-    wsRef.current?.close();
     setFrames([]);
     framesRef.current = [];
     setIndice(0);
     setReproduciendo(false);
     setError(null);
     setEstado("cargando");
-
-    const proto = location.protocol === "https:" ? "wss" : "ws";
-    const ws = new WebSocket(`${proto}://${location.host}/api/stream`);
-    wsRef.current = ws;
-    ws.onopen = () => ws.send(JSON.stringify(cfg));
-    ws.onmessage = (ev) => {
-      const msg: Mensaje = JSON.parse(ev.data);
-      if (msg.type === "frame") {
-        setFrames((f) => [...f, msg]);
-        if (framesRef.current.length === 0) setReproduciendo(true); // auto-play
-      } else if (msg.type === "done") {
+    correrSim(cfg)
+      .then((fr) => {
+        framesRef.current = fr;
+        setFrames(fr);
+        setIndice(0);
         setEstado("listo");
-      } else if (msg.type === "error") {
+        setReproduciendo(true); // auto-play al terminar de calcular
+      })
+      .catch((e) => {
         setEstado("error");
-        setError(msg.detail);
-      }
-    };
-    ws.onerror = () => {
-      setEstado("error");
-      setError("no se pudo conectar con el backend (¿uvicorn corriendo en :8000?)");
-    };
+        setError(e instanceof Error ? e.message : String(e));
+      });
   }, []);
 
   // Bucle de reproducción: avanza el índice a `fps` mientras haya frames por delante.
@@ -68,8 +58,6 @@ export function useSimulation() {
     return () => window.clearInterval(id);
   }, [reproduciendo, fps]);
 
-  useEffect(() => () => wsRef.current?.close(), []);
-
   const alternar = useCallback(() => setReproduciendo((p) => !p), []);
   const pausar = useCallback(() => setReproduciendo(false), []);
   const reproducir = useCallback(() => setReproduciendo(true), []);
@@ -83,7 +71,6 @@ export function useSimulation() {
   }, []);
   // Descarta la corrida por completo (vuelve al estado editable, sin frames).
   const limpiar = useCallback(() => {
-    wsRef.current?.close();
     setFrames([]);
     framesRef.current = [];
     setIndice(0);

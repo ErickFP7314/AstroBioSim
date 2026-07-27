@@ -1,5 +1,9 @@
-// Cliente de la API FastAPI. La UI NO tiene lógica de simulación (ADR-0009):
-// solo envía configs y consume lo que devuelve el motor.
+// Cliente del motor. Antes hablaba con el backend FastAPI por HTTP/WebSocket;
+// ahora el motor Python corre EN EL NAVEGADOR con Pyodide (deploy 100% estático
+// en Cloudflare Pages), vía el runtime del worker. La UI no cambia: sigue
+// enviando configs y consumiendo frames/catálogo (ADR-0009).
+import { initRuntime, runtime } from "./pyodide/runtime";
+export { initRuntime };
 
 export type Modo = "sandbox" | "analogico";
 export type EspecieId = "ecoli" | "dradiodurans" | "mburtonii";
@@ -97,37 +101,28 @@ export interface Montecarlo {
   desviacion: number[][];
 }
 
-export async function fetchCatalogo(): Promise<Catalogo> {
-  const r = await fetch("/api/config");
-  if (!r.ok) throw new Error(`config: ${r.status}`);
-  return r.json();
-}
-
-export async function fetchMontecarlo(cfg: ConfigCorrida): Promise<Montecarlo> {
-  const r = await fetch("/api/montecarlo", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(cfg),
-  });
-  if (!r.ok) throw new Error(`montecarlo: ${r.status}`);
-  return r.json();
-}
-
 export interface ValidacionRegla {
   valida: boolean;
   notacion: string | null;
   error: string | null;
 }
 
-/** Valida un spec de bloques en el backend y devuelve su notación o el error. */
-export async function fetchValidarRegla(spec: ReglaSpec): Promise<ValidacionRegla> {
-  const r = await fetch("/api/regla/validar", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(spec),
-  });
-  if (!r.ok) throw new Error(`validar: ${r.status}`);
-  return r.json();
+export function fetchCatalogo(): Promise<Catalogo> {
+  return runtime.catalogo();
+}
+
+/** Corre la simulación en el motor (Pyodide) y devuelve TODOS los frames del run. */
+export function correrSim(cfg: ConfigCorrida): Promise<Frame[]> {
+  return runtime.correr(cfg);
+}
+
+export function fetchMontecarlo(cfg: ConfigCorrida): Promise<Montecarlo> {
+  return runtime.montecarlo(cfg);
+}
+
+/** Valida un spec de bloques y devuelve su notación o el error. */
+export function fetchValidarRegla(spec: ReglaSpec): Promise<ValidacionRegla> {
+  return runtime.validarRegla(spec);
 }
 
 /** Decodifica el grid base64 (int8) a un Uint8Array de valores 0/1/2. */

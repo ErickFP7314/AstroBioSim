@@ -3,6 +3,7 @@ import {
   fetchCatalogo,
   fetchMontecarlo,
   fetchValidarRegla,
+  initRuntime,
   type Catalogo,
   type ConfigCorrida,
   type Modo,
@@ -56,10 +57,16 @@ export default function App() {
   // Modal "para editar hay que reiniciar": aparece si se toca un campo bloqueado
   // mientras hay una corrida cargada.
   const [modalEditar, setModalEditar] = useState(false);
+  const [progresoMotor, setProgresoMotor] = useState("iniciando…");
   const sim = useSimulation();
 
+  // Arranca Pyodide (el motor Python corre en el navegador) y recién ahí pide el
+  // catálogo. `initRuntime` reporta el progreso de carga.
   useEffect(() => {
-    fetchCatalogo().then(setCatalogo).catch((e) => setErrCat(String(e)));
+    initRuntime(setProgresoMotor)
+      .then(() => fetchCatalogo())
+      .then(setCatalogo)
+      .catch((e) => setErrCat(String(e)));
   }, []);
 
   // Notación de la regla activa: si es un preset, sale del catálogo; si es un
@@ -132,8 +139,24 @@ export default function App() {
     sim.reproducir();    // cancelar = seguir la simulación (play automático)
   }, [sim]);
 
-  if (errCat) return <div className="fatal">No se pudo cargar la config: {errCat}<br /><small>¿Está corriendo <code>uvicorn astrobiosim.ui.api:app</code>?</small></div>;
-  if (!catalogo) return <div className="fatal">Cargando…</div>;
+  if (errCat) return (
+    <div className="fatal">
+      No se pudo cargar el motor: {errCat}
+      <br /><small>Revisá la conexión y recargá. El motor se descarga de un CDN la primera vez.</small>
+    </div>
+  );
+  if (!catalogo) return (
+    <div className="fatal">
+      <div className="motor-load">
+        <div className="spinner" />
+        <p>Cargando el motor de simulación…</p>
+        <small className="motor-paso">{progresoMotor}</small>
+        <small className="motor-nota">
+          Corre 100 % en tu navegador (Pyodide/WASM). La primera vez descarga unos MB; después queda en caché.
+        </small>
+      </div>
+    </div>
+  );
 
   const n = sim.frameActual?.n ?? null;
   const tot = n ? n.m + n.l + n.a : 0;
