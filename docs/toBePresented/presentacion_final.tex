@@ -1,0 +1,265 @@
+\documentclass[11pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish,es-noshorthands]{babel}
+\usepackage{lmodern}
+\usepackage[margin=2.3cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{parskip}
+\usepackage[colorlinks=true,linkcolor=black,urlcolor=blue]{hyperref}
+
+\definecolor{acmuerta}{HTML}{9AA0A6}
+\definecolor{aclatente}{HTML}{C9A227}
+\definecolor{acactiva}{HTML}{2E7D32}
+\definecolor{procest}{HTML}{C62828}
+\newcommand{\MUERTA}{\textcolor{acmuerta}{\textsf{MUERTA}}}
+\newcommand{\LATENTE}{\textcolor{aclatente}{\textsf{LATENTE}}}
+\newcommand{\ACTIVA}{\textcolor{acactiva}{\textsf{ACTIVA}}}
+\newcommand{\est}[1]{\textcolor{procest}{\textbf{#1}}}
+
+% Inserta una figura si existe; si no, deja una nota (así compila igual).
+\newcommand{\figurasi}[3]{% {archivo}{ancho}{caption}
+  \begin{figure}[htbp]\centering
+  \IfFileExists{#1}{\includegraphics[width=#2\linewidth]{#1}}%
+    {\fbox{\parbox{#2\linewidth}{\centering\vspace{2ex}\itshape Falta la figura
+     \texttt{#1}; generarla con su script antes de compilar.\vspace{2ex}}}}%
+  \caption{#3}\end{figure}}
+
+\title{\textbf{AstroBioSim — Presentación final del proyecto}\\[3pt]
+\large Decisiones fundamentales y hallazgos, integrados por las tres áreas}
+\author{Equipo AstroBioSim — Matemática $\cdot$ Física $\cdot$ Biotecnología}
+\date{Julio 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent AstroBioSim simula la \textbf{supervivencia poblacional de
+microorganismos} en subsuelos de Tierra, Marte y Encelado mediante un
+\textbf{autómata celular} estocástico y espacialmente explícito sobre una grilla
+2D, gobernado por tres variables ambientales: temperatura $T$, radiación UV $R$ y
+actividad de agua $a_w$. Este documento reúne, en un solo hilo, lo que debe
+contarse en la exposición final: las \emph{decisiones fundamentales} de cada área
+y los \emph{hallazgos} del modelo —el umbral crítico de microrefugios, la solidez
+estadística de las corridas y el análisis de sensibilidad que blinda el resultado.
+Los tres documentos por disciplina (\texttt{matematicas.tex}, \texttt{fisica.tex},
+\texttt{biotecnologia.tex}) desarrollan cada pieza en detalle; este las integra.
+\end{abstract}
+
+\section{El proyecto en una frase, y la pregunta de investigación}
+
+Modelamos si una población microbiana \emph{persiste o se extingue} en un subsuelo
+planetario, y qué hace falta para que persista. El resultado que ancla todo el
+proyecto es que \textbf{el regolito marciano en bulk es inhabitable} para el
+crecimiento activo ($a_w\approx 0{,}38$, muy por debajo del límite de división
+celular $\approx 0{,}605$): la vida solo puede persistir en \emph{microrefugios}
+húmedos transitorios (salmueras delicuescentes). De ahí la pregunta de
+investigación (ADR-0015):
+
+\begin{quote}\itshape
+¿Con qué frecuencia y magnitud mínimas deben aparecer microrefugios húmedos
+transitorios para que una población persista en un subsuelo planetario, en vez de
+extinguirse?
+\end{quote}
+
+\noindent Que Marte dé \emph{extinción del crecimiento activo} no es un error del
+modelo: es el resultado correcto y el punto de partida de la pregunta.
+
+\section{El modelo: tres decisiones fundamentales, una por área}
+
+\paragraph{Matemática — un autómata celular de \emph{tres} estados con cinética
+continua.} A diferencia del Juego de la Vida (vivo/muerto), el espacio de estados
+es $\{\MUERTA,\LATENTE,\ACTIVA\}$ (ADR-0012): \MUERTA{} es absorbente (la muerte es
+irreversible; repoblar es \emph{colonización}, no resurrección), \LATENTE{} está
+viva sin reproducirse, \ACTIVA{} crece. La habitabilidad deja de ser binaria: una
+\textbf{tasa de crecimiento} continua (gamma concept + CTMI, ADR-0013)
+$\mu=\mu_{\mathrm{opt}}\,\gamma_T\,\gamma_{a_w}\,\gamma_{\mathrm{UV}}$ fija la
+probabilidad de reproducción por tick ($\Delta t = 1$~h). La actualización es
+\textbf{síncrona} (doble buffer, vectorizada en NumPy) y la regla de transición es
+\textbf{intercambiable} (ADR-0016) con un editor por bloques y panel de notación
+formal (ADR-0018). Un orquestador único corre el bucle bajo dos modos (Sandbox y
+Analógico, ADR-0017), y toda la aleatoriedad usa un generador \textbf{sembrado}
+(reproducibilidad exacta).
+
+\paragraph{Física — un campo de tres variables que \emph{discriminan}.} El criterio
+rector es que una variable que no separa escenarios no entra al modelo. Por eso se
+eliminó la presión (ADR-0008, casi constante en los análogos) y la radiación se
+reencuadró como \textbf{irradiancia UV}, no dosis ionizante (ADR-0014): la dosis
+ionizante marciana ($0{,}077$~Gy/año) tardaría $\sim\!65\,000$ años en alcanzar la
+letal de \emph{D.\ radiodurans}, mientras que el UV esteriliza de inmediato. Cada
+subsuelo tiene su modelo de campo: Marte amortigua la onda térmica y el UV con la
+profundidad (el UV cae mucho más rápido que el calor), Encelado suma fumarolas
+gaussianas sobre un fondo frío. Los eventos estocásticos perturban \emph{solo} el
+campo, y deben ser \textbf{simétricos}: junto a los que degradan (micro-fisura)
+existe el que mejora (salmuera), sin el cual la pregunta de investigación no
+tendría mecanismo.
+
+\paragraph{Biotecnología — tres especies análogas con umbrales trazables.} Un
+control mesófilo (\emph{E.\ coli}, Tierra), un candidato radiorresistente y
+anhidrobiótico (\emph{D.\ radiodurans}, Marte) y una metanógena psicrotolerante
+(\emph{M.\ burtonii}, Encelado; ADR-0011). La decisión de fondo es separar
+\textbf{crecimiento} ($\mu>0$) de \textbf{supervivencia} ($\mu=0$, sigue viva): es
+lo que permite la \emph{latencia} (anhidrobiosis), sin la cual habría que matar a
+\emph{D.\ radiodurans} al secarse (falso) o declarar crecimiento bajo el límite de
+la vida (indefendible). Todo parámetro lleva \textbf{procedencia}: \textbf{[LIT]}
+publicado, \textbf{[DER]} derivado, \textbf{[ANA]} por analogía, \textbf{[CONV]}
+convención, \est{[EST]} estimación (deuda). Un parámetro sin procedencia no entra
+al modelo.
+
+\section{Resultado base: cada especie en su entorno}
+
+Con los parámetros calibrados y \emph{sin ajustar nada}, cada especie análoga en su
+entorno produce:
+
+\begin{center}\small
+\begin{tabular}{@{}lcccl@{}}
+\toprule
+Especie / entorno & \ACTIVA & \LATENTE & \MUERTA & Lectura \\
+\midrule
+\emph{E.\ coli} / Tierra & $100\%$ & $0\%$ & $0\%$ & el control prospera \\
+\emph{D.\ radiodurans} / Marte & $0\%$ & $98\%$ & $2\%$ & \textbf{sobrevive latente, no crece} \\
+\emph{M.\ burtonii} / Encelado & $100\%$ & $0\%$ & $0\%$ & crece hasta en los núcleos de fumarola \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+En Marte, combinar la atenuación rápida del UV con la lenta del calor hace emerger
+una \textbf{banda de profundidad}: la superficie inmediata queda \MUERTA{} (UV
+sobre la fluencia letal) y el resto \LATENTE{} (el UV ya no mata, pero falta agua
+para crecer). La ventana habitable queda acotada \emph{arriba} por el UV y
+\emph{abajo} por el agua. \textbf{Validación independiente:} el modelo da
+$\mathrm{UV}_{\mathrm{sup}}\approx 42{,}2$~W/m$^2$, dentro del rango publicado de UV
+marciano ($42$--$55$~W/m$^2$), por una vía distinta a la que lo fijó.
+
+\section{Hallazgo central: el umbral crítico de microrefugios (ADR-0015)}
+
+Operativamente, la pregunta de investigación es un \textbf{barrido}
+$\text{frecuencia}\times\text{magnitud}$ del evento de salmuera sobre ensambles
+Montecarlo, con la persistencia como variable de respuesta. El hallazgo tiene dos
+capas:
+
+\begin{itemize}[nosep]
+  \item \textbf{La extremófila no necesita refugios para \emph{sobrevivir}.}
+  \emph{D.\ radiodurans} tiene $a_{w,\text{sup}}=0$ (anhidrobiosis total): en Marte
+  persiste \LATENTE{} indefinidamente sin ningún refugio, así que con la métrica
+  ``viva'' \emph{no hay} umbral crítico —es un hallazgo, no un fallo. El umbral
+  interesante para ella es el de \emph{reactivación} (¿los refugios la vuelven a
+  \ACTIVA?).
+  \item \textbf{La mesófila sí, y con exigencia cuantificable.} \emph{E.\ coli}
+  muere sin agua ($a_{w,\text{sup}}=0{,}5$), de modo que da un umbral limpio: para
+  persistir en Marte necesita microrefugios \textbf{grandes} (radio $\gtrsim 10$--$16$
+  celdas) \textbf{y} \textbf{frecuentes} ($\gtrsim 0{,}27$ disparos/tick). Por debajo
+  de ese contorno se extingue; por encima, persiste.
+\end{itemize}
+
+\figurasi{barrido_microrefugios_marte_ecoli_radio_viva.png}{0.86}{Barrido
+frecuencia $\times$ radio del microrefugio para \emph{E.\ coli} en Marte. El
+\emph{umbral crítico} (contorno donde la probabilidad de persistencia cruza $0{,}5$)
+separa la extinción de la persistencia: hace falta un refugio a la vez amplio y
+frecuente. Reproducible con \texttt{scripts/barrido\_microrefugios.py}.}
+
+\section{Solidez estadística: ¿cuántas réplicas hacen falta? (validación Montecarlo)}
+
+Como el sistema es estocástico, \textbf{una corrida no es la respuesta}. Se
+promedian $N$ réplicas con semillas explícitas y se reporta la
+\textbf{media $\pm$ desviación muestral}, más el error estándar
+$\mathrm{SE}=\sigma/\sqrt{N}$. El estudio de convergencia responde los tres
+criterios de validación:
+
+\begin{itemize}[nosep]
+  \item \textbf{$N$ suficiente:} cerca del umbral crítico (donde más importa),
+  hacen falta $\mathbf{N=180}$ réplicas para que $\mathrm{SE}\le 3\%$ —bastante más
+  que las $30$ de una corrida ingenua. La media se estabiliza y el SE decae
+  exactamente como $1/\sqrt{N}$.
+  \item \textbf{No confundir una corrida con la distribución:} se reporta siempre
+  media $\pm\,\sigma$ (p.\ ej.\ $0{,}212\pm 0{,}410$ para la persistencia).
+  \item \textbf{Reproducibilidad:} misma semilla $\Rightarrow$ misma traza, exacta.
+\end{itemize}
+
+\figurasi{validacion_montecarlo_marte_ecoli_persistencia.png}{0.92}{Convergencia del
+estimador Montecarlo. Izquierda: la media acumulada se estabiliza con banda de
+confianza del $95\%$. Derecha: el error estándar decae como $1/\sqrt{N}$ y cruza el
+objetivo del $3\%$ en $N\approx 180$. Reproducible con
+\texttt{scripts/validacion\_montecarlo.py}.}
+
+\section{Blindaje: análisis de sensibilidad de los umbrales (ADR-0013)}
+
+¿Qué tan frágil es la conclusión frente a la incertidumbre de los umbrales
+biológicos? Se varía cada umbral sobre su rango de incertidumbre —cuyo ancho sale
+de su \emph{procedencia}: [LIT] estrecho, [ANA] el rango documentado
+$2{,}5$--$13{,}8\times$ de \emph{M.\ burtonii}, \est{[EST]} ancho— dejando el resto
+en su valor nominal, y se mide cuánto se mueve la persistencia. El hallazgo es
+contundente:
+
+\begin{quote}
+\textbf{Domina un solo umbral: $\boldsymbol{a_{w,\text{sup}}}$ de \emph{E.\ coli}},
+que es \est{[EST]} (estimado, sin cita). Barrerlo en su rango mueve la persistencia
+$0{,}83$ (de $\sim\!0{,}10$ a $\sim\!0{,}93$) y \textbf{cruza la frontera $0{,}5$};
+todos los demás umbrales (temperatura, UV, $a_{w,\min}$) son \emph{planos}. La
+conclusión de persistencia \textbf{no es robusta}: pende por completo del parámetro
+menos defendible del modelo.
+\end{quote}
+
+\noindent Esto no debilita el proyecto: lo \emph{fortalece}. El análisis identifica
+exactamente dónde invertir para que el resultado sea defendible —cerrar la deuda
+\est{[EST]} de $a_{w,\text{sup}}$— en vez de dejarlo a la intuición.
+
+\figurasi{sensibilidad_marte_ecoli_viva.png}{0.9}{Diagrama de tornado: cada barra es
+el rango de persistencia al barrer un umbral en su incertidumbre, ordenadas por
+dominancia y coloreadas por procedencia. Una sola barra ($a_{w,\text{sup}}$, \est{[EST]})
+cruza la frontera $0{,}5$; el resto no mueve la aguja. Reproducible con
+\texttt{scripts/sensibilidad\_umbrales.py}.}
+
+\section{Honestidad científica: deuda abierta}
+
+Parte de la defensa es declarar lo que falta. Estado a la fecha:
+
+\begin{itemize}[nosep]
+  \item \textbf{Resuelto:} la $a_w$ media de Marte se re-derivó de la humedad
+  relativa cruda ($0{,}382$, antes se usaba el mínimo diario $0{,}19$); el $a_w$ del
+  control terrestre se corrigió a $0{,}99$ (era humedad del aire); y
+  $\tau=\texttt{SEGUNDOS\_UV\_POR\_TICK}$ se ajustó a $1$~h para coincidir con el
+  $\Delta t$ del autómata (antes $8$~h dejaban los umbrales UV $8\times$ permisivos).
+  \item \textbf{Abierto — física:} la asíntota térmica de Marte usa la media de los
+  mínimos diarios ($7{,}8\,^\circ$C), pero una onda amortigua hacia la \emph{media
+  anual} ($\approx 22\,^\circ$C): revisar. Y el pico $\Delta T=25$ de la emisión
+  hidrotermal, apilado sobre una fumarola, lleva $T$ a $\sim\!59\,^\circ$C (mata a
+  \emph{M.\ burtonii} en el $29\%$ de los disparos): puede ser correcto, pero hay
+  que decidirlo.
+  \item \textbf{Abierto — biología, y ahora \emph{prioritario}:} los umbrales de
+  \emph{supervivencia} $t_{\text{sup}}$ y $a_{w,\text{sup}}$ (de \emph{E.\ coli} y
+  \emph{M.\ burtonii}) son \est{[EST]} sin cita directa. El análisis de sensibilidad
+  (\S7) muestra que $a_{w,\text{sup}}$ de \emph{E.\ coli} es \textbf{el} parámetro que
+  decide el resultado: cerrarlo con literatura es la mejora de mayor impacto pendiente.
+\end{itemize}
+
+\section*{Qué contar en la exposición (síntesis)}
+
+\begin{center}\small
+\begin{tabular}{@{}llll@{}}
+\toprule
+\# & Bloque & Mensaje clave & Apoyo \\
+\midrule
+1 & Pregunta & Marte en bulk es inhabitable; ¿qué refugios salvan a la vida? & --- \\
+2 & Modelo & AC de 3 estados + cinética CTMI + campo UV/agua + 3 especies & \texttt{cinetica\_ctmi} \\
+3 & Resultado base & control prospera; \emph{D.\ rad.}\ latente en Marte; banda de profundidad & tabla \\
+4 & Hallazgo central & umbral crítico: refugio amplio \emph{y} frecuente para \emph{E.\ coli} & fig.\ barrido \\
+5 & Rigor & $N=180$ réplicas para $\mathrm{SE}\le 3\%$; media $\pm\,\sigma$; reproducible & fig.\ validación \\
+6 & Blindaje & todo pende de $a_{w,\text{sup}}$ \est{[EST]}: dónde mejorar & fig.\ sensibilidad \\
+7 & Honestidad & deuda abierta declarada (física + $a_{w,\text{sup}}$) & --- \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent\textbf{Aporte del proyecto.} La combinación \emph{espacialidad $+$
+estocasticidad $+$ latencia}, con umbrales trazables y un análisis de sensibilidad
+que dice de qué depende el resultado, es un nicho poco cubierto por la literatura de
+habitabilidad —que suele ser puntual (0-D) y determinista. No afirmamos que haya
+vida en Marte: cuantificamos \emph{qué condiciones de refugio la harían persistir},
+y con cuánta confianza podemos decirlo.
+
+\end{document}
