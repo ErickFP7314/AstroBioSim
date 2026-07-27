@@ -71,6 +71,8 @@ export function useSimulation() {
   useEffect(() => () => wsRef.current?.close(), []);
 
   const alternar = useCallback(() => setReproduciendo((p) => !p), []);
+  const pausar = useCallback(() => setReproduciendo(false), []);
+  const reproducir = useCallback(() => setReproduciendo(true), []);
   const paso = useCallback((d: number) => {
     setReproduciendo(false);
     setIndice((i) => Math.max(0, Math.min(framesRef.current.length - 1, i + d)));
@@ -78,6 +80,16 @@ export function useSimulation() {
   const reset = useCallback(() => {
     setReproduciendo(false);
     setIndice(0);
+  }, []);
+  // Descarta la corrida por completo (vuelve al estado editable, sin frames).
+  const limpiar = useCallback(() => {
+    wsRef.current?.close();
+    setFrames([]);
+    framesRef.current = [];
+    setIndice(0);
+    setReproduciendo(false);
+    setError(null);
+    setEstado("idle");
   }, []);
   const irA = useCallback((i: number) => {
     setReproduciendo(false); // arrastrar la línea de tiempo pausa la reproducción
@@ -97,8 +109,11 @@ export function useSimulation() {
     setFps,
     correr,
     alternar,
+    pausar,
+    reproducir,
     paso,
     reset,
+    limpiar,
     irA,
   };
 }
