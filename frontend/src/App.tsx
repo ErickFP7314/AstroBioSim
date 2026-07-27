@@ -23,7 +23,7 @@ const CFG_INICIAL: ConfigCorrida = {
   modo: "sandbox", especie: "dradiodurans", entorno: "marte",
   T: 20, R: 0, A_w: 0.9, m: 60, n: 60,
   fraccion_activa: 0.15, patron: "uniforme", semilla: 42,
-  n_iteraciones: 200, salmuera: true, n_corridas: 30, regla: "logistica",
+  n_iteraciones: 200, salmuera: true, n_corridas: 30, regla: "latencia_anhidro",
 };
 
 /** Spec editable con el que arrancar el editor de bloques. Si la regla actual es
@@ -53,6 +53,9 @@ export default function App() {
   const [wPanel, setWPanel] = useState(336);
   const [ctrlOpen, setCtrlOpen] = useState(true);
   const [panelOpen, setPanelOpen] = useState(true);
+  // Modal "para editar hay que reiniciar": aparece si se toca un campo bloqueado
+  // mientras hay una corrida cargada.
+  const [modalEditar, setModalEditar] = useState(false);
   const sim = useSimulation();
 
   useEffect(() => {
@@ -113,6 +116,22 @@ export default function App() {
     window.addEventListener("pointerup", fin);
   };
 
+  // Bloqueo de edición durante una corrida (requests 3 y 4): con una corrida
+  // cargada, tocar un campo pausa y ofrece reiniciar para poder editar.
+  const bloqueado = sim.total > 0;
+  const onIntentoEditar = useCallback(() => {
+    sim.pausar();
+    setModalEditar(true);
+  }, [sim]);
+  const onReiniciarEditar = useCallback(() => {
+    sim.limpiar();       // descarta la corrida → los campos vuelven a ser editables
+    setModalEditar(false);
+  }, [sim]);
+  const onCancelarEditar = useCallback(() => {
+    setModalEditar(false);
+    sim.reproducir();    // cancelar = seguir la simulación (play automático)
+  }, [sim]);
+
   if (errCat) return <div className="fatal">No se pudo cargar la config: {errCat}<br /><small>¿Está corriendo <code>uvicorn astrobiosim.ui.api:app</code>?</small></div>;
   if (!catalogo) return <div className="fatal">Cargando…</div>;
 
@@ -150,6 +169,8 @@ export default function App() {
               cargando={sim.estado === "cargando"}
               reproduciendo={sim.reproduciendo}
               hayFrames={sim.total > 0}
+              bloqueado={bloqueado}
+              onIntentoEditar={onIntentoEditar}
               alternar={sim.alternar}
               paso={sim.paso}
               reset={sim.reset}
@@ -237,6 +258,22 @@ export default function App() {
           onUsar={(spec) => { update({ regla: spec }); setEditorRegla(false); }}
           onCerrar={() => setEditorRegla(false)}
         />
+      )}
+
+      {modalEditar && (
+        <div className="modal-bg" onClick={onCancelarEditar}>
+          <div className="modal modal-sm" onClick={(e) => e.stopPropagation()}>
+            <p className="modal-ttl">Editar parámetros</p>
+            <p className="modal-sub">
+              Para cambiar los parámetros tenés que <b>reiniciar</b> la simulación
+              (se descarta la corrida actual). Si no, seguí reproduciéndola.
+            </p>
+            <div className="modal-foot">
+              <button className="ghost" onClick={onCancelarEditar}>Cancelar</button>
+              <button className="run" onClick={onReiniciarEditar}>Reiniciar y ajustar</button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

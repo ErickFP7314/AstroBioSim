@@ -10,6 +10,9 @@ interface Props {
   // reproducción
   reproduciendo: boolean;
   hayFrames: boolean;
+  // con una corrida cargada los parámetros quedan bloqueados; tocarlos dispara el modal
+  bloqueado: boolean;
+  onIntentoEditar: () => void;
   alternar: () => void;
   paso: (d: number) => void;
   reset: () => void;
@@ -49,97 +52,106 @@ export function ControlPanel(p: Props) {
 
   return (
     <aside className="ctrl">
-      <div>
-        <p className="lbl">Especie</p>
-        {catalogo.especies.map((e) => (
-          <button key={e.id} className={"opt" + (cfg.especie === e.id ? " on" : "")}
-            onClick={() => update({ especie: e.id })}>
-            <span className="sw" style={{ background: DOT[e.id] }} />
-            <span className="nm"><i>{e.label}</i></span>
-          </button>
-        ))}
-      </div>
-
-      {esAnalogico ? (
-        <div>
-          <p className="lbl">Entorno · datos 2025</p>
-          <div className="chips">
-            {catalogo.entornos.map((en) => (
-              <button key={en.id} className={"chip" + (cfg.entorno === en.id ? " on" : "")}
-                onClick={() => update({ entorno: en.id as EntornoId })}>{en.label}</button>
-            ))}
-          </div>
-          {cfg.entorno === "marte" && (
-            <label className="toggle">
-              <input type="checkbox" checked={cfg.salmuera}
-                onChange={(e) => update({ salmuera: e.target.checked })} />
-              <span>Salmueras delicuescentes (microrefugios)</span>
-            </label>
-          )}
-        </div>
-      ) : (
-        <div>
-          <p className="lbl">Campo (Sandbox)</p>
-          <Slider label="Temperatura" unidad="°C" value={cfg.T} min={-30} max={60} step={0.5}
-            onChange={(v) => update({ T: v })} fmt={(v) => v.toFixed(1)} />
-          <Slider label="UV" unidad="W/m²" value={cfg.R} min={0} max={60} step={0.5}
-            onChange={(v) => update({ R: v })} fmt={(v) => v.toFixed(1)} />
-          <Slider label="Actividad de agua" unidad="" value={cfg.A_w} min={0} max={1} step={0.01}
-            onChange={(v) => update({ A_w: v })} fmt={(v) => v.toFixed(2)} />
-        </div>
-      )}
-
-      <div>
-        <p className="lbl">Grilla e inicio</p>
-        <Slider label="Lado" unidad="celdas" value={cfg.m} min={catalogo.limites.lado[0]}
-          max={catalogo.limites.lado[1]} step={2}
-          onChange={(v) => update({ m: v, n: v })} fmt={(v) => `${v}×${v}`} />
-        <Slider label="Siembra inicial" unidad="" value={cfg.fraccion_activa} min={0.02} max={0.6}
-          step={0.01} onChange={(v) => update({ fraccion_activa: v })}
-          fmt={(v) => `${Math.round(v * 100)}%`} />
-        <label className="seed">
-          <span className="lbl" style={{ margin: 0 }}>Semilla</span>
-          <input type="number" value={cfg.semilla ?? 0}
-            onChange={(e) => update({ semilla: Number(e.target.value) })} />
-        </label>
-        <Slider label="Iteraciones (ticks)" unidad="" value={cfg.n_iteraciones ?? 200}
-          min={20} max={catalogo.limites.iter_max} step={10}
-          onChange={(v) => update({ n_iteraciones: v })} fmt={(v) => String(v)} />
-        {esAnalogico && (
-          <p className="nota-ticks">En Analógico la serie 2025 (~365 días) se recicla si pedís más ticks.</p>
+      <div className={"lockable" + (p.bloqueado ? " locked" : "")}>
+        {p.bloqueado && (
+          <button
+            className="lock-overlay"
+            onClick={p.onIntentoEditar}
+            title="Para editar los parámetros hay que reiniciar la simulación"
+            aria-label="Editar parámetros (reinicia la simulación)"
+          />
         )}
-      </div>
 
-      <div>
-        <p className="lbl">Regla de transición</p>
-        <select className="regla-sel" value={reglaSel}
-          onChange={(e) => update({ regla: e.target.value })}>
-          {reglaEsSpec && (
-            <option value="__custom__" disabled>
-              ✎ {(cfg.regla as ReglaSpec).nombre} · personalizada
-            </option>
-          )}
-          {catalogo.reglas.map((r) => (
-            <option key={r.id} value={r.id}>{r.nombre}</option>
+        <div>
+          <p className="lbl">Especie</p>
+          {catalogo.especies.map((e) => (
+            <button key={e.id} className={"opt" + (cfg.especie === e.id ? " on" : "")}
+              onClick={() => update({ especie: e.id })}>
+              <span className="sw" style={{ background: DOT[e.id] }} />
+              <span className="nm"><i>{e.label}</i></span>
+            </button>
           ))}
-        </select>
-        <button className="edit-regla" onClick={p.onEditarRegla}>✎ Editar por bloques</button>
+        </div>
+
+        {esAnalogico ? (
+          <div>
+            <p className="lbl">Entorno · datos 2025</p>
+            <div className="chips">
+              {catalogo.entornos.map((en) => (
+                <button key={en.id} className={"chip" + (cfg.entorno === en.id ? " on" : "")}
+                  onClick={() => update({ entorno: en.id as EntornoId })}>{en.label}</button>
+              ))}
+            </div>
+            {cfg.entorno === "marte" && (
+              <label className="toggle">
+                <input type="checkbox" checked={cfg.salmuera}
+                  onChange={(e) => update({ salmuera: e.target.checked })} />
+                <span>Salmueras delicuescentes (microrefugios)</span>
+              </label>
+            )}
+          </div>
+        ) : (
+          <div>
+            <p className="lbl">Campo (Sandbox)</p>
+            <Slider label="Temperatura" unidad="°C" value={cfg.T} min={-30} max={60} step={0.5}
+              onChange={(v) => update({ T: v })} fmt={(v) => v.toFixed(1)} />
+            <Slider label="UV" unidad="W/m²" value={cfg.R} min={0} max={60} step={0.5}
+              onChange={(v) => update({ R: v })} fmt={(v) => v.toFixed(1)} />
+            <Slider label="Actividad de agua" unidad="" value={cfg.A_w} min={0} max={1} step={0.01}
+              onChange={(v) => update({ A_w: v })} fmt={(v) => v.toFixed(2)} />
+          </div>
+        )}
+
+        <div>
+          <p className="lbl">Grilla e inicio</p>
+          <Slider label="Lado" unidad="celdas" value={cfg.m} min={catalogo.limites.lado[0]}
+            max={catalogo.limites.lado[1]} step={2}
+            onChange={(v) => update({ m: v, n: v })} fmt={(v) => `${v}×${v}`} />
+          <Slider label="Siembra inicial" unidad="" value={cfg.fraccion_activa} min={0.02} max={0.6}
+            step={0.01} onChange={(v) => update({ fraccion_activa: v })}
+            fmt={(v) => `${Math.round(v * 100)}%`} />
+          <label className="seed">
+            <span className="lbl" style={{ margin: 0 }}>Semilla</span>
+            <input type="number" value={cfg.semilla ?? 0}
+              onChange={(e) => update({ semilla: Number(e.target.value) })} />
+          </label>
+          <Slider label="Iteraciones (ticks)" unidad="" value={cfg.n_iteraciones ?? 200}
+            min={20} max={catalogo.limites.iter_max} step={10}
+            onChange={(v) => update({ n_iteraciones: v })} fmt={(v) => String(v)} />
+          {esAnalogico && (
+            <p className="nota-ticks">En Analógico la serie 2025 (~365 días) se recicla si pedís más ticks.</p>
+          )}
+        </div>
+
+        <div>
+          <p className="lbl">Regla de transición</p>
+          <select className="regla-sel" value={reglaSel}
+            onChange={(e) => update({ regla: e.target.value })}>
+            {reglaEsSpec && (
+              <option value="__custom__" disabled>
+                ✎ {(cfg.regla as ReglaSpec).nombre} · personalizada
+              </option>
+            )}
+            {catalogo.reglas.map((r) => (
+              <option key={r.id} value={r.id}>{r.nombre}</option>
+            ))}
+          </select>
+          <button className="edit-regla" onClick={p.onEditarRegla}>✎ Editar por bloques</button>
+        </div>
       </div>
 
       <div className="run-block">
-        <button className="run" onClick={p.onCorrer} disabled={p.cargando}>
-          {p.cargando ? "Corriendo…" : "▶ Correr simulación"}
+        {/* Botón único: correr (si no hay corrida) / pausar / reproducir. */}
+        <button className="run" onClick={p.hayFrames ? p.alternar : p.onCorrer}
+          disabled={p.cargando && !p.hayFrames}>
+          {p.cargando && !p.hayFrames ? "Corriendo…"
+            : !p.hayFrames ? "▶ Correr simulación"
+              : p.reproduciendo ? "⏸ Pausar" : "▶ Reproducir"}
         </button>
         <p className="lbl">Reproducción</p>
         <div className="play">
           <button className="b" onClick={() => p.paso(-1)} disabled={!p.hayFrames} aria-label="Atrás">
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h2v14H6zM18 5v14l-8-7z" /></svg>
-          </button>
-          <button className="b pri" onClick={p.alternar} disabled={!p.hayFrames}
-            aria-label={p.reproduciendo ? "Pausar" : "Reproducir"}>
-            {p.reproduciendo
-              ? <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z" /></svg>
-              : <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>}
           </button>
           <button className="b" onClick={() => p.paso(1)} disabled={!p.hayFrames} aria-label="Adelante">
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 5h2v14h-2zM6 5v14l8-7z" /></svg>
