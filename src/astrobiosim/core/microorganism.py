@@ -99,6 +99,7 @@ class Microorganismo(ABC):
 
     # --- Cinética (ADR-0013) ---
     mu_opt: float
+    sensibilidad_t: float = 1.0  # Ponderador de sensibilidad en gamma_temperatura
 
     # --- Rasgo de dormancia (biología) ---
     #: ¿La especie tiene un estado LATENTE biológicamente real? Solo las
@@ -161,7 +162,7 @@ class EColi(Microorganismo):
     FLUENCIA_LETAL_J_M2: float = 870.0
 
     # Crecimiento
-    t_min: float = 7.5
+    t_min: float = 14.0
     t_opt: float = 37.0
     t_max: float = 47.0
     a_w_min: float = 0.95
@@ -174,6 +175,7 @@ class EColi(Microorganismo):
     uv_letal: float = FLUENCIA_LETAL_J_M2 / SEGUNDOS_UV_POR_TICK
 
     mu_opt: float = 2.1  # h⁻¹ — la más rápida de las tres
+    sensibilidad_t: float = 3.0  # Alta sensibilidad térmica a temperaturas bajas (limita <10% en Encélado)
     anhidrobiotico: bool = False  # mesófila: NO tolera la desecación; muere seca, no duerme
 
 
@@ -192,7 +194,7 @@ class DRadiodurans(Microorganismo):
     FLUENCIA_LETAL_J_M2: float = 50_760.0
 
     # Crecimiento
-    t_min: float = 4.0
+    t_min: float = 8.0
     t_opt: float = 30.0  # mesófila, pese a su fama de extremófila
     t_max: float = 39.0
     a_w_min: float = 0.90  # límite de metabolismo activo
@@ -205,6 +207,7 @@ class DRadiodurans(Microorganismo):
     uv_letal: float = FLUENCIA_LETAL_J_M2 / SEGUNDOS_UV_POR_TICK
 
     mu_opt: float = 0.26  # h⁻¹ — costo metabólico de la extremofilia
+    sensibilidad_t: float = 3.0  # Alta sensibilidad térmica a temperaturas bajas (limita <10% en Encélado)
     anhidrobiotico: bool = True  # anhidrobiosis: sobrevive la desecación total en dormancia reversible
 
 
@@ -256,4 +259,5 @@ class MBurtonii(Microorganismo):
     uv_letal: float = FLUENCIA_LETAL_J_M2 / SEGUNDOS_UV_POR_TICK
 
     mu_opt: float = 0.069  # h⁻¹ — la más lenta: metanógena psicrotolerante
+    sensibilidad_t: float = 1.0
     anhidrobiotico: bool = False  # necesita agua líquida: no es anhidrobiótica (muere seca)

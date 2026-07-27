@@ -290,8 +290,8 @@ class EnceladoSubglacial(PlanetaSubsuelo):
     #: habitables: la vida se agrupa en las ventilas, no las evita (ADR-0011).
     DELTA_T_FUMAROLA: float = 25.0
     #: Radio de decaimiento gaussiano, como fracción del lado menor de la grilla.
-    #: A 50×50 (default) equivale a los 4.0 celdas originales.
-    SIGMA_FRACCION: float = 0.08
+    #: Ajustado a 0.05 para limitar el penacho térmico a las chimeneas (<10% habitabilidad para no psicrofílicas).
+    SIGMA_FRACCION: float = 0.05
 
     #: Posiciones de fumarolas como fracción (fila, col) de la grilla.
     FUMAROLAS_FRACCION: tuple[tuple[float, float], ...] = (
