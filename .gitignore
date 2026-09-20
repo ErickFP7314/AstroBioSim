@@ -44,3 +44,7 @@ frontend/dist/
 .vite/
 frontend/vite.config.js
 frontend/vite.config.d.ts
+
+# Wrangler
+.wrangler/
+

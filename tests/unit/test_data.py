@@ -119,3 +119,13 @@ def test_fallback_atacama_respeta_min_menor_o_igual_que_max(tmp_path) -> None:
     assert (df["temperature_min"] <= df["temperature_max"]).all()
     esperado = (df["temperature_min"] + df["temperature_max"]) / 2.0
     pd.testing.assert_series_equal(df["temperature"], esperado, check_names=False)
+
+
+def test_tierra_temporada_calida_mayo_a_septiembre() -> None:
+    """Opción 3: filtra temporada cálida (mayo a septiembre, 153 días con T >= 16.8 °C)."""
+    df = cargar_control_tierra(str(TIERRA), temporada_calida=True)
+    assert len(df) == 153
+    assert df["temperature"].min() >= 14.0
+    assert df["t"].min() == pd.Timestamp("2025-05-01")
+    assert df["t"].max() == pd.Timestamp("2025-09-30")
+

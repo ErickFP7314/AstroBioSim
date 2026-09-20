@@ -109,7 +109,10 @@ def _finalizar(df: pd.DataFrame, columnas: tuple[str, ...]) -> pd.DataFrame:
 # Adaptadores por fuente (con fallback automático si el archivo no existe)
 # --------------------------------------------------------------------------
 def cargar_control_tierra(
-    ruta: str, *, rng: np.random.Generator | None = None
+    ruta: str,
+    *,
+    rng: np.random.Generator | None = None,
+    temporada_calida: bool = False,
 ) -> pd.DataFrame:
     """Adaptador del control terrestre (Valles de Fresno) → DataFrame canónico.
 
@@ -119,9 +122,13 @@ def cargar_control_tierra(
         Ruta al CSV real. Si no existe, se genera un fallback sintético.
     rng : np.random.Generator, optional
         Generador para el fallback. Solo se usa si `ruta` no existe.
+    temporada_calida : bool, optional
+        Si es `True`, filtra la serie para la temporada cálida (mayo a septiembre,
+        2025-05-01 .. 2025-09-30), evitando las temperaturas invernales bajo el
+        umbral de división celular de E. coli (14 °C). Por defecto `False`.
     """
     if not Path(ruta).exists():
-        return _sintetico_tierra(rng=rng)
+        return _sintetico_tierra(rng=rng, temporada_calida=temporada_calida)
     c = pd.read_csv(ruta)
     df = pd.DataFrame(
         {
@@ -131,6 +138,8 @@ def cargar_control_tierra(
             "radiation": c["Radiacion_Solar_W_m2"].astype(float),
         }
     )
+    if temporada_calida:
+        df = df[(df["t"] >= "2025-05-01") & (df["t"] <= "2025-09-30")].reset_index(drop=True)
     return _finalizar(df, COLUMNAS_CANONICAS)
 
 
@@ -186,7 +195,10 @@ def cargar_ventilas(
 # Fallbacks sintéticos (misma interfaz canónica; SOLO para pruebas)
 # --------------------------------------------------------------------------
 def _sintetico_tierra(
-    *, rng: np.random.Generator | None = None, n: int = N_DIAS_DEFECTO
+    *,
+    rng: np.random.Generator | None = None,
+    n: int = N_DIAS_DEFECTO,
+    temporada_calida: bool = False,
 ) -> pd.DataFrame:
     g = _rng(rng)
     df = pd.DataFrame(
@@ -197,6 +209,8 @@ def _sintetico_tierra(
             "radiation": _muestra(g, _TIERRA["radiation"], n),
         }
     )
+    if temporada_calida:
+        df = df[(df["t"] >= "2025-05-01") & (df["t"] <= "2025-09-30")].reset_index(drop=True)
     return _finalizar(df, COLUMNAS_CANONICAS)
 
 

@@ -106,7 +106,10 @@ def construir_modo(cfg: dict, rng: np.random.Generator) -> ModoSimulacion:
         return ModoSandbox(_shape(cfg), T=float(_g(cfg, "T")), R=float(_g(cfg, "R")),
                            A_w=float(_g(cfg, "A_w")))
     loader, archivo = _LOADER[_g(cfg, "entorno")]
-    df = loader(str(DATA_DIR / archivo))
+    if _g(cfg, "entorno") == "tierra":
+        df = loader(str(DATA_DIR / archivo), temporada_calida=True)
+    else:
+        df = loader(str(DATA_DIR / archivo))
     # ciclico=True: si se piden más ticks que días tiene el dataset (~365), la
     # serie 2025 se recicla para respetar el nº de ticks pedido.
     return ModoAnalogico(df, _ENTORNOS[_g(cfg, "entorno")], _shape(cfg), rng=rng, ciclico=True)
