@@ -110,3 +110,25 @@ def test_encelado_crece_incluso_en_los_nucleos_de_fumarola() -> None:
     # y el punto más caliente de la grilla también es fértil
     fila, col = np.unravel_index(np.argmax(campo.T), campo.T.shape)
     assert crece[fila, col]
+
+
+def test_ecoli_prospera_en_tierra_en_temporada_calida() -> None:
+    """Opción 3: en la temporada cálida (mayo a septiembre), E. coli prolifera activamente."""
+    from pathlib import Path
+    from astrobiosim.data.loaders import cargar_control_tierra
+    from astrobiosim.data.resampling import Entorno
+    from astrobiosim.modes.analog import ModoAnalogico
+    from astrobiosim.simulation import simular, sembrar_estado
+    from astrobiosim.engine.transition_rules import ReglaLatenciaAnhidrobiotica
+
+    ruta = Path(__file__).resolve().parents[2] / "data" / "processed" / "datos_tierra_control_2025.csv"
+    df = cargar_control_tierra(str(ruta), temporada_calida=True)
+    modo = ModoAnalogico(df, Entorno.TIERRA, (15, 15), ciclico=True)
+    rng = np.random.default_rng(42)
+    estado0 = sembrar_estado((15, 15), rng=rng, fraccion_activa=0.15)
+    e = EColi()
+    res = simular(modo, e, estado0, rng, n_iteraciones=30, regla=ReglaLatenciaAnhidrobiotica())
+    # la población activa aumenta respecto al inicio y no se extingue
+    assert res.activa[-1] > res.activa[0]
+    assert res.muerta[-1] < res.muerta[0]
+
