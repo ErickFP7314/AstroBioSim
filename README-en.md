@@ -8,4 +8,4 @@ Final Project — 1st Winter School on Computational Methods.
 
 ## Architecture
 
-...
+Two decoupled motors coordinated by a simulation orchestrator (see docs/adr/):
