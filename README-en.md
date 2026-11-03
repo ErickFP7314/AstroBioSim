@@ -5,3 +5,5 @@ An interactive Python-based simulator that models the population viability of mi
 Final Project — 1st Winter School on Computational Methods.
 
 ![Preview of the system in operation](preview.png)
+
+## Arquitectura
