@@ -6,4 +6,6 @@ Final Project — 1st Winter School on Computational Methods.
 
 ![Preview of the system in operation](preview.png)
 
-## Arquitectura
+## Architecture
+
+...
